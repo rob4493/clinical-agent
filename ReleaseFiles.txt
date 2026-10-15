@@ -8,6 +8,7 @@ LICENSE
 README.md
 ReleaseFiles.txt
 THIRD_PARTY_NOTICES.md
+TesterDeployment.md
 backend/app/__init__.py
 backend/app/adapters/__init__.py
 backend/app/adapters/vectorStore/__init__.py
@@ -108,6 +109,7 @@ frontend/index.html
 frontend/package-lock.json
 frontend/package.json
 frontend/public/THIRD_PARTY_NOTICES.txt
+frontend/public/backend-unavailable.json
 frontend/src/App.tsx
 frontend/src/DemoCases.ts
 frontend/src/PregnancyCases.json
@@ -136,6 +138,7 @@ frontend/tests/setup.ts
 frontend/tests/uiBrowser.cjs
 frontend/tsconfig.json
 frontend/vite.config.ts
+netlify.toml
 pytest.ini
 tests/__init__.py
 tests/conftest.py
@@ -190,10 +193,12 @@ tests/unit/testScaffolds.py
 tests/unit/testSecurity.py
 tests/unit/testSourceIntake.py
 tests/unit/testSyntheticDemo.py
+tests/unit/testTesterHosting.py
 tests/unit/testValidationPrivacy.py
 tests/unit/testWatsonx.py
 tools/clinicalPacket.py
 tools/evidenceInstall.py
 tools/releaseExport.py
 tools/runDemo.py
+tools/serveTester.py
 tools/sourceIntake.py

@@ -72,8 +72,24 @@ describe('clinician workflow with mocked HTTP only', () => {
   });
   it('handles module transport failure generically', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('private host and credentials'))); render(<App />);
-    expect(await screen.findByText('Unable to load module availability. Please try again.')).toBeVisible();
+    expect(await screen.findByText('Analysis is unavailable. Check that the backend is configured and reachable, then refresh availability.')).toBeVisible();
     expect(document.body).not.toHaveTextContent('private host');
+    expect(screen.getByRole('button', { name: 'Analyze' })).toBeDisabled();
+  });
+  it.each([404, 200])('keeps Analyze visibly closed for a backend-free static site with status %s', async status => {
+    const fetchMock = vi.fn(async (url: string) => {
+      expect(url.startsWith('/api/')).toBe(true);
+      return status === 404
+        ? reply({ detail: 'Analysis is unavailable. No backend is configured for this site.' }, 404)
+        : new Response('<html><body>Static SPA fallback</body></html>', { headers: { 'Content-Type': 'text/html' } });
+    });
+    vi.stubGlobal('fetch', fetchMock); render(<App />);
+    expect(await screen.findByText(/Analysis is unavailable\. Check that the backend/)).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Analyze' })).toBeDisabled();
+    expect(screen.getByLabelText(/Clinical module/)).toBeDisabled();
+    fireEvent.submit(document.getElementById('caseForm')!);
+    expect(fetchMock.mock.calls.some(argumentsList => String(argumentsList[0]).endsWith('/v1/analyze'))).toBe(false);
+    expect(document.body).not.toHaveTextContent('Static SPA fallback');
   });
   it('keeps unavailable analysis dependencies closed', async () => {
     mockHttp(undefined, 200, Modules, { status: 'notReady', reasonCode: 'analysisUnavailable' }); render(<App />); await chooseModule();

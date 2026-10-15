@@ -141,3 +141,9 @@ Press **Ctrl+C in both windows** to stop. Closing the browser alone does not sto
 `backend`, `frontend`, `tests` and `tools` contain original application code, configuration, synthetic test fixtures and test tools. Requirements and the npm lockfile declare separately installed dependencies. `backend/releaseModules` holds inactive configurations without evidence. `EvidenceSources.example.json` holds only identities, filenames, official links, hashes and claim IDs. `ReleaseFiles.txt` is the exact source-release inventory.
 
 Protected source originals, complete clinical packages, knowledge documents, intake originals, source-derived review packets, environments, node_modules, builds, screenshots, logs, local coding instructions and historical reports stay untracked. They must not be included in archives, frontend assets or image contexts. Apache 2.0 covers only original project work; it does not grant source rights, trademarks or third-party dependency rights.
+
+## Tester hosting configuration
+
+The root `netlify.toml` builds from `frontend` and publishes only `frontend/dist`, with Node 24.21.0. It includes SPA navigation and an API-unavailable fallback. Until an actual backend is assigned and its same-origin proxy is enabled, **Analyze stays disabled**. Setting `VITE_BACKEND_URL` does not configure a production Netlify proxy.
+
+See [tester deployment instructions](TesterDeployment.md) for the commented proxy placeholder, the Python host command using its assigned `PORT`, private read-only evidence installation, health checks and prerequisites. No backend address is assumed and no hosting deployment is performed by these files. Clinical sources must never enter Git, the static site or an image layer.
