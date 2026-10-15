@@ -1,0 +1,15 @@
+{
+  "claims": [
+    {
+      "approvedReviewIds": [
+        "00000000-0000-4000-8000-000000000001"
+      ],
+      "claimId": "SyntheticClaim",
+      "evidenceVersion": "synthetic-v1",
+      "knowledgeHash": "ef4edbdadb9104de90965e5385bc74442d07c24641caa93e6acc0333765708ce",
+      "moduleId": "SyntheticDemo",
+      "sourceId": "SyntheticSource",
+      "status": "approved"
+    }
+  ]
+}

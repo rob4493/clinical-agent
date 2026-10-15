@@ -1,0 +1,29 @@
+{
+  "active": true,
+  "description": "Not clinically validated. Demonstration only; must not be used for clinical care.",
+  "evidenceDirectory": "evidence",
+  "evidencePackages": {
+    "00000000-0000-4000-8000-000000000010": "4c389122a2d0779f3469ca63b902577a7f0ee3c893bb388aabdf4e62165f15a9"
+  },
+  "jurisdictionNotes": "synthetic",
+  "kbVersion": "synthetic-v1",
+  "knowledgeChecksums": {
+    "knowledge.bin": "ef4edbdadb9104de90965e5385bc74442d07c24641caa93e6acc0333765708ce"
+  },
+  "moduleHintValue": "SyntheticDemo",
+  "moduleId": "SyntheticDemo",
+  "moduleName": "Pelvic pain review",
+  "requiredSourceIds": [
+    "SyntheticSource"
+  ],
+  "reviewDate": "synthetic review",
+  "reviewDirectory": "reviews",
+  "sourceCatalog": "sources.json",
+  "sourceRegister": {},
+  "status": "approved",
+  "supportedCaseTypes": [
+    "brief",
+    "detailed"
+  ],
+  "version": "synthetic-v1"
+}

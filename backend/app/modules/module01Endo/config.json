@@ -1,0 +1,36 @@
+{
+  "moduleId": "module_01_endo",
+  "moduleName": "Endometriosis and Chronic Pelvic Pain",
+  "moduleHintValue": "EndometriosisChronicPelvicPain",
+  "version": "2.1",
+  "kbVersion": "2.1",
+  "reviewDate": "2026-10-13",
+  "status": "pending_review",
+  "active": false,
+  "description": "Module 1 Version 2.1 provenance reference; clinical source approval and runtime clinical activation remain pending.",
+  "jurisdictionNotes": "",
+  "supportedCaseTypes": [
+    "brief",
+    "detailed"
+  ],
+  "sourceRegister": {},
+  "knowledgePath": null,
+  "urgentRuleIds": [],
+  "sourceCatalog": "sources.json",
+  "knowledgeChecksums": {
+    "knowledge/ClinicianDecisionKnowledgeBaseV2.1.docx": "9c978751f88e7adf27dc8dbc2402d75ff518f34494a7a5cdc4a89f8c5fbd3162"
+  },
+  "reviewDirectory": "reviews",
+  "requiredSourceIds": [
+    "ACOG-CPP",
+    "ACOG-ECTOPIC",
+    "ACOG-ENDO-DX-2026",
+    "ACOG-FIBROIDS",
+    "CDC-PID",
+    "ESHRE-ENDO-2022",
+    "NICE-NG73",
+    "NICHD-DX",
+    "SRU-US-2024",
+    "WHO-2025"
+  ]
+}

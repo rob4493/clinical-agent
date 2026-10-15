@@ -1,0 +1,25 @@
+{
+  "chunkCount": 1,
+  "chunksFile": "chunks.json",
+  "chunksHash": "674e04d70f679a2ca95af50e60dd4b68636afb9fb4dba778d8590b8c2241bdc7",
+  "claimsFile": "approvedClaims.json",
+  "claimsHash": "de1d5bf7b6e03aec30582172f2f049afbab4fd5909dcc36d8e6c4be0f1264a6a",
+  "createdAt": "2026-10-07T00:00:00Z",
+  "evidenceVersion": "synthetic-v1",
+  "knowledgeFile": "knowledge.bin",
+  "knowledgeHash": "ef4edbdadb9104de90965e5385bc74442d07c24641caa93e6acc0333765708ce",
+  "moduleId": "SyntheticDemo",
+  "packageHash": "f9f61c5eea735ae7f915f6ecafba0734d175b221f137585c000491256bb65d89",
+  "packageId": "00000000-0000-4000-8000-000000000010",
+  "reviewSetFile": "reviewSet.json",
+  "reviewSetHash": "d751d49dd10dbde2776705e544f33a8427e182c9c32be9ccc055fb03e3c5360b",
+  "sourceArtifacts": {
+    "SyntheticSource": {
+      "file": "source.bin",
+      "sourceHash": "84a8fc1bdb8da9ae635f5b2e02306df6c80072eff136bb0a506d3e0694a7b941"
+    }
+  },
+  "sourceCatalogFile": "sources.json",
+  "sourceCatalogHash": "a4f8535c923080eb12451a7fb73127de008c218749e46c6b0c88153c00e958c4",
+  "status": "approved"
+}

@@ -1,0 +1,22 @@
+# Preserve exact bytes, including integrity-bound JSON, HTML and review Markdown.
+* -text
+
+# Knowledge documents and source artifacts must not undergo text diff/merge.
+*.docx binary
+*.pdf binary
+*.bin binary
+
+# Defense in depth for Git archives; protected bytes never belong in history.
+*.pdf export-ignore
+*.docx export-ignore
+/backend/competition/evidence/** export-ignore
+/backend/competition/module02Evidence/** export-ignore
+/backend/app/modules/*/knowledge/** export-ignore
+/backend/app/modules/*/candidatePolicies/** export-ignore
+/backend/app/modules/*/candidateClaims.json export-ignore
+/backend/app/modules/*/candidates.json export-ignore
+/sourceIntake/** export-ignore
+/docs/** export-ignore
+AGENTS.md export-ignore
+clinical-agent-plan.md export-ignore
+.env export-ignore

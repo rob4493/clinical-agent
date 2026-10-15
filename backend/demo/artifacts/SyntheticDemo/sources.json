@@ -1,0 +1,16 @@
+{
+  "sources": [
+    {
+      "jurisdiction": "synthetic",
+      "knowledgeFile": "knowledge.bin",
+      "notes": null,
+      "organization": "Fictional demonstration publisher",
+      "publicationDate": null,
+      "reviewDate": null,
+      "sourceId": "SyntheticSource",
+      "status": "approved",
+      "title": "Fictional demonstration reference - not clinical evidence",
+      "verifiedUrl": null
+    }
+  ]
+}

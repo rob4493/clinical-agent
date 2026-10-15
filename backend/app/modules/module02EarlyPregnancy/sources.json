@@ -1,0 +1,158 @@
+{
+  "sources": [
+    {
+      "sourceId": "ACEP-EARLYPREG-2017",
+      "organization": "American College of Emergency Physicians",
+      "title": "Critical Issues in the Initial Evaluation and Management of Patients Presenting to the Emergency Department in Early Pregnancy",
+      "jurisdiction": "United States emergency departments",
+      "knowledgeFile": "knowledge/Module02EarlyPregnancyKnowledgeBaseV1.0.docx",
+      "status": "pendingReview",
+      "verifiedUrl": null,
+      "notes": "Registered date (not independently reverified): Approved 2016; published February 2017. Candidate official URL (not verified by this register): https://www.acep.org/siteassets/new-pdfs/clinical-policies/cp-earlypregnancy-doc.pdf. Older policy that does not incorporate all newer ultrasound terminology and standards; not the primary threshold authority."
+    },
+    {
+      "sourceId": "ACOG-ECTOPIC-193",
+      "organization": "American College of Obstetricians and Gynecologists",
+      "title": "Tubal Ectopic Pregnancy Practice Bulletin 193",
+      "jurisdiction": "United States",
+      "knowledgeFile": "knowledge/Module02EarlyPregnancyKnowledgeBaseV1.0.docx",
+      "status": "pendingReview",
+      "verifiedUrl": null,
+      "notes": "Registered date (not independently reverified): March 2018; reaffirmed 2025. Candidate official URL (not verified by this register): https://www.acog.org/clinical/clinical-guidance/practice-bulletin/articles/2018/03/tubal-ectopic-pregnancy. Some full content may require authorized access. Applies principally to tubal ectopic pregnancy."
+    },
+    {
+      "sourceId": "ACOG-EPL-200",
+      "organization": "American College of Obstetricians and Gynecologists",
+      "title": "Early Pregnancy Loss Practice Bulletin 200",
+      "jurisdiction": "United States",
+      "knowledgeFile": "knowledge/Module02EarlyPregnancyKnowledgeBaseV1.0.docx",
+      "status": "pendingReview",
+      "verifiedUrl": null,
+      "notes": "Registered date (not independently reverified): November 2018 with interim updates. Candidate official URL (not verified by this register): https://www.acog.org/clinical/clinical-guidance/practice-bulletin/articles/2018/11/early-pregnancy-loss. Older Rh recommendations are superseded by the 2024 ACOG Clinical Practice Update."
+    },
+    {
+      "sourceId": "ACOG-RHD-2024",
+      "organization": "American College of Obstetricians and Gynecologists",
+      "title": "Rh D Immune Globulin Administration After Abortion or Pregnancy Loss at Less Than 12 Weeks of Gestation",
+      "jurisdiction": "United States",
+      "knowledgeFile": "knowledge/Module02EarlyPregnancyKnowledgeBaseV1.0.docx",
+      "status": "pendingReview",
+      "verifiedUrl": null,
+      "notes": "Registered date (not independently reverified): September 2024; published December 2024. Candidate official URL (not verified by this register): https://pubmed.ncbi.nlm.nih.gov/39255498/. Must be interpreted with applicable policy and acknowledged professional disagreement."
+    },
+    {
+      "sourceId": "ACR-BLEEDING-2025",
+      "organization": "American College of Radiology",
+      "title": "ACR Appropriateness Criteria First Trimester Vaginal Bleeding 2025 Update",
+      "jurisdiction": "United States",
+      "knowledgeFile": "knowledge/Module02EarlyPregnancyKnowledgeBaseV1.0.docx",
+      "status": "pendingReview",
+      "verifiedUrl": null,
+      "notes": "Registered date (not independently reverified): 2025. Candidate official URL (not verified by this register): https://acsearch.acr.org/docs/69460/Narrative/. Does not independently establish diagnosis or management."
+    },
+    {
+      "sourceId": "FDA-PREGTEST",
+      "organization": "US Food and Drug Administration",
+      "title": "Pregnancy Home Use Tests",
+      "jurisdiction": "United States",
+      "knowledgeFile": "knowledge/Module02EarlyPregnancyKnowledgeBaseV1.0.docx",
+      "status": "pendingReview",
+      "verifiedUrl": null,
+      "notes": "Registered date (not independently reverified): Current page accessed 13 October 2026. Candidate official URL (not verified by this register): https://www.fda.gov/medical-devices/home-use-tests/pregnancy. Consumer test guidance; cannot determine pregnancy location or viability."
+    },
+    {
+      "sourceId": "HCG-US-2023",
+      "organization": "PubMed indexed study",
+      "title": "Association of HCG Level with Ultrasound Visualization of the Gestational Sac in Early Viable Pregnancies",
+      "jurisdiction": "Study population specific",
+      "knowledgeFile": "knowledge/Module02EarlyPregnancyKnowledgeBaseV1.0.docx",
+      "status": "pendingReview",
+      "verifiedUrl": null,
+      "notes": "Registered date (not independently reverified): 2023. Candidate official URL (not verified by this register): https://pubmed.ncbi.nlm.nih.gov/37563479/. Individual study; must not create a universal discriminatory threshold or diagnosis rule."
+    },
+    {
+      "sourceId": "NICE-NG126-2026",
+      "organization": "National Institute for Health and Care Excellence",
+      "title": "Ectopic pregnancy and miscarriage diagnosis and initial management",
+      "jurisdiction": "United Kingdom",
+      "knowledgeFile": "knowledge/Module02EarlyPregnancyKnowledgeBaseV1.0.docx",
+      "status": "pendingReview",
+      "verifiedUrl": null,
+      "notes": "Registered date (not independently reverified): Published 17 April 2019; last updated 17 June 2026. Candidate official URL (not verified by this register): https://www.nice.org.uk/guidance/ng126. UK service pathways and thresholds must be labeled by jurisdiction and must not be generalized universally."
+    },
+    {
+      "sourceId": "PUL-REVIEW-2025",
+      "organization": "PubMed indexed clinical review",
+      "title": "Individualizing Management of Pregnancy of Unknown Location and Uncertain Prognosis",
+      "jurisdiction": "United States review",
+      "knowledgeFile": "knowledge/Module02EarlyPregnancyKnowledgeBaseV1.0.docx",
+      "status": "pendingReview",
+      "verifiedUrl": null,
+      "notes": "Registered date (not independently reverified): 2025. Candidate official URL (not verified by this register): https://pubmed.ncbi.nlm.nih.gov/40320270/. Narrative clinical review; not a substitute for current local guideline pathways."
+    },
+    {
+      "sourceId": "SMFM-RHD-2024",
+      "organization": "Society for Maternal Fetal Medicine",
+      "title": "RhD immune globulin after spontaneous or induced abortion less than 12 weeks of gestation",
+      "jurisdiction": "United States",
+      "knowledgeFile": "knowledge/Module02EarlyPregnancyKnowledgeBaseV1.0.docx",
+      "status": "pendingReview",
+      "verifiedUrl": null,
+      "notes": "Registered date (not independently reverified): 2024. Candidate official URL (not verified by this register): https://publications.smfm.org/publications/551-society-for-maternal-fetal-medicine-statement-rhd-immune/. Conditional recommendation involving feasibility, access and future-pregnancy considerations."
+    },
+    {
+      "sourceId": "SRU-US-LEXICON-2024",
+      "organization": "Society of Radiologists in Ultrasound",
+      "title": "A Lexicon for First Trimester US Consensus Conference Recommendations",
+      "jurisdiction": "International multisociety imaging terminology",
+      "knowledgeFile": "knowledge/Module02EarlyPregnancyKnowledgeBaseV1.0.docx",
+      "status": "pendingReview",
+      "verifiedUrl": null,
+      "notes": "Registered date (not independently reverified): 2024. Candidate official URL (not verified by this register): https://pubmed.ncbi.nlm.nih.gov/39189906/. Terminology consensus rather than a complete clinical-management guideline."
+    },
+    {
+      "sourceId": "US-MEASURE-REVIEW-2026",
+      "organization": "PubMed indexed systematic review",
+      "title": "Ultrasound measurements of gestational sac diameter and crown rump length in intrauterine pregnancy of uncertain prognosis",
+      "jurisdiction": "Evidence synthesis",
+      "knowledgeFile": "knowledge/Module02EarlyPregnancyKnowledgeBaseV1.0.docx",
+      "status": "pendingReview",
+      "verifiedUrl": null,
+      "notes": "Registered date (not independently reverified): 2026. Candidate official URL (not verified by this register): https://pubmed.ncbi.nlm.nih.gov/42523978/. Supports limitation statements; does not replace guideline criteria or clinician interpretation."
+    },
+    {
+      "sourceId": "ACOG-ECTOPIC-FAQ155",
+      "organization": "American College of Obstetricians and Gynecologists",
+      "title": "Ectopic Pregnancy | ACOG",
+      "jurisdiction": "United States; public education",
+      "knowledgeFile": "knowledge/sources/ACOG-Ectopic-Pregnancy-FAQ155.pdf",
+      "status": "pendingReview",
+      "verifiedUrl": null,
+      "notes": "Supplemental FAQ155 background source authorized separately from the V1.0 register. Published April 2020; reviewed April 2026. Public educational aid, explicitly not a standard of care or Practice Bulletin 193. Only page 2 urgent symptoms support is eligible for bounded offline review. URL acquisition remains unresolved; no diagnostic, treatment, threshold or disposition expansion."
+    },
+    {
+      "sourceId": "CDC-MATERNAL-WARNINGS-POSTER",
+      "organization": "Centers for Disease Control and Prevention",
+      "title": "Urgent Maternal Warning Signs poster",
+      "publicationDate": null,
+      "reviewDate": null,
+      "jurisdiction": "United States; government public-health warning information",
+      "knowledgeFile": "knowledge/sources/CDC-MaternalWarningSigns.pdf",
+      "status": "pendingReview",
+      "verifiedUrl": "https://www.cdc.gov/hearher/resources/download-share/docs/pdf/Warning-Signs-Poster-LTR-English.pdf",
+      "notes": "Candidate-only CDC material; official acquisition 2026-10-14. Not an approved guideline or runtime warning claim. Pregnancy means explicitly current pregnancy here; possible pregnancy alone is insufficient. Detailed dizziness qualification: ongoing or recurring over many days, without inventing a numeric cutoff. Fainting is separately qualified by current pregnancy/current symptoms. Poster emergency access is conditional on inability to reach a provider. Dates: No publication date printed; PDF creation 2023-09-28 is not a clinical review date."
+    },
+    {
+      "sourceId": "CDC-MATERNAL-WARNINGS-2024",
+      "organization": "Centers for Disease Control and Prevention",
+      "title": "Urgent Maternal Warning Signs and Symptoms",
+      "publicationDate": null,
+      "reviewDate": null,
+      "jurisdiction": "United States; government public-health warning information",
+      "knowledgeFile": "knowledge/sources/CDC-MaternalWarningSigns.html",
+      "status": "pendingReview",
+      "verifiedUrl": "https://www.cdc.gov/hearher/maternal-warning-signs/index.html",
+      "notes": "Candidate-only CDC material; official acquisition 2026-10-14. Not an approved guideline or runtime warning claim. Pregnancy means explicitly current pregnancy here; possible pregnancy alone is insufficient. Detailed dizziness qualification: ongoing or recurring over many days, without inventing a numeric cutoff. Fainting is separately qualified by current pregnancy/current symptoms. Poster emergency access is conditional on inability to reach a provider. Dates: HTML displays May 15, 2024; not independently labelled a clinical review date."
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "reviews": [
+    {
+      "authorityVerified": true,
+      "identityVerified": true,
+      "jurisdictionReviewed": true,
+      "knowledgeHash": "ef4edbdadb9104de90965e5385bc74442d07c24641caa93e6acc0333765708ce",
+      "limitationsReviewed": true,
+      "metadataHash": "7a5dfe18a7dc8fde611256040be804898566a6bc420552b5b37e544e0e14ea9f",
+      "moduleId": "SyntheticDemo",
+      "notes": null,
+      "outcome": "approved",
+      "reviewId": "00000000-0000-4000-8000-000000000001",
+      "reviewedAt": "2026-10-07T00:00:00Z",
+      "reviewerId": "synthetic-reviewer",
+      "scopeReviewed": true,
+      "sourceId": "SyntheticSource",
+      "urlVerified": null,
+      "versionVerified": true
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "moduleId": "module_01_endo",
+  "moduleName": "Endometriosis and Chronic Pelvic Pain",
+  "moduleHintValue": "EndometriosisChronicPelvicPain",
+  "version": "2.1",
+  "kbVersion": "2.1",
+  "reviewDate": "2026-10-13",
+  "status": "pending_review",
+  "active": false,
+  "description": "Inactive source-free metadata scaffold. Private evidence installation never grants clinical approval.",
+  "jurisdictionNotes": "",
+  "supportedCaseTypes": [
+    "brief",
+    "detailed"
+  ],
+  "sourceRegister": {},
+  "knowledgePath": null,
+  "urgentRuleIds": [],
+  "sourceCatalog": null,
+  "knowledgeChecksums": {},
+  "reviewDirectory": null,
+  "requiredSourceIds": []
+}

@@ -1,0 +1,396 @@
+{
+  "schemaVersion": 1,
+  "licenseScope": "Metadata only; no clinical source licence granted.",
+  "files": [
+    {
+      "path": "backend/app/modules/module01Endo/knowledge/ClinicianDecisionKnowledgeBaseV2.1.docx",
+      "moduleId": "module_01_endo",
+      "byteSize": 45892,
+      "sha256": "9c978751f88e7adf27dc8dbc2402d75ff518f34494a7a5cdc4a89f8c5fbd3162"
+    },
+    {
+      "path": "backend/app/modules/module01Endo/sources.json",
+      "moduleId": "module_01_endo",
+      "byteSize": 6927,
+      "sha256": "55ef3ab691d5a7bf256178841b03125c98d38584258f04c2581acda26c1958b6"
+    },
+    {
+      "path": "backend/app/modules/module02EarlyPregnancy/candidateClaims.json",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 55971,
+      "sha256": "a072f4cc26c4eb15ba624478de7e85c191fb98baf0c29d77460441973bd8fa7e"
+    },
+    {
+      "path": "backend/app/modules/module02EarlyPregnancy/candidatePolicies/maternal.json",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 5761,
+      "sha256": "56d7d76fe3412c12d9b523f12a5a9395973b5173b1d5712888603e9a3bdb3659"
+    },
+    {
+      "path": "backend/app/modules/module02EarlyPregnancy/candidates.json",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 11471,
+      "sha256": "ae52df11d2ae31f0bae3f889e596876b348b2e83e0a79bc2536bf18419294684"
+    },
+    {
+      "path": "backend/app/modules/module02EarlyPregnancy/knowledge/Module02EarlyPregnancyKnowledgeBaseV1.0.docx",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 45886,
+      "sha256": "869193cfdbd463faa05e7f92f09196af23838858fe661d58c9336700be6f11f9"
+    },
+    {
+      "path": "backend/app/modules/module02EarlyPregnancy/knowledge/sources/ACOG-Ectopic-Pregnancy-FAQ155.pdf",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 247486,
+      "sha256": "0163d363dbaf61d9c705d85c33d2684711b9d59061fa08db9d6960d2fdf71d45"
+    },
+    {
+      "path": "backend/app/modules/module02EarlyPregnancy/knowledge/sources/CDC-MaternalWarningSigns.html",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 64519,
+      "sha256": "12274e98a313f46044585ced8cb25c5a8b97b41dac10ff872c4c6e4121341f25"
+    },
+    {
+      "path": "backend/app/modules/module02EarlyPregnancy/knowledge/sources/CDC-MaternalWarningSigns.pdf",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 627077,
+      "sha256": "2d2646f9fe369be4a2a8a4b45273688f5ca4c82e65262165ad33d656103d0531"
+    },
+    {
+      "path": "backend/app/modules/module02EarlyPregnancy/knowledge/sources/cp-earlypregnancy-doc.pdf",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 11166962,
+      "sha256": "8c6a3af4a3439d03d9a81d0edebe101b3aa27beb9591e0a303375df2997e25e4"
+    },
+    {
+      "path": "backend/app/modules/module02EarlyPregnancy/knowledge/sources/ectopic-pregnancy-and-miscarriage-diagnosis-and-initial-management-pdf-66141662244037.pdf",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 243087,
+      "sha256": "f27f86a8779b2b1de7ede51e6c3d65564f656d3ec65a73ae3701fdda49833045"
+    },
+    {
+      "path": "backend/app/modules/module02EarlyPregnancy/sources.json",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 11514,
+      "sha256": "14ded1feba944e218fb80c9b284f2728215fdb7cc51a77d660b61dab89a6f014"
+    },
+    {
+      "path": "backend/competition/evidence/ACOG-Chronic-Pelvic-Pain.pdf",
+      "moduleId": "module_01_endo",
+      "byteSize": 272931,
+      "sha256": "187d9f9d896b109405f954b67f871444bb0517aea0e63036addb6e9d0e80a9b2"
+    },
+    {
+      "path": "backend/competition/evidence/ACOG-Ectopic-Pregnancy.pdf",
+      "moduleId": "module_01_endo",
+      "byteSize": 247486,
+      "sha256": "0163d363dbaf61d9c705d85c33d2684711b9d59061fa08db9d6960d2fdf71d45"
+    },
+    {
+      "path": "backend/competition/evidence/CDC-PID.html",
+      "moduleId": "module_01_endo",
+      "byteSize": 95442,
+      "sha256": "b5b7c71c6f6163dec8a79829dff292c98613487d13c409f2b48e1b286009acfa"
+    },
+    {
+      "path": "backend/competition/evidence/NICE-NG73-Endometriosis.pdf",
+      "moduleId": "module_01_endo",
+      "byteSize": 178320,
+      "sha256": "a8d631d2c50bb9208f59dfec31e7a2ab65e233a2a08d86e31fe7c4869f51d64f"
+    },
+    {
+      "path": "backend/competition/evidence/NICHD-DX.html",
+      "moduleId": "module_01_endo",
+      "byteSize": 240970,
+      "sha256": "5615e75ef6035c3ddfb5e31345e4c5105b3ed15174a4e4f753cad9bfc3baa2e8"
+    },
+    {
+      "path": "backend/competition/evidence/WHO-2025.html",
+      "moduleId": "module_01_endo",
+      "byteSize": 109542,
+      "sha256": "56d40181d53e2a17abb42ced73d469498f304857e4ea5df2e736dc41c064bcfd"
+    },
+    {
+      "path": "backend/competition/evidence/package.json",
+      "moduleId": "module_01_endo",
+      "byteSize": 95908,
+      "sha256": "24a45eff098781766f8db4ed3da7ef237eccbbb285d1907440e33b8828d10d79"
+    },
+    {
+      "path": "backend/competition/module02Evidence/ACEP-EarlyPregnancy.pdf",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 11166962,
+      "sha256": "8c6a3af4a3439d03d9a81d0edebe101b3aa27beb9591e0a303375df2997e25e4"
+    },
+    {
+      "path": "backend/competition/module02Evidence/ACOG-Ectopic-Pregnancy-FAQ155.pdf",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 247486,
+      "sha256": "0163d363dbaf61d9c705d85c33d2684711b9d59061fa08db9d6960d2fdf71d45"
+    },
+    {
+      "path": "backend/competition/module02Evidence/CDC-MaternalWarningSigns.html",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 64519,
+      "sha256": "12274e98a313f46044585ced8cb25c5a8b97b41dac10ff872c4c6e4121341f25"
+    },
+    {
+      "path": "backend/competition/module02Evidence/CDC-MaternalWarningSigns.pdf",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 627077,
+      "sha256": "2d2646f9fe369be4a2a8a4b45273688f5ca4c82e65262165ad33d656103d0531"
+    },
+    {
+      "path": "backend/competition/module02Evidence/NICE-NG126.pdf",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 243087,
+      "sha256": "f27f86a8779b2b1de7ede51e6c3d65564f656d3ec65a73ae3701fdda49833045"
+    },
+    {
+      "path": "backend/competition/module02Evidence/package.json",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 46541,
+      "sha256": "2c48cbad01ca0d26290ed4d8f7fa86735d1fa0adc2687a37b21776c927c75f17"
+    },
+    {
+      "path": "docs/ClinicianDecisionKnowledgeBaseV2.1.docx",
+      "moduleId": "module_01_endo",
+      "byteSize": 45892,
+      "sha256": "9c978751f88e7adf27dc8dbc2402d75ff518f34494a7a5cdc4a89f8c5fbd3162"
+    },
+    {
+      "path": "docs/Module02ClinicalReviewPacket.md",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 85302,
+      "sha256": "541dec539ebc841d126cccb33e8086d385c2278776575f0c3ea4e8492bb70196"
+    },
+    {
+      "path": "docs/Module02DirectActionEvidence.json",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 8439,
+      "sha256": "903fdd650134cf415a0705be4170fc232104551e6e9a9718b94edb51c5ea8870"
+    },
+    {
+      "path": "docs/Module02EarlyPregnancyKnowledgeBaseV1.0.docx",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 45886,
+      "sha256": "869193cfdbd463faa05e7f92f09196af23838858fe661d58c9336700be6f11f9"
+    },
+    {
+      "path": "docs/Module02Scope.md",
+      "moduleId": "module_02_early_pregnancy",
+      "byteSize": 21851,
+      "sha256": "48dbad4b15b8d8360a41a60ebf0e101571abf11276ec1a4077168d389d33d0a3"
+    }
+  ],
+  "packages": [
+    {
+      "moduleId": "module_01_endo",
+      "packageId": "Module01Competition20261013",
+      "manifestPath": "backend/competition/evidence/package.json",
+      "sha256": "24a45eff098781766f8db4ed3da7ef237eccbbb285d1907440e33b8828d10d79",
+      "claimIds": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C08",
+        "C09",
+        "C10",
+        "C11",
+        "C14",
+        "CdcAbscess",
+        "CdcPregnancy",
+        "CdcResponse",
+        "CdcSevereIllness",
+        "CdcSurgicalEmergency",
+        "CdcTemperature",
+        "CdcTolerance",
+        "CppDefinition",
+        "CppHistory",
+        "CppPattern",
+        "E01",
+        "E02",
+        "E03",
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05",
+        "N06",
+        "N07",
+        "N08",
+        "N09",
+        "N12",
+        "N13",
+        "N14",
+        "N15",
+        "N16",
+        "N17",
+        "N18",
+        "N19",
+        "N20",
+        "N21",
+        "N22",
+        "N25",
+        "N26",
+        "N27",
+        "NichdConfirmationPosition",
+        "NichdMriLimits",
+        "NichdUltrasoundLimits",
+        "WhoClinicalPosition",
+        "WhoImpact",
+        "WhoPriorities",
+        "WhoRecurrence",
+        "WhoSymptoms",
+        "WhoVariation"
+      ],
+      "sources": [
+        {
+          "sourceId": "ACOG-CPP",
+          "organization": "American College of Obstetricians and Gynecologists",
+          "title": "Chronic Pelvic Pain | ACOG",
+          "officialUrl": "https://www.acog.org/womens-health/faqs/chronic-pelvic-pain",
+          "fileName": "ACOG-Chronic-Pelvic-Pain.pdf",
+          "sha256": "187d9f9d896b109405f954b67f871444bb0517aea0e63036addb6e9d0e80a9b2",
+          "mimeType": "application/pdf",
+          "byteSize": 272931
+        },
+        {
+          "sourceId": "ACOG-ECTOPIC",
+          "organization": "American College of Obstetricians and Gynecologists",
+          "title": "Ectopic Pregnancy | ACOG",
+          "officialUrl": "https://www.acog.org/womens-health/faqs/ectopic-pregnancy",
+          "fileName": "ACOG-Ectopic-Pregnancy.pdf",
+          "sha256": "0163d363dbaf61d9c705d85c33d2684711b9d59061fa08db9d6960d2fdf71d45",
+          "mimeType": "application/pdf",
+          "byteSize": 247486
+        },
+        {
+          "sourceId": "CDC-PID",
+          "organization": "Centers for Disease Control and Prevention",
+          "title": "Pelvic Inflammatory Disease \u2014 STI Treatment Guidelines",
+          "officialUrl": "https://www.cdc.gov/std/treatment-guidelines/pid.htm",
+          "fileName": "CDC-PID.html",
+          "sha256": "b5b7c71c6f6163dec8a79829dff292c98613487d13c409f2b48e1b286009acfa",
+          "mimeType": "text/html",
+          "byteSize": 95442
+        },
+        {
+          "sourceId": "NICE-NG73",
+          "organization": "National Institute for Health and Care Excellence",
+          "title": "Endometriosis: diagnosis and management",
+          "officialUrl": "https://www.nice.org.uk/guidance/ng73/chapter/Recommendations",
+          "fileName": "NICE-NG73-Endometriosis.pdf",
+          "sha256": "a8d631d2c50bb9208f59dfec31e7a2ab65e233a2a08d86e31fe7c4869f51d64f",
+          "mimeType": "application/pdf",
+          "byteSize": 178320
+        },
+        {
+          "sourceId": "NICHD-DX",
+          "organization": "Eunice Kennedy Shriver National Institute of Child Health and Human Development, NIH",
+          "title": "How do healthcare providers diagnose endometriosis?",
+          "officialUrl": "https://www.nichd.nih.gov/health/topics/endometri/conditioninfo/diagnose",
+          "fileName": "NICHD-DX.html",
+          "sha256": "5615e75ef6035c3ddfb5e31345e4c5105b3ed15174a4e4f753cad9bfc3baa2e8",
+          "mimeType": "text/html",
+          "byteSize": 240970
+        },
+        {
+          "sourceId": "WHO-2025",
+          "organization": "World Health Organization",
+          "title": "Endometriosis",
+          "officialUrl": "https://www.who.int/news-room/fact-sheets/detail/endometriosis",
+          "fileName": "WHO-2025.html",
+          "sha256": "56d40181d53e2a17abb42ced73d469498f304857e4ea5df2e736dc41c064bcfd",
+          "mimeType": "text/html",
+          "byteSize": 109542
+        }
+      ]
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "packageId": "Module02Competition20261014",
+      "manifestPath": "backend/competition/module02Evidence/package.json",
+      "sha256": "2c48cbad01ca0d26290ed4d8f7fa86735d1fa0adc2687a37b21776c927c75f17",
+      "claimIds": [
+        "M2AIndeterminateHcg",
+        "M2ANoCutoff",
+        "M2ASerialScope",
+        "M2AUltrasoundMethod",
+        "M2NAlternativeScan",
+        "M2NEmptyUterus",
+        "M2NHcgLocation",
+        "M2NImmediateAssessment",
+        "M2NPulDefinition",
+        "M2NPulPossibility",
+        "M2NPulReturn",
+        "M2NSingleScan",
+        "M2NSymptoms",
+        "M2NSymptomsOverHcg",
+        "M2NUrgentReferral",
+        "M2EctopicEmergency",
+        "M2NPainAssessment",
+        "CDCFaintingCare",
+        "CDCPersistentDizzinessCare",
+        "CDCEmergencyAccess",
+        "M2NSerialLimits"
+      ],
+      "sources": [
+        {
+          "sourceId": "NICE-NG126-2026",
+          "organization": "NICE",
+          "title": "Ectopic pregnancy and miscarriage: diagnosis and initial management",
+          "officialUrl": "https://www.nice.org.uk/guidance/ng126",
+          "fileName": "NICE-NG126.pdf",
+          "sha256": "f27f86a8779b2b1de7ede51e6c3d65564f656d3ec65a73ae3701fdda49833045",
+          "mimeType": "application/pdf",
+          "byteSize": 243087
+        },
+        {
+          "sourceId": "ACEP-EARLYPREG-2017",
+          "organization": "ACEP",
+          "title": "Clinical Policy: Critical Issues in the Initial Evaluation and Management of Patients Presenting to the Emergency Department in Early Pregnancy",
+          "officialUrl": "https://www.acep.org/patient-care/clinical-policies/early-pregnancy",
+          "fileName": "ACEP-EarlyPregnancy.pdf",
+          "sha256": "8c6a3af4a3439d03d9a81d0edebe101b3aa27beb9591e0a303375df2997e25e4",
+          "mimeType": "application/pdf",
+          "byteSize": 11166962
+        },
+        {
+          "sourceId": "ACOG-ECTOPIC-FAQ155",
+          "organization": "American College of Obstetricians and Gynecologists",
+          "title": "Ectopic Pregnancy | ACOG",
+          "officialUrl": "https://www.acog.org/womens-health/faqs/ectopic-pregnancy",
+          "fileName": "ACOG-Ectopic-Pregnancy-FAQ155.pdf",
+          "sha256": "0163d363dbaf61d9c705d85c33d2684711b9d59061fa08db9d6960d2fdf71d45",
+          "mimeType": "application/pdf",
+          "byteSize": 247486
+        },
+        {
+          "sourceId": "CDC-MATERNAL-WARNINGS-POSTER",
+          "organization": "Centers for Disease Control and Prevention",
+          "title": "Urgent Maternal Warning Signs poster",
+          "officialUrl": "https://www.cdc.gov/hearher/resources/download-share/docs/pdf/Warning-Signs-Poster-LTR-English.pdf",
+          "fileName": "CDC-MaternalWarningSigns.pdf",
+          "sha256": "2d2646f9fe369be4a2a8a4b45273688f5ca4c82e65262165ad33d656103d0531",
+          "mimeType": "application/pdf",
+          "byteSize": 627077
+        },
+        {
+          "sourceId": "CDC-MATERNAL-WARNINGS-2024",
+          "organization": "Centers for Disease Control and Prevention",
+          "title": "Urgent Maternal Warning Signs and Symptoms",
+          "officialUrl": "https://www.cdc.gov/hearher/maternal-warning-signs/index.html",
+          "fileName": "CDC-MaternalWarningSigns.html",
+          "sha256": "12274e98a313f46044585ced8cb25c5a8b97b41dac10ff872c4c6e4121341f25",
+          "mimeType": "text/html",
+          "byteSize": 64519
+        }
+      ]
+    }
+  ]
+}

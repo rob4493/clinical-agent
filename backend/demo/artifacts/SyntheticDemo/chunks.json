@@ -1,0 +1,37 @@
+{
+  "chunks": [
+    {
+      "approvedReviewIds": [
+        "00000000-0000-4000-8000-000000000001"
+      ],
+      "category": "synthetic",
+      "chunkId": "00000000-0000-4000-8000-000000000002",
+      "citationLabel": "Fictional demonstration reference",
+      "claimIds": [
+        "SyntheticClaim"
+      ],
+      "contentHash": "e0a056b2cdc6f6183373d27fc647d47a752e56536daddae33ee700b5f05fea2f",
+      "createdAt": "2026-10-07T00:00:00Z",
+      "documentSection": "alpha",
+      "documentTitle": "Fictional demonstration reference - not clinical evidence",
+      "evidenceVersion": "synthetic-v1",
+      "jurisdiction": "synthetic",
+      "knowledgeHash": "ef4edbdadb9104de90965e5385bc74442d07c24641caa93e6acc0333765708ce",
+      "moduleId": "SyntheticDemo",
+      "packageId": "00000000-0000-4000-8000-000000000010",
+      "prohibitedInferences": [],
+      "sourceHash": "84a8fc1bdb8da9ae635f5b2e02306df6c80072eff136bb0a506d3e0694a7b941",
+      "sourceId": "SyntheticSource",
+      "sourcePages": [
+        {
+          "pdfPage": 1,
+          "printedPage": "alpha-1"
+        }
+      ],
+      "status": "approved",
+      "text": "Available review statements: Recurrent pelvic discomfort is the reported concern. The available description does not establish its timing, frequency or effect on daily activities. These gaps limit how specifically the reported pattern can be reviewed; they should remain unknown rather than be filled with assumed findings. Examination and test results have not been supplied. An absent result is different from a reported normal result. Keep alternative explanations open and separate the reported symptoms from any conclusion about their cause. The current information supports a limited review of the case description. The reported discomfort is mild, intermittent and present over several months. Those features describe its course, but the account does not establish a cause or explain how it affects daily activities. A concise review should distinguish this recurring pattern from a new change in symptoms. Additional findings remain unknown. The description does not establish examination results or test findings, and mild symptoms alone cannot settle the interpretation. Keep uncertainty visible and avoid converting the reported intensity into a conclusion about the underlying condition. Further context would make the pattern more interpretable. Intermittent pelvic discomfort over several months and variable interference with daily activities are the central reported features. The duration and functional impact provide more context than symptom intensity alone. However, the account does not specify how the discomfort varies with time or which activities are affected. Distinguish the recurring background pattern from any separately reported change rather than combining them into a single assumption. The information supplied describes the experience and its consequences; it does not establish a cause. Keep the review focused on the reported features and the limits of the available context. Examination and test findings have not been supplied. They remain unknown and must not be represented as normal or reassuring. Different possible explanations cannot be resolved from this description alone, and the effect on daily activities does not establish the extent of an underlying condition. Maintain a clear distinction between what the clinician reported, what remains uncertain, and what would require independent assessment. A focused timing question can clarify the recurring pattern without asking the clinician to complete a long template or repeat information already supplied. The presenting concern is abrupt pelvic pain, distinct from a recurring symptom pattern. The warning above takes priority. This short account does not establish a cause or accompanying findings. Interpret the reported symptoms alongside the explicitly selected structured statuses; unreported findings remain unknown. The abrupt presentation should remain distinct from a chronic symptom history. An ordinary pattern review cannot resolve the warning or provide reassurance. Missing examination and test results remain unknown. The response therefore preserves the high-priority warning while limiting the remaining review to the information supplied. A normal transvaginal ultrasound does not rule out endometriosis and does not establish it. This result concerns that specific test; it cannot be generalized to every imaging method. The reported finding should remain separate from the symptom history and any other examination or test findings. A negative imaging finding does not automatically end evaluation or establish a need for surgery. The available result alone does not explain the symptoms. Other unreported findings remain unknown, and the review should preserve uncertainty rather than convert a normal result into a conclusion about the cause. A normal MRI does not establish absence of endometriosis. It also does not establish endometriosis or explain the symptoms. This statement applies to the named test only; ultrasound findings must be reviewed separately. Missing examination findings and other test results remain unknown. Negative imaging does not automatically end evaluation or require surgery. Keep the reported MRI result separate from conclusions about the cause of symptoms. The available information does not resolve that cause, and further interpretation requires evidence that applies to the specific clinical question. CA-125 cannot establish or rule out endometriosis. A reported CA-125 result must not be used alone to settle that question. The named test does not replace a review of the reported symptoms and relevant findings; unreported findings remain unknown rather than normal. Keep this test limitation separate from findings about ultrasound or MRI. Evidence about one test must not be extended automatically to another. The result does not determine the cause of symptoms or establish a need for surgery, and the available information cannot support those conclusions. Possible or known pregnancy with a predefined acute symptom pattern requires immediate emergency assessment. This warning does not establish a cause. Sudden or severe acute pelvic pain requires prompt independent assessment. Do not treat this presentation as routine chronic pelvic pain. With PID explicitly marked Yes, a predefined disposition consideration has triggered. Review the applicable disposition criteria independently; symptoms alone do not establish PID status.",
+      "urgencyClass": "none",
+      "verifiedUrl": null
+    }
+  ]
+}

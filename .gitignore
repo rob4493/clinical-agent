@@ -1,0 +1,99 @@
+# Private environment/configuration; documented examples only
+.env
+.env.*
+*.env
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+!.env.example
+!frontend/.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Administrative originals and disposable SDK assessment environments
+/sourceIntake/
+/.sdkAssessment/
+
+# Python environments, dependencies and caches
+.venv*/
+.venv/
+.venvMilvus/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+/.pytestCompetition*/
+/.test*/
+.tox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Frontend dependencies, builds and generated smoke-check artifacts
+frontend/node_modules/
+frontend/.npmCache/
+frontend/dist/
+frontend/build/
+frontend/screenshots/
+/docs/requestCancellationGuard.json
+/docs/requestCancellationBrowser.json
+/docs/requestCancellationClear.png
+/docs/KnowledgeBase
+*.tsbuildinfo
+
+# Operational output
+*.jsonl
+*.log
+logs/
+volumes/
+milvus_data/
+
+# Editor and OS-local files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Protected sources and source-derived appraisals are private installation inputs.
+*.pdf
+*.docx
+*.html
+!frontend/index.html
+/backend/competition/evidence/
+/backend/competition/module02Evidence/
+/backend/app/modules/*/knowledge/
+/backend/app/modules/*/candidatePolicies/
+/backend/app/modules/*/candidateClaims.json
+/backend/app/modules/*/candidates.json
+/privateEvidence/
+/EvidenceSources.local*
+
+# Retired Module 1 reference; current runtime uses the unchanged V2.1 mirror.
+/backend/app/modules/module01Endo/knowledge/ClinicianDecisionSupportKnowledgeBaseV2.docx
+
+# Local coding instructions and planning; preserve locally, never publish with the app.
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+/clinical-agent-plan.md
+/.agents/
+/.codex/
+/.cursor/
+/.cursorrules
+/.github/copilot-instructions.md
+/.github/instructions/
+
+# Historical reports and source-derived review fixtures stay local.
+/docs/*

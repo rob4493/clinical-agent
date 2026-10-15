@@ -1,0 +1,116 @@
+{
+  "sources": [
+    {
+      "sourceId": "ACOG-CPP",
+      "knowledgeFile": "knowledge/ClinicianDecisionKnowledgeBaseV2.1.docx",
+      "status": "pendingReview",
+      "organization": "American College of Obstetricians and Gynecologists",
+      "title": "Chronic Pelvic Pain FAQ099",
+      "jurisdiction": "United States",
+      "verifiedUrl": "https://www.acog.org/womens-health/faqs/chronic-pelvic-pain",
+      "notes": "V2.1 register ID: ACOG-CPP-2025. Registered date metadata (not independently reverified): Reviewed July 2025; updated October 2025. Production source and claim approval remain pending.",
+      "reviewDate": "July 2025"
+    },
+    {
+      "sourceId": "ACOG-ECTOPIC",
+      "knowledgeFile": "knowledge/ClinicianDecisionKnowledgeBaseV2.1.docx",
+      "status": "pendingReview",
+      "organization": "American College of Obstetricians and Gynecologists",
+      "title": "Ectopic Pregnancy FAQ155",
+      "jurisdiction": "United States",
+      "verifiedUrl": "https://www.acog.org/womens-health/faqs/ectopic-pregnancy",
+      "notes": "V2.1 register ID: ACOG-ECTOPIC-2026. Registered date metadata (not independently reverified): Published April 2020; reviewed April 2026. Production source and claim approval remain pending.",
+      "publicationDate": "April 2020",
+      "reviewDate": "April 2026"
+    },
+    {
+      "sourceId": "ACOG-ENDO-DX-2026",
+      "knowledgeFile": "knowledge/ClinicianDecisionKnowledgeBaseV2.1.docx",
+      "status": "pendingReview",
+      "organization": "American College of Obstetricians and Gynecologists",
+      "title": "Diagnosis of Endometriosis Clinical Practice Guideline 11",
+      "jurisdiction": "United States",
+      "verifiedUrl": null,
+      "notes": "V2.1 register ID: ACOG-ENDO-DX-2026. Registered date metadata (not independently reverified): March 2026. Candidate official URL (not verified): https://www.acog.org/clinical/clinical-guidance/clinical-practice-guideline/articles/2026/03/diagnosis-of-endometriosis. Production source and claim approval remain pending.",
+      "publicationDate": "March 2026"
+    },
+    {
+      "sourceId": "ACOG-FIBROIDS",
+      "knowledgeFile": "knowledge/ClinicianDecisionKnowledgeBaseV2.1.docx",
+      "status": "pendingReview",
+      "organization": "American College of Obstetricians and Gynecologists",
+      "title": "Uterine Fibroids",
+      "jurisdiction": "United States",
+      "verifiedUrl": null,
+      "notes": "V2.1 register ID: ACOG-FIBROIDS. Registered date metadata (not independently reverified): Date not confirmed in this review. Candidate official URL (not verified): https://www.acog.org/womens-health/faqs/uterine-fibroids. Production source and claim approval remain pending."
+    },
+    {
+      "sourceId": "CDC-PID",
+      "knowledgeFile": "knowledge/ClinicianDecisionKnowledgeBaseV2.1.docx",
+      "status": "pendingReview",
+      "organization": "Centers for Disease Control and Prevention",
+      "title": "Pelvic Inflammatory Disease STI Treatment Guidelines",
+      "jurisdiction": "United States",
+      "verifiedUrl": "https://www.cdc.gov/std/treatment-guidelines/pid.htm",
+      "notes": "V2.1 register ID: CDC-PID-2021. Registered date metadata (not independently reverified): 2021 guideline; PID page reviewed 21 September 2022; confirmed current October 2026. Production source and claim approval remain pending.",
+      "publicationDate": "2021",
+      "reviewDate": "21 September 2022"
+    },
+    {
+      "sourceId": "ESHRE-ENDO-2022",
+      "knowledgeFile": "knowledge/ClinicianDecisionKnowledgeBaseV2.1.docx",
+      "status": "pendingReview",
+      "organization": "European Society of Human Reproduction and Embryology",
+      "title": "ESHRE Guideline Endometriosis",
+      "jurisdiction": "Europe and international use",
+      "verifiedUrl": null,
+      "notes": "V2.1 register ID: ESHRE-ENDO-2022. Registered date metadata (not independently reverified): 2 February 2022. Candidate official URL (not verified): https://www.eshre.eu/Guidelines-and-Legal/Guidelines/Endometriosis-guideline. Production source and claim approval remain pending.",
+      "publicationDate": "2 February 2022"
+    },
+    {
+      "sourceId": "NICE-NG73",
+      "knowledgeFile": "knowledge/ClinicianDecisionKnowledgeBaseV2.1.docx",
+      "status": "pendingReview",
+      "organization": "National Institute for Health and Care Excellence",
+      "title": "Endometriosis diagnosis and management",
+      "jurisdiction": "United Kingdom",
+      "verifiedUrl": "https://www.nice.org.uk/guidance/ng73/chapter/Recommendations",
+      "notes": "V2.1 register ID: NICE-NG73. Registered date metadata (not independently reverified): Published 6 September 2017; updated 11 November 2024; reviewed 2 September 2025. Production source and claim approval remain pending.",
+      "publicationDate": "6 September 2017",
+      "reviewDate": "2 September 2025"
+    },
+    {
+      "sourceId": "NICHD-DX",
+      "knowledgeFile": "knowledge/ClinicianDecisionKnowledgeBaseV2.1.docx",
+      "status": "pendingReview",
+      "organization": "Eunice Kennedy Shriver National Institute of Child Health and Human Development",
+      "title": "How do healthcare providers diagnose endometriosis",
+      "jurisdiction": "United States",
+      "verifiedUrl": "https://www.nichd.nih.gov/health/topics/endometri/conditioninfo/diagnose",
+      "notes": "V2.1 register ID: NICHD-DX-2020. Registered date metadata (not independently reverified): Reviewed 21 February 2020. Production source and claim approval remain pending.",
+      "reviewDate": "21 February 2020"
+    },
+    {
+      "sourceId": "SRU-US-2024",
+      "knowledgeFile": "knowledge/ClinicianDecisionKnowledgeBaseV2.1.docx",
+      "status": "pendingReview",
+      "organization": "Society of Radiologists in Ultrasound",
+      "title": "Consensus on Routine Pelvic Ultrasound for Endometriosis",
+      "jurisdiction": "Primarily United States",
+      "verifiedUrl": null,
+      "notes": "V2.1 register ID: SRU-US-2024. Registered date metadata (not independently reverified): 9 April 2024. Candidate official URL (not verified): https://pubs.rsna.org/doi/10.1148/radiol.232191. Production source and claim approval remain pending.",
+      "publicationDate": "9 April 2024"
+    },
+    {
+      "sourceId": "WHO-2025",
+      "knowledgeFile": "knowledge/ClinicianDecisionKnowledgeBaseV2.1.docx",
+      "status": "pendingReview",
+      "organization": "World Health Organization",
+      "title": "Endometriosis",
+      "jurisdiction": "Global",
+      "verifiedUrl": "https://www.who.int/news-room/fact-sheets/detail/endometriosis",
+      "notes": "V2.1 register ID: WHO-ENDO-2025. Registered date metadata (not independently reverified): 15 October 2025. Production source and claim approval remain pending.",
+      "publicationDate": "15 October 2025"
+    }
+  ]
+}

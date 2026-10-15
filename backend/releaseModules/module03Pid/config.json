@@ -1,0 +1,23 @@
+{
+  "moduleId": "module_03_pid",
+  "moduleName": "Pelvic Inflammatory Disease",
+  "moduleHintValue": "module_03_pid",
+  "version": "0.0.0",
+  "active": false,
+  "status": "pending_review",
+  "description": "Inactive source-free metadata scaffold. Private evidence installation never grants clinical approval.",
+  "supportedCaseTypes": [
+    "brief",
+    "detailed"
+  ],
+  "kbVersion": null,
+  "reviewDate": null,
+  "jurisdictionNotes": "",
+  "sourceRegister": {},
+  "sourceCatalog": null,
+  "knowledgePath": null,
+  "knowledgeChecksums": {},
+  "reviewDirectory": null,
+  "requiredSourceIds": [],
+  "urgentRuleIds": []
+}
