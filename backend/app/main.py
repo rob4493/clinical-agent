@@ -107,7 +107,8 @@ def createApp(settings: Settings | None = None, registry: ModuleRegistry | None 
     if settings.runtimeMode() == "synthetic" and (registry is not None or analysis is not None):
         raise ValueError("Synthetic runtime requires its isolated composition.")
     if registry is None:
-        registry = ModuleRegistry(settings.moduleRoot, settings)
+        root = Path(__file__).parents[1] / "releaseModules" if settings.runtimeMode() == "competition" else settings.moduleRoot
+        registry = ModuleRegistry(root, settings)
     if any(root.is_relative_to(Path(__file__).parents[1] / "demo") for root in registry.moduleRoots.values()):
         raise ValueError("Synthetic artifacts require explicit isolated composition.")
     authenticRegistry = ModuleRegistry(settings.moduleRoot, settings) if isinstance(registry, CompetitionRegistry) else registry
@@ -128,8 +129,11 @@ def createApp(settings: Settings | None = None, registry: ModuleRegistry | None 
         if analysis is None:
             from backend.app.services.watsonx import createTransport, selectLanguage
             if not isinstance(registry, CompetitionRegistry):
-                registry = CompetitionRegistry(authenticRegistry)
+                registry = CompetitionRegistry(authenticRegistry, publicPackages=True)
             selectedLanguage = language if language is not None else selectLanguage(settings, createTransport)
+            if selectedLanguage is None and getattr(registry, "publicEvaluation", False):
+                from backend.competition.deterministic import EvaluationLanguage
+                selectedLanguage = EvaluationLanguage()
             analysis = CompetitionAnalysis(registry, settings, selectedLanguage)
 
     app = FastAPI(
@@ -166,7 +170,16 @@ def createApp(settings: Settings | None = None, registry: ModuleRegistry | None 
     @app.get("/v1/runtime", tags=["Discovery"])
     def describeRuntime() -> dict:
         """Public mode metadata; synthetic readiness is never authentic clinical readiness."""
-        return {"mode": runtimeMode, "synthetic": runtimeMode == "synthetic", "notice": demoNotice}
+        publicStatus = None
+        if getattr(registry, "publicEvaluation", False):
+            try:
+                from backend.competition.evaluation import verifyReview
+                review = verifyReview()
+                publicStatus = {"reviewStatus": review["reviewStatus"], "competitionStatus": review["competitionStatus"], "notice": review["notice"]}
+            except Exception:
+                publicStatus = {"reviewStatus": "unavailable", "competitionStatus": "unavailable"}
+        return {"mode": runtimeMode, "synthetic": runtimeMode == "synthetic", "notice": demoNotice,
+                **({"evaluation": publicStatus} if publicStatus is not None else {})}
 
     # Routers
     app.include_router(healthRouter)

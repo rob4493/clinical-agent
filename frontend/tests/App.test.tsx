@@ -72,7 +72,7 @@ describe('clinician workflow with mocked HTTP only', () => {
   });
   it('handles module transport failure generically', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('private host and credentials'))); render(<App />);
-    expect(await screen.findByText('Analysis is unavailable. Check that the backend is configured and reachable, then refresh availability.')).toBeVisible();
+    expect(await screen.findByText('Evaluation services are unavailable. Refresh availability to try again.')).toBeVisible();
     expect(document.body).not.toHaveTextContent('private host');
     expect(screen.getByRole('button', { name: 'Analyze' })).toBeDisabled();
   });
@@ -84,7 +84,7 @@ describe('clinician workflow with mocked HTTP only', () => {
         : new Response('<html><body>Static SPA fallback</body></html>', { headers: { 'Content-Type': 'text/html' } });
     });
     vi.stubGlobal('fetch', fetchMock); render(<App />);
-    expect(await screen.findByText(/Analysis is unavailable\. Check that the backend/)).toBeVisible();
+    expect(await screen.findByText('Evaluation services are unavailable. Refresh availability to try again.')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Analyze' })).toBeDisabled();
     expect(screen.getByLabelText(/Clinical module/)).toBeDisabled();
     fireEvent.submit(document.getElementById('caseForm')!);

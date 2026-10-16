@@ -66,6 +66,8 @@ class CompetitionDraft(EvidenceModel):
 
 def claimWording(claim) -> str:
     """Clinician-facing realizations preserve each verified proposition's boundaries."""
+    if getattr(claim, "publicEvaluation", False):
+        return claim.supportedStatement
     controlled = {
         "C03": "PID is among the conditions associated with acute or chronic pelvic pain.",
         "C04": "Menstrual pain is one possible contributor to pelvic pain.",

@@ -3,7 +3,7 @@ export const UnexpectedMessage = 'Unable to complete this request. Please try ag
 export const DemoNotice = 'Synthetic demonstration — uses fictional test evidence and must not be used for clinical care.';
 export const SyntheticNotice = 'Synthetic demonstration only; not a diagnosis, treatment selection, or substitute for clinical judgment.';
 export const CompetitionNotice = 'Decision-support notice: Evidence support only; not a diagnosis, treatment selection, or substitute for clinical judgment.';
-export const CompetitionBanner = 'Competition evaluation mode — clinician-facing evidence support; not for direct patient care.';
+export const CompetitionBanner = 'Reviewed with healthcare professionals for evaluation and feedback. Not validated or approved for patient care.';
 export type RuntimeMode = 'standard' | 'synthetic' | 'competition' | 'production';
 
 export interface ClinicalModule { moduleId: string; displayName: string; supportedCaseTypes: string[] }

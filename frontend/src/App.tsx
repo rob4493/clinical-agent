@@ -82,7 +82,7 @@ export default function App() {
       setCanRequest(readiness.status === 200 && isReady(readiness.payload) || (readiness.runtimeMode === 'competition' && readiness.status === 503 && (readiness.payload as { reasonCode?: string })?.reasonCode === 'analysisUnavailable'));
     } catch {
       if (mounted.current && moduleController.current === controller) {
-        setModules([]); setModuleId(''); setCanRequest(false); setAvailabilityError('Analysis is unavailable. Check that the backend is configured and reachable, then refresh availability.');
+        setModules([]); setModuleId(''); setCanRequest(false); setAvailabilityError('Evaluation services are unavailable. Refresh availability to try again.');
       }
     } finally {
       clearTimeout(timer);

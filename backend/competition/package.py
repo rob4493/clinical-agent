@@ -132,6 +132,9 @@ def loadPackage(root: Path, expectedHash: str, runtimeMode: str, moduleId: str =
     try:
         if runtimeMode != "competition" or len(expectedHash) != 64:
             raise ValueError()
+        from backend.competition.evaluation import publicRoot, loadEvaluation
+        if publicRoot(root):
+            return loadEvaluation(root, expectedHash, moduleId)
         manifest = readBounded(root, "package.json", 1000000)
         if hashlib.sha256(manifest).hexdigest() != expectedHash:
             raise ValueError()

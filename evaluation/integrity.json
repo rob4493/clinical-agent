@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "SHA-256",
+  "scope": "Public evaluation summary bytes only; no underlying publication files are distributed or pinned here.",
+  "packages": [
+    {
+      "path": "evaluation/modules/module1/claims.json",
+      "moduleId": "module_01_endo",
+      "claimCount": 57,
+      "sha256": "b1b28cb6522e9a18654e978ea5b669f2f107b2b858f920d907634a99577ff187"
+    },
+    {
+      "path": "evaluation/modules/module2/claims.json",
+      "moduleId": "module_02_early_pregnancy",
+      "claimCount": 21,
+      "sha256": "a42079d0122c9cdb98a125e6783456c40be632eda93f5ae4e911359d1f6579c7"
+    }
+  ]
+}

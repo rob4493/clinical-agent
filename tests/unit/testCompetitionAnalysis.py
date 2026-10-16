@@ -8,6 +8,8 @@ from fastapi.testclient import TestClient
 from backend.app.config import Settings
 from backend.app.main import createApp
 from backend.app.models.output import CompetitionNotice
+from backend.app.modules.registry import ModuleRegistry
+from backend.competition.registry import CompetitionRegistry
 from tests.support.competitionLanguage import CompetitionLanguage
 
 
@@ -79,7 +81,11 @@ def testAbnormalBleedingDoesNotRelabelAnExplicitlyNormalTest():
 @pytest.mark.parametrize("provider", [None, CompetitionLanguage()])
 @pytest.mark.parametrize("finding", ["shoulder pain", "fainting", "sudden severe pelvic pain"])
 def testImmediateEmergencyStopsOrdinaryAnalysis(finding, provider, caplog):
-    app = createApp(Settings(clinicalRuntimeMode="competition"), language=provider)
+    settings = Settings(clinicalRuntimeMode="competition")
+    # Preserve the historical private-package contract independently of the
+    # public graph's stricter E01 action-coverage boundary.
+    registry = CompetitionRegistry(ModuleRegistry(settings.moduleRoot, settings))
+    app = createApp(settings, registry=registry, language=provider)
     def rejectRetrieval(case):
         pytest.fail("Immediate emergency response must not retrieve ordinary evidence.")
     app.state.analysis.retrieval.retrieve = rejectRetrieval
@@ -133,7 +139,7 @@ def testExplicitDefinitionQuestionRetainsSupportedDuration():
     with TestClient(createApp(Settings(clinicalRuntimeMode="competition"), language=CompetitionLanguage())) as client:
         payload = client.post("/v1/analyze", json=caseFields("What is the definition of chronic pelvic pain?", caseType="detailed")).json()
     assert payload["response"]["responseType"] == "AgentResponse"
-    assert "six months or longer" in payload["renderedText"]
+    assert "at least six months" in payload["renderedText"]
 
 
 @pytest.mark.parametrize("narrative,fields,outcome,urgent", [
@@ -165,7 +171,9 @@ def testPredefinedCasesUseCompetitionPipeline(narrative, fields, outcome, urgent
 
 
 def testMissingProviderDoesNotSilentlyUseFake():
-    app = createApp(Settings(clinicalRuntimeMode="competition"))
+    settings = Settings(clinicalRuntimeMode="competition")
+    registry = CompetitionRegistry(ModuleRegistry(settings.moduleRoot, settings))
+    app = createApp(settings, registry=registry)
     assert app.state.analysis.language is None
     with TestClient(app) as client:
         assert client.get("/ready").status_code == 503

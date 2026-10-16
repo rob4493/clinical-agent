@@ -1,60 +1,47 @@
-# Tester hosting configuration
+# Public evaluation hosting
 
-This is a competition evaluation build, not an approved clinical service. Use fictional cases only. No live IBM/Milvus provider is configured and no authentic module or pending source is approved by deployment. This change prepares configuration; it does not deploy a site or assign a backend URL.
+This competition evaluation build is not approved for patient care. Use fictional or de-identified cases only. Reviewed with healthcare professionals for evaluation and feedback. Not validated or approved for patient care.
 
-## Netlify frontend
+## One Netlify deployment
 
-Connect the public repository in Netlify and use the root `netlify.toml`. Its base is `frontend`, build command is `npm run build` and publish directory is `dist` relative to that base: **frontend/dist**. Node is pinned to the locally verified **24.21.0**. Netlify installs the locked frontend dependencies from the base directory; no Python/evidence files are published. Do not upload the repository or private storage as a static directory. The SPA fallback serves index.html for client-side navigation.
+Use the root netlify.toml. A repository-root build base keeps production and CLI file patterns consistent. Its command installs the exact frontend lockfile with lifecycle scripts disabled and builds through npm --prefix frontend. It publishes frontend/dist, pins Node 24.21.0 and bundles netlify/functions/evaluate.ts with esbuild. No Python host, backend URL, database, API key or CLINICAL_EVIDENCE_ROOT is required.
 
-Until a backend is assigned, `/api/*` returns the fixed local unavailable document with status 404, ahead of the SPA fallback. Analyze stays disabled, the module selector stays unavailable and a visible message explains that a configured, reachable backend is required. The frontend still rejects malformed or HTML API responses. It never fabricates module availability or clinical output.
+The first rewrite routes /api/* to /.netlify/functions/evaluate/:splat. The final SPA fallback supports direct URLs and page refreshes. API failures remain sanitized JSON. VITE_BACKEND_URL configures only the separate local Vite/FastAPI development proxy; it is unnecessary for Netlify.
 
-`VITE_BACKEND_URL` configures Vite's **local development/preview proxy only**. Setting it in Netlify does not configure a production proxy and cannot enable Analyze. Browser requests always use same-origin `/api/*`. Never put credentials, evidence, provider URLs or private filesystem paths in any VITE variable.
+Build preparation verifies the trusted evaluation review record and creates an explicit public allowlist snapshot in ignored frontend/.evaluationBundle/content.json. It is statically imported only by server code and embedded in the function, outside the static publish directory. Runtime rechecks every embedded file against the trusted review pin. The only additional included file is Netlify's MIT runtime notice, netlify/RuntimeNotice.txt. There are no runtime evidence files or dynamic filesystem lookups. This avoids the local CLI's broad filesystem tracing and recursive copying of previous build/test directories. No original publications, intake files, private packages or source-file hashes are copied. Builds and startup never reseal changed evidence. A running function retains its immutable reviewed release; changes require a complete verified rebuild and deployment, not mutable evidence-file replacement.
 
-When the Python host assigns its actual reviewed HTTPS origin, replace the commented `<VERIFIED_BACKEND_ORIGIN>` marker in netlify.toml and uncomment that entire proxy rule. Keep it **before** the local `/api/*` fallback and the SPA rule:
+## Availability and privacy
 
-```toml
-# Template only: substitute the real assigned HTTPS origin before enabling.
-# [[redirects]]
-# from = "/api/*"
-# to = "<VERIFIED_BACKEND_ORIGIN>/:splat"
-# status = 200
-# force = true
-```
+GET /api/health is liveness. GET /api/ready verifies local evaluation dependencies; GET /api/v1/modules discovers the two evaluation modules. POST /api/v1/analyze preserves the existing request and AnalysisResult shapes. Readiness means evaluation availability, never authentic clinical approval. Missing or altered reviewed files fail closed, and final response provenance is rechecked. Invalid discovery/readiness keeps Analyze unavailable.
 
-The proxy strips `/api` so `/api/v1/analyze` reaches `/v1/analyze` and `/api/ready` reaches `/ready`. Preserve response status/body and `X-Clinical-Mode`; do not cache API responses or enable request/body capture, analytics or payload logging. Verify GET discovery/readiness and POST analysis through the actual proxy before opening testing. Confirm client-disconnect and request-deadline behavior through the host; local cancellation tests cannot establish CDN/proxy buffering behavior. Netlify routing configuration is not backend authorization.
+The server uses deterministic evidence-bound composition, not a live language model or vector service. It retains input/privacy validation, conflicts, clarification, source-bound urgent warnings, module isolation and exact citations. Authentic module activation and pending source states remain unchanged. The function has no outbound clients, application retries, persistent case state or case logging.
 
-## Python backend host
+A five-second operation deadline bounds the function. Browser aborts prevent late UI updates. Request-signal cancellation is respected when propagated by the host; a buffered CDN may allow bounded computation to finish after a client disconnect. Guaranteed host-to-function disconnect propagation has not been established. Review platform logs, retention, access controls and request-body capture settings before tester access. Never enable payload logging or analytics.
 
-Use Python **3.12** and the repository root as working directory. Install declared dependencies in the host's isolated environment:
+## Local emulation
 
-```sh
-python -m pip install -c backend/constraintsMilvus.txt setuptools==81.0.0 -r backend/requirements.txt
-python -m pip check
-python -B -m tools.serveTester
-```
+Netlify CLI 27.12.1 is separately approved, ignored tooling under frontend/.testNetlifyTools, installed with lifecycle scripts disabled. It is not an application dependency. The supported functions:serve --offline command runs the actual function emulator without an account.
 
-The host supplies `PORT`. It must be a decimal integer from 1 through 65535; missing or invalid ports fail with a sanitized error. The launcher binds **0.0.0.0**, uses one worker, disables access logs and does not trust forwarded headers. Do not use the loopback-only tools.runDemo launcher for a hosted service. No external client is created during import, construction, health or readiness checks.
+This CLI also downloads an unused Deno Edge environment during full-site dev --offline startup. That bootstrap attempt was blocked by the test network guard. Full-site offline testing explicitly uses the existing internal --internal-disable-edge-functions switch; it is an internal test limitation, not a production setting or dependency patch. No Edge Function is configured.
 
-Configure environment settings in the host dashboard, not Git or a real committed .env:
+After building, from the repository root:
 
-| Setting | Default/source-free state | Controlled competition setting |
-|---|---|---|
-| `PORT` | Assigned by host; required | Assigned by host; required |
-| `CLINICAL_RUNTIME_MODE` | `standard` | `competition` |
-| `CLINICAL_DEMO_MODE` | `false` | `false` |
-| `LANGUAGE_PROVIDER` | `disabled` | `disabled` |
-| `CLINICAL_TESTER_PROVIDER` | `disabled` | `deterministic` only when deliberately opting into offline generated responses |
-| `CLINICAL_EVIDENCE_ROOT` | Omit entirely | Absolute private read-only mount, outside the application checkout/image directory |
-| `DEBUG` | `false` | `false` |
+    node frontend/.testNetlifyTools/node_modules/netlify-cli/bin/run.js dev --offline --internal-disable-edge-functions --port 8892
 
-`standard` has no selectable authentic modules and readiness remains 503. Explicit `CLINICAL_RUNTIME_MODE=synthetic` runs the existing fictional demo without private sources. Competition with `CLINICAL_TESTER_PROVIDER=disabled` stays provider-unavailable; this is not silently replaced with a fake or live model. The deterministic option composes the existing evaluation provider and must not be represented as live model generation or clinically validated analysis. Production mode and live language providers are rejected by this offline tester launcher.
+Do not run two emulators together: they share generated function directories. Stop with Ctrl+C. No account login or deployment is required. The CLI recommends its optional TypeScript types package; none was added.
 
-Follow [private evidence installation](EVIDENCE_INSTALLATION.md) to obtain and verify the complete exact inventory legally. Install it in an external directory **before** runtime configuration, then mount it privately read-only. The launcher verifies filenames, sizes, hashes, source/module identities, original inactive configurations and package/claim bindings before competition startup. Missing, altered, stale or incorrectly installed evidence prevents startup. Routine analysis is not returned as a fallback. Do not place protected bytes in Git, frontend/public, release archives, image layers, Docker build contexts, build arguments or environment values. `.dockerignore` remains default-deny; no Docker image or Dockerfile is supplied. A native Python host needs private persistent-volume support; a host without it cannot run the competition package.
+## Optional FastAPI development
 
-Use `/health` for liveness and `/ready` for readiness, on the host-assigned port. `/ready` may return 200 for an available synthetic/competition graph, never authentic clinical readiness. Neither endpoint contacts a provider. Do not require `/ready` to return 200 for the deliberately closed standard graph. Read-only evidence and rolling restarts must preserve complete matching code/package versions; switch the code and verified volume together to roll back.
+FastAPI remains intact. Use Python 3.12 and the declared isolated backend environment, then python -B -m tools.runDemo --mode competition. Public competition composition requires no private files. Standard and production authentic modules remain inactive. Explicit legacy private evidence operation still requires legally obtained, separately verified files described in EVIDENCE_INSTALLATION.md and is not used by Netlify.
 
-## Before enabling tester access
+A separately authorized Python host can use python -B -m tools.serveTester with its assigned integer PORT; it binds 0.0.0.0 and disables access logs. This is optional, not the public Netlify backend.
 
-Assign the backend origin and private storage, verify publisher processing/display permissions and retain the licensing boundaries. Review host TLS, access control, public backend exposure, log retention, proxy timeouts and response headers. Those infrastructure decisions are not implemented by this configuration. Keep real patient information out. No authentication, deployment, source approval, live provider connection or authentic activation is added here. If any prerequisite is missing, keep the API fallback and Analyze unavailable.
+## Release and rollback
 
-Configuration references reviewed 2026-10-15: [Netlify file-based configuration](https://docs.netlify.com/build/configure-builds/file-based-configuration/), [redirect status options](https://docs.netlify.com/manage/routing/redirects/redirect-options/), [proxy/SPA rewrites](https://docs.netlify.com/manage/routing/redirects/rewrites-proxies/). Python-host arguments were checked against installed Uvicorn 0.32.1; deployment tests use mocks rather than opening a public listener.
+Do not publish until inventory, source-only build, complete suites, privacy/integrity and actual-function browser checks pass and are reported. Roll back the complete Git commit and Netlify deploy, keeping code, public packages and review pins together. Never refresh hashes to bypass review. Protected evidence must never enter Git, release archives, image layers or static assets. No deployment is performed here.
+
+Official documentation reviewed 2026-10-15:
+- https://docs.netlify.com/build/functions/get-started/
+- https://docs.netlify.com/api-and-cli-guides/cli-guides/local-development/
+- https://docs.netlify.com/api-and-cli-guides/cli-guides/manage-functions/
+- https://docs.netlify.com/build/configure-builds/file-based-configuration/

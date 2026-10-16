@@ -45,8 +45,8 @@ def sourceDetails(sourceId: ModuleId, request: Request):
         return CompetitionSourceDetails(organization=source.organization, title=source.title,
             date=source.publicationDate or source.reviewDate,
             sourceType="Government public-health warning material" if sourceId.startswith("CDC-MATERNAL-") else "Public educational FAQ" if sourceId.startswith("ACOG-") else "Guideline" if sourceId.startswith(("NICE-", "ACEP-")) or sourceId == "CDC-PID" else "Public information webpage",
-            captureStatus=source.provenance, status="Competition-eligible evidence; production approval unchanged.",
-            statements=[claimWording(claim) for claim in claims], limitations=" ".join(limitations)[:6000],
+            captureStatus=source.provenance, status="Reviewed for evaluation; authentic sources remain pending review." if getattr(registry, "publicEvaluation", False) else "Competition-eligible evidence; production approval unchanged.",
+            statements=[claim.supportedStatement if getattr(registry, "publicEvaluation", False) else claimWording(claim) for claim in claims], limitations=" ".join(limitations)[:6000],
             jurisdiction=claims[0].jurisdiction, sections=[claim.sourceLocation for claim in claims])
     except Exception:
         return JSONResponse(status_code=404, content={"detail": "Source details are unavailable."})

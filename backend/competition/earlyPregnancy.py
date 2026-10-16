@@ -40,6 +40,12 @@ def readPackage():
     return loadPackage(EvidenceRoot, Module2PackageHash, "competition", Module2Id)
 
 
+def packageFor(registry):
+    if getattr(registry, "publicEvaluation", False):
+        return loadPackage(*registry.packageBinding(Module2Id), "competition", Module2Id)
+    return readPackage()
+
+
 class PregnancyRetrieval:
     """Apply exact test/population qualifiers before selecting any bounded atom."""
 
@@ -90,14 +96,18 @@ class PregnancyAnalysis(AnalysisService):
         self.safety = PregnancySafety(registry, settings)
         self.retrieval = PregnancyRetrieval(registry)
         self.language = language
-        self.maternal = MaternalCandidates(settings.moduleRoot / "module02EarlyPregnancy")
+        if getattr(registry, "publicEvaluation", False):
+            from backend.competition.maternalEvaluation import MaternalEvaluation
+            self.maternal = MaternalEvaluation(packageFor(registry))
+        else:
+            self.maternal = MaternalCandidates(settings.moduleRoot / "module02EarlyPregnancy")
 
     def isReady(self):
         try:
             from backend.competition.integrity import Module2CompetitionEnabled
             if not Module2CompetitionEnabled:
                 return False
-            package = readPackage()
+            package = packageFor(self.registry)
             # A technical test pass cannot confer missing urgent-source coverage.
             if not any(claim.claimId == "M2EctopicEmergency" for claim in package.claims):
                 return False
@@ -169,7 +179,7 @@ class PregnancyAnalysis(AnalysisService):
             return self.present(safety)
         warnings = safety.warningsTriggered
         try:
-            package = readPackage()
+            package = packageFor(self.registry)
             if context.gestationalWeeks is not None and context.gestationalWeeks > 13:
                 return self.present(OutsideScope(moduleId=Module2Id), package=package)
             if any(warning.ruleId.value == "U1" for warning in warnings) and not any(claim.claimId == "M2EctopicEmergency" for claim in package.claims):

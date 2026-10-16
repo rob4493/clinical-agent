@@ -33,6 +33,10 @@ dist/
 .pytest_cache/
 /.pytestCompetition*/
 /.test*/
+/frontend/.testNetlifyTools/
+/.netlify/
+/frontend/.netlify/
+/frontend/.evaluationBundle/
 .tox/
 .coverage
 .coverage.*

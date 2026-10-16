@@ -36,12 +36,13 @@ def configureHost():
         privateRoot = None
         configured = os.environ.get("CLINICAL_EVIDENCE_ROOT")
         if mode == "competition":
-            if not configured or not Path(configured).is_absolute():
-                raise ValueError()
-            privateRoot = Path(configured)
-            project = Path(__file__).resolve().parents[1]
-            if privateRoot.resolve().is_relative_to(project) or project.is_relative_to(privateRoot.resolve()):
-                raise ValueError()
+            if configured is not None:
+                if not configured or not Path(configured).is_absolute():
+                    raise ValueError()
+                privateRoot = Path(configured)
+                project = Path(__file__).resolve().parents[1]
+                if privateRoot.resolve().is_relative_to(project) or project.is_relative_to(privateRoot.resolve()):
+                    raise ValueError()
         elif configured is not None:
             raise ValueError()
         from tools.runDemo import configureDemo
@@ -61,10 +62,15 @@ def buildApp():
             raise ValueError()
         from backend.app.main import createApp
         language = None
+        registry = None
         if provider == "deterministic":
-            from tests.support.competitionLanguage import CompetitionLanguage
-            language = CompetitionLanguage()
-        return createApp(settings, language=language)
+            from backend.competition.deterministic import EvaluationLanguage
+            language = EvaluationLanguage()
+        if settings.runtimeMode() == "competition" and os.environ.get("CLINICAL_EVIDENCE_ROOT"):
+            from backend.app.modules.registry import ModuleRegistry
+            from backend.competition.registry import CompetitionRegistry
+            registry = CompetitionRegistry(ModuleRegistry(settings.moduleRoot))
+        return createApp(settings, registry=registry, language=language)
     except Exception:
         raise HostingError("Tester runtime is unavailable.") from None
 

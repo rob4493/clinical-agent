@@ -10,10 +10,10 @@ def configureDemo(mode: str, privateRoot: Path | None = None):
     project = Path(__file__).resolve().parents[1]
     if mode not in {"synthetic", "standard", "competition"}:
         raise ValueError("Invalid demonstration configuration.")
-    if mode == "competition":
+    if mode == "competition" and privateRoot is not None:
         from tools.evidenceInstall import verifyFiles, verifyRuntime
         import json
-        if privateRoot is None or not privateRoot.is_absolute():
+        if not privateRoot.is_absolute():
             raise ValueError("Private evidence verification failed.")
         verifyFiles(privateRoot, json.loads((project / "EvidenceSources.example.json").read_bytes()))
         verifyRuntime(privateRoot)
@@ -37,11 +37,16 @@ def main():
         from backend.app.config import Settings
         from backend.app.main import createApp
         language = None
+        registry = None
         if args.mode == "competition":
-            from tests.support.competitionLanguage import CompetitionLanguage
-            language = CompetitionLanguage()
+            from backend.competition.deterministic import EvaluationLanguage
+            language = EvaluationLanguage()
+            if args.privateRoot is not None:
+                from backend.app.modules.registry import ModuleRegistry
+                from backend.competition.registry import CompetitionRegistry
+                registry = CompetitionRegistry(ModuleRegistry(Settings().moduleRoot))
         import uvicorn
-        uvicorn.run(createApp(Settings(), language=language), host="127.0.0.1", port=8000,
+        uvicorn.run(createApp(Settings(), registry=registry, language=language), host="127.0.0.1", port=8000,
                     access_log=False, log_level="warning")
     except Exception:
         parser.exit(1, "Demonstration runtime is unavailable.\n")

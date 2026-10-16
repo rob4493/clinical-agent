@@ -1,25 +1,21 @@
 [build]
-  base = "frontend"
-  command = "npm run build"
-  # Relative to base: the repository output is frontend/dist.
-  publish = "dist"
+  base = "."
+  command = "npm --prefix frontend ci --ignore-scripts --no-audit --no-fund && npm --prefix frontend run build"
+  publish = "frontend/dist"
 
 [build.environment]
   NODE_VERSION = "24.21.0"
 
-# Once the Python host has an assigned, verified HTTPS origin, insert this rule
-# BEFORE the local /api fallback. Replace the marker; do not deploy it literally.
-# [[redirects]]
-#   from = "/api/*"
-#   to = "<VERIFIED_BACKEND_ORIGIN>/:splat"
-#   status = 200
-#   force = true
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  # Generated from the reviewed public allowlist; never original publications.
+  included_files = ["netlify/RuntimeNotice.txt"]
 
-# API failures must not be disguised as successful SPA HTML responses.
 [[redirects]]
   from = "/api/*"
-  to = "/backend-unavailable.json"
-  status = 404
+  to = "/.netlify/functions/evaluate/:splat"
+  status = 200
   force = true
 
 [[redirects]]
@@ -32,7 +28,8 @@
   [headers.values]
     Cache-Control = "no-store"
 
-[[headers]]
-  for = "/backend-unavailable.json"
-  [headers.values]
-    Cache-Control = "no-store"
+[dev]
+  framework = "#static"
+  publish = "frontend/dist"
+  port = 8891
+  autoLaunch = false

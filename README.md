@@ -6,17 +6,17 @@ A local demonstration that helps healthcare professionals review case informatio
 
 ## What works today
 
-- A React website connected to a FastAPI backend.
+- A React website with a same-origin Netlify evaluation API; FastAPI remains available for local development.
 - Explicit topic selection, structured case fields and editable examples.
 - Conflict and clarification checks, predefined urgent warnings, evidence retrieval and citation validation.
 - Concise responses, relevant source links and safe evidence-insufficient outcomes.
 - Two competition topics: **Endometriosis and Chronic Pelvic Pain** and **Early Pregnancy Pain and Bleeding**.
 
-The competition topics use separate, identity-verified evidence packages. Their eligibility for controlled evaluation does **not** approve the sources for authentic clinical use. All four authentic clinical modules remain inactive and pending review. The language provider is simulated in the offline evaluator; IBM and Milvus are not connected.
+The competition topics use separate, integrity-verified, project-authored evaluation summary packages. Their eligibility for controlled evaluation does **not** approve the sources for authentic clinical use. All four authentic clinical modules remain inactive and pending review. The language provider is simulated in the offline evaluator; IBM and Milvus are not connected.
 
 Original project code and original documentation are licensed under **Apache License 2.0**. Clinical sources, publisher files, knowledge documents and complete source-derived claim packages are **not distributed or licensed by this repository**. See [licensing boundaries](THIRD_PARTY_NOTICES.md).
 
-A clean clone can run the fictional synthetic demo without private files. The two competition topics require a separately authorized private evidence installation; downloading this repository does not provide that evidence or permission to use it. See [private evidence installation](EVIDENCE_INSTALLATION.md) and the exact metadata-only [file inventory](EvidenceSources.example.json).
+A clean clone can run the fictional synthetic demo and both public competition topics without private evidence, API keys or a CLINICAL_EVIDENCE_ROOT setting. The competition topics use project-authored evaluation summaries, not original publications. Reviewed with healthcare professionals for evaluation and feedback. Not validated or approved for patient care. The optional legacy private-source graph is documented separately in [private evidence installation](EVIDENCE_INSTALLATION.md).
 
 ## Before you start
 
@@ -49,7 +49,7 @@ npm ci
 Set-Location ..
 ```
 
-`pip check` should report `No broken requirements found.` Keep the declared versions and lockfile. If installation fails, stop and retain the error; do not use `--force`, `--legacy-peer-deps`, overrides or automatic dependency fixes. The Python requirements pin direct versions but do not fully lock transitive packages; a future clean installation may require compatibility review. No dependency installation was performed during push preparation.
+`pip check` should report `No broken requirements found.` Keep the declared versions and lockfile. If installation fails, stop and retain the error; do not use `--force`, `--legacy-peer-deps`, overrides or automatic dependency fixes. The Python requirements pin direct versions but do not fully lock transitive packages; a future clean installation may require compatibility review.
 
 ## Start the fictional demo
 
@@ -75,13 +75,13 @@ The launcher explicitly selects an inactive, source-free authentic registry and 
 
 ## Run competition Modules 1 and 2
 
-An authorized administrator must first follow [private evidence installation](EVIDENCE_INSTALLATION.md). The public repository intentionally cannot recreate protected packages from hashes or official links. Once the complete private installation is verified:
+No source download or private installation is needed for the public evaluation packages. Run:
 
 ```powershell
-.\.venvMilvus\Scripts\python.exe -B -m tools.runDemo --mode competition --private-root C:\clinicalPrivateEvidence
+.\.venvMilvus\Scripts\python.exe -B -m tools.runDemo --mode competition
 ```
 
-Use the same frontend command above. Confirm **Competition evaluation mode** and explicitly select **Endometriosis and Chronic Pelvic Pain** or **Early Pregnancy Pain and Bleeding**. The injected deterministic language provider is simulated; authentic sources remain pending review and authentic modules inactive. Missing or altered evidence prevents startup. Never edit hashes to force a download to match.
+Use the same frontend command above. Confirm **Competition evaluation mode** and explicitly select **Endometriosis and Chronic Pelvic Pain** or **Early Pregnancy Pain and Bleeding**. Responses are composed deterministically from the reviewed public summaries; no live model is connected. Authentic sources remain pending review and authentic modules inactive. Missing or altered public packages or safety code invalidate evaluation readiness. Do not edit hashes to bypass review.
 
 Keep age range and case type in dropdowns rather than repeating them in the narrative. Pregnancy and PID have Yes, No and Unknown states; PID means pelvic inflammatory disease, and this field records a clinician-reported diagnosis rather than one made by the app. Module 2 has additional pregnancy-test and ultrasound context. Responses use numbered citations with sources at the bottom. Absence of a warning does not prove safety.
 
@@ -126,11 +126,11 @@ Only the exact [ReleaseFiles.txt](ReleaseFiles.txt) allowlist is copied. Do not 
 | Problem | What to do |
 |---|---|
 | Site will not open | Keep both PowerShell windows running and check the ports in the startup output. |
-| No topics or provider unavailable | Use the exact synthetic launcher, or verify the private installation before competition startup. |
+| No topics or provider unavailable | Use the exact synthetic or public competition launcher and verify the reviewed public package files. |
 | Port already in use | Stop your own earlier server with Ctrl+C. Do not terminate an unfamiliar process. |
 | Input rejected | Check the selections and remove identifying information. Do not replace Unknown with No to bypass validation. |
 | Conflict or evidence insufficient | These can be intended safety outcomes. Try a supplied example; do not disable validators or edit evidence to force an answer. |
-| Source/knowledge unavailable | Follow the private installation inventory; synthetic mode needs no clinical sources. Do not resave documents or refresh checksums casually. |
+| Source/knowledge unavailable | Verify the public review pins for competition mode. The private installer is only for legacy private-source operation; never refresh pins to bypass review. |
 
 Backend checks: [health](http://127.0.0.1:8000/health) and [readiness](http://127.0.0.1:8000/ready). Health means the process is alive. Synthetic or competition readiness reflects its local demo dependencies, never authentic clinical approval. Standard mode remains unready.
 
@@ -144,6 +144,6 @@ Protected source originals, complete clinical packages, knowledge documents, int
 
 ## Tester hosting configuration
 
-The root `netlify.toml` builds from `frontend` and publishes only `frontend/dist`, with Node 24.21.0. It includes SPA navigation and an API-unavailable fallback. Until an actual backend is assigned and its same-origin proxy is enabled, **Analyze stays disabled**. Setting `VITE_BACKEND_URL` does not configure a production Netlify proxy.
+The public evaluation site runs entirely on Netlify: the React interface calls a same-origin TypeScript Function through `/api/*`. No separate backend, API key or private evidence installation is required. The root `netlify.toml` pins Node 24.21.0, installs and builds through `npm --prefix frontend`, publishes only `frontend/dist`, and supports page refreshes. Its repository-root base keeps function paths consistent. Run `npm ci` and `npm run build` inside `frontend`.
 
-See [tester deployment instructions](TesterDeployment.md) for the commented proxy placeholder, the Python host command using its assigned `PORT`, private read-only evidence installation, health checks and prerequisites. No backend address is assumed and no hosting deployment is performed by these files. Clinical sources must never enter Git, the static site or an image layer.
+Modules 1 and 2 use the repository's original evaluation summaries and deterministic server-side composition. They are reviewedForEvaluation and competitionReady, never approved for patient care. Original clinical publications are not distributed. FastAPI remains available for local development. See [hosting, health checks, local emulation and rollback](TesterDeployment.md). A failed integrity or availability check keeps Analyze unavailable. No deployment is performed by these files.

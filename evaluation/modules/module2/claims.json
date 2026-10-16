@@ -1,0 +1,540 @@
+{
+  "schemaVersion": 1,
+  "packageId": "Module2PublicEvaluationV1",
+  "moduleId": "module_02_early_pregnancy",
+  "contentKind": "projectAuthoredEvaluationSummaries",
+  "reviewStatus": "reviewedForEvaluation",
+  "productionApproved": false,
+  "notice": "Original project-authored evaluation summaries of clinical facts and guidance. These are not reproductions of, or replacements for, the cited publications and are not approved for clinical care.",
+  "sources": [
+    {
+      "sourceId": "NICE-NG126-2026",
+      "organization": "NICE",
+      "title": "Ectopic pregnancy and miscarriage: diagnosis and initial management",
+      "publicationDate": "2019 April 17",
+      "officialUrl": "https://www.nice.org.uk/guidance/ng126",
+      "urlVerificationStatus": "verifiedOfficialRetrieval",
+      "lifecycleStatus": "pendingReview"
+    },
+    {
+      "sourceId": "ACEP-EARLYPREG-2017",
+      "organization": "ACEP",
+      "title": "Clinical Policy: Critical Issues in the Initial Evaluation and Management of Patients Presenting to the Emergency Department in Early Pregnancy",
+      "publicationDate": "2017 February",
+      "officialUrl": "https://www.acep.org/patient-care/clinical-policies/early-pregnancy",
+      "urlVerificationStatus": "unresolved",
+      "lifecycleStatus": "pendingReview"
+    },
+    {
+      "sourceId": "ACOG-ECTOPIC-FAQ155",
+      "organization": "American College of Obstetricians and Gynecologists",
+      "title": "Ectopic Pregnancy | ACOG",
+      "publicationDate": "April 2020",
+      "officialUrl": "https://www.acog.org/womens-health/faqs/ectopic-pregnancy",
+      "urlVerificationStatus": "unresolved",
+      "lifecycleStatus": "pendingReview"
+    },
+    {
+      "sourceId": "CDC-MATERNAL-WARNINGS-POSTER",
+      "organization": "Centers for Disease Control and Prevention",
+      "title": "Urgent Maternal Warning Signs poster",
+      "publicationDate": null,
+      "officialUrl": "https://www.cdc.gov/hearher/resources/download-share/docs/pdf/Warning-Signs-Poster-LTR-English.pdf",
+      "urlVerificationStatus": "verifiedOfficialRetrieval",
+      "lifecycleStatus": "pendingReview"
+    },
+    {
+      "sourceId": "CDC-MATERNAL-WARNINGS-2024",
+      "organization": "Centers for Disease Control and Prevention",
+      "title": "Urgent Maternal Warning Signs and Symptoms",
+      "publicationDate": null,
+      "officialUrl": "https://www.cdc.gov/hearher/maternal-warning-signs/index.html",
+      "urlVerificationStatus": "verifiedOfficialRetrieval",
+      "lifecycleStatus": "pendingReview"
+    }
+  ],
+  "claims": [
+    {
+      "claimId": "M2AIndeterminateHcg",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "ACEP-EARLYPREG-2017",
+      "supportedStatement": "For the policy's stable US emergency-department population, ectopic pregnancy cannot be ruled out using the initial serum hCG value after an indeterminate transvaginal scan.",
+      "retrievalText": "Initial ED assessment: indeterminate transvaginal ultrasound and serum hCG nonexclusion, not serial testing.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Initial emergency assessment includes an indeterminate transvaginal ultrasound."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Excluded populations include unstable patients, abdominal trauma and increased heterotopic risk, including fertility treatment. Do not extend this ED policy to routine outpatient or obstetric practice.",
+        "The evidence search stopped on July 13, 2015. Continued listing is not evidence of recent review, reaffirmation or demonstrated current clinical validity.",
+        "A nonexclusion result is not positive diagnostic evidence and supplies no serial-monitoring guidance."
+      ],
+      "intendedPopulation": "First-trimester patients in US hospital emergency departments who have normal pulse and blood pressure, abdominal pain or vaginal bleeding, and no previously established intrauterine pregnancy.",
+      "jurisdiction": "US",
+      "productionApproved": false,
+      "contentHash": "f5c04095baa96c16120cc794fb8b464f61e3404509da5d11556d6559f171402c"
+    },
+    {
+      "claimId": "M2ANoCutoff",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "ACEP-EARLYPREG-2017",
+      "supportedStatement": "This US emergency-department policy supplies no universal serum hCG value that locates a pregnancy.",
+      "retrievalText": "No universal pregnancy-location serum hCG threshold in the initial ED policy.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Initial assessment within the defined policy population."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Excluded populations include unstable patients, abdominal trauma and increased heterotopic risk, including fertility treatment. Do not extend this ED policy to routine outpatient or obstetric practice.",
+        "The evidence search stopped on July 13, 2015. Continued listing is not evidence of recent review, reaffirmation or demonstrated current clinical validity.",
+        "Study-specific or historical numbers are not endorsed location thresholds."
+      ],
+      "intendedPopulation": "First-trimester patients in US hospital emergency departments who have normal pulse and blood pressure, abdominal pain or vaginal bleeding, and no previously established intrauterine pregnancy.",
+      "jurisdiction": "US",
+      "productionApproved": false,
+      "contentHash": "aad060152d118aa86bbb0e98d243cf80bf6d8151609863316fcb950bb2ce7bb7"
+    },
+    {
+      "claimId": "M2ASerialScope",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "ACEP-EARLYPREG-2017",
+      "supportedStatement": "Initial emergency-department assessment is the policy's subject. It cannot supply an individualized serial serum hCG schedule, and that scope limit is not advice against serial testing.",
+      "retrievalText": "Distinguish initial ED policy scope from patient-specific serial hCG monitoring.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Explaining a scope boundary, not advising against serial measurements."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Excluded populations include unstable patients, abdominal trauma and increased heterotopic risk, including fertility treatment. Do not extend this ED policy to routine outpatient or obstetric practice.",
+        "The evidence search stopped on July 13, 2015. Continued listing is not evidence of recent review, reaffirmation or demonstrated current clinical validity.",
+        "No individualized serial hCG schedule can be generated from this scope statement."
+      ],
+      "intendedPopulation": "First-trimester patients in US hospital emergency departments who have normal pulse and blood pressure, abdominal pain or vaginal bleeding, and no previously established intrauterine pregnancy.",
+      "jurisdiction": "US",
+      "productionApproved": false,
+      "contentHash": "c92915759a49e51976318567a5152621d0ff1d8426ca452d1adf14c69fb71b0a"
+    },
+    {
+      "claimId": "M2AUltrasoundMethod",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "ACEP-EARLYPREG-2017",
+      "supportedStatement": "The policy's pelvic-ultrasound evidence primarily concerns the transvaginal route. Its narrow transabdominal exception cannot be expanded into a statement about every imaging method.",
+      "retrievalText": "ED policy ultrasound-method boundary: principally transvaginal, limited transabdominal exception.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The policy's specifically defined pelvic ultrasound context applies."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Excluded populations include unstable patients, abdominal trauma and increased heterotopic risk, including fertility treatment. Do not extend this ED policy to routine outpatient or obstetric practice.",
+        "The evidence search stopped on July 13, 2015. Continued listing is not evidence of recent review, reaffirmation or demonstrated current clinical validity.",
+        "Do not generalize this to MRI, all imaging or unrestricted transabdominal scanning."
+      ],
+      "intendedPopulation": "First-trimester patients in US hospital emergency departments who have normal pulse and blood pressure, abdominal pain or vaginal bleeding, and no previously established intrauterine pregnancy.",
+      "jurisdiction": "US",
+      "productionApproved": false,
+      "contentHash": "8ff017194964d59f1f6ee114a2d160cf49f8ca5b0c5c87a45ffa2e5ea13fe57d"
+    },
+    {
+      "claimId": "M2NAlternativeScan",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "NICE-NG126-2026",
+      "supportedStatement": "If transvaginal scanning is unacceptable to the person, transabdominal ultrasound is an alternative with limitations. Findings from these routes cannot be treated as interchangeable.",
+      "retrievalText": "UK early-pregnancy scan-route alternative and unquantified method limitations.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Transvaginal ultrasound is unacceptable to the person."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "UK context is secondary and cannot silently replace a US pathway. The June 2026 document update does not establish a 2026 evidence review for every recommendation.",
+        "Clinical review is required; never infer omitted findings or determine diagnosis, viability or individualized treatment.",
+        "The alternative route's limitations are not quantified here; do not invent performance figures."
+      ],
+      "intendedPopulation": "People with pregnancy complications up to and including 13 completed weeks in the UK NG126 setting; this is not a universal gestational limit for Module 2.",
+      "jurisdiction": "UK",
+      "productionApproved": false,
+      "contentHash": "3a90185f21a6a8071cc250dfe29378d7ce66813711cb7b99a4ed8a69597be70d"
+    },
+    {
+      "claimId": "M2NEmptyUterus",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "NICE-NG126-2026",
+      "supportedStatement": "An empty uterus on a transvaginal scan is insufficient on its own to identify ectopic pregnancy; interpretation still needs the remaining scan findings and clinical picture.",
+      "retrievalText": "Empty uterus on transvaginal ultrasound: contextual interpretation rather than positive ectopic proof.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "An empty uterus is reported on transvaginal scanning during early pregnancy."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "UK context is secondary and cannot silently replace a US pathway. The June 2026 document update does not establish a 2026 evidence review for every recommendation.",
+        "Clinical review is required; never infer omitted findings or determine diagnosis, viability or individualized treatment.",
+        "An absent intrauterine finding is not positive proof of an ectopic pregnancy."
+      ],
+      "intendedPopulation": "People with pregnancy complications up to and including 13 completed weeks in the UK NG126 setting; this is not a universal gestational limit for Module 2.",
+      "jurisdiction": "UK",
+      "productionApproved": false,
+      "contentHash": "5dde178f38648a3d03e0435899b1d0244d7ec7de9b56e7a469c79e9230a2caa2"
+    },
+    {
+      "claimId": "M2NHcgLocation",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "NICE-NG126-2026",
+      "supportedStatement": "When pregnancy location is unresolved, a serum hCG value alone cannot locate it. This limitation applies within the UK early-pregnancy pathway.",
+      "retrievalText": "UK unresolved-location context: limits of serum hCG for locating pregnancy.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Pregnancy location is unresolved."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "UK context is secondary and cannot silently replace a US pathway. The June 2026 document update does not establish a 2026 evidence review for every recommendation.",
+        "Clinical review is required; never infer omitted findings or determine diagnosis, viability or individualized treatment.",
+        "Do not extend this restriction to every use of hCG or treat nonexclusion as positive evidence."
+      ],
+      "intendedPopulation": "People with pregnancy complications up to and including 13 completed weeks in the UK NG126 setting; this is not a universal gestational limit for Module 2.",
+      "jurisdiction": "UK",
+      "productionApproved": false,
+      "contentHash": "760f546f1de97204a23ad1911b49f4467127af317a8baf552d041982922030ca"
+    },
+    {
+      "claimId": "M2NImmediateAssessment",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "NICE-NG126-2026",
+      "supportedStatement": "A positive pregnancy test together with pain meets the UK immediate-assessment pathway when the clinician reports at least one qualifying examination finding: cervical-motion tenderness, abdominal tenderness or pelvic tenderness.",
+      "retrievalText": "Positive pregnancy test plus pain and one qualifying clinician-reported tenderness finding; immediate UK assessment.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "A positive test and pain are reported together with abdominal, pelvic or cervical-motion tenderness; the three tenderness alternatives remain separate."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "UK context is secondary and cannot silently replace a US pathway. The June 2026 document update does not establish a 2026 evidence review for every recommendation.",
+        "Clinical review is required; never infer omitted findings or determine diagnosis, viability or individualized treatment.",
+        "Examination findings must come from the clinician. The UK early-pregnancy or out-of-hours gynecology pathway is not a rule for negative or missing tests."
+      ],
+      "intendedPopulation": "People with pregnancy complications up to and including 13 completed weeks in the UK NG126 setting; this is not a universal gestational limit for Module 2.",
+      "jurisdiction": "UK",
+      "productionApproved": false,
+      "contentHash": "d66f1a70996e1398f30ad9a9066dbb7330e8c74c3dc0aeda72ea34172fd7fa16"
+    },
+    {
+      "claimId": "M2NPulDefinition",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "NICE-NG126-2026",
+      "supportedStatement": "A positive pregnancy test together with a transvaginal scan showing neither an intrauterine nor an extrauterine pregnancy leaves the location unresolved. It does not identify an ectopic pregnancy.",
+      "retrievalText": "Unresolved pregnancy location requires both a positive test and the specified transvaginal scan findings.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "A positive test is explicit and a transvaginal scan reports neither an intrauterine nor an extrauterine pregnancy."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "UK context is secondary and cannot silently replace a US pathway. The June 2026 document update does not establish a 2026 evidence review for every recommendation.",
+        "Clinical review is required; never infer omitted findings or determine diagnosis, viability or individualized treatment.",
+        "Missing test or scan information cannot establish an unknown-location classification."
+      ],
+      "intendedPopulation": "People with pregnancy complications up to and including 13 completed weeks in the UK NG126 setting; this is not a universal gestational limit for Module 2.",
+      "jurisdiction": "UK",
+      "productionApproved": false,
+      "contentHash": "35e737d1965a0816c7eae4c2b976227745cd91c85b8766b02d2e805bd5f5993f"
+    },
+    {
+      "claimId": "M2NPulPossibility",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "NICE-NG126-2026",
+      "supportedStatement": "An unresolved pregnancy location leaves ectopic pregnancy among the possibilities, without confirming it or assigning a probability.",
+      "retrievalText": "Ectopic possibility in pregnancy of unknown location, without diagnostic certainty.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The pregnancy has an unresolved location."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "UK context is secondary and cannot silently replace a US pathway. The June 2026 document update does not establish a 2026 evidence review for every recommendation.",
+        "Clinical review is required; never infer omitted findings or determine diagnosis, viability or individualized treatment.",
+        "Possibility does not establish a diagnosis or a probability estimate."
+      ],
+      "intendedPopulation": "People with pregnancy complications up to and including 13 completed weeks in the UK NG126 setting; this is not a universal gestational limit for Module 2.",
+      "jurisdiction": "UK",
+      "productionApproved": false,
+      "contentHash": "c10f530534771f68bff078cdb35ea0f02c7855843ff30d20d48e8619a0cc36a9"
+    },
+    {
+      "claimId": "M2NPulReturn",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "NICE-NG126-2026",
+      "supportedStatement": "New or worsening symptoms require reassessment in the UK unresolved-location pathway even after earlier hCG results; this summary supplies no individual follow-up timetable.",
+      "retrievalText": "UK PUL reassessment for symptom deterioration regardless of earlier hCG measurements.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "An unresolved-location pregnancy has new or worsening symptoms."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "UK context is secondary and cannot silently replace a US pathway. The June 2026 document update does not establish a 2026 evidence review for every recommendation.",
+        "Clinical review is required; never infer omitted findings or determine diagnosis, viability or individualized treatment.",
+        "Do not provide discharge clearance, an individual timetable or an invented UK contact number."
+      ],
+      "intendedPopulation": "People with pregnancy complications up to and including 13 completed weeks in the UK NG126 setting; this is not a universal gestational limit for Module 2.",
+      "jurisdiction": "UK",
+      "productionApproved": false,
+      "contentHash": "34bae629377ac9bed85c5e474310f00b5d70f97fc2efabce7e70e8afb17a1f66"
+    },
+    {
+      "claimId": "M2NSingleScan",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "NICE-NG126-2026",
+      "supportedStatement": "A very early scan can leave uncertainty about pregnancy loss. One scan must not be treated as guaranteeing that conclusion when the findings are incomplete.",
+      "retrievalText": "Early ultrasound and limits of a single examination for pregnancy-loss interpretation.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The question concerns ultrasound-based assessment for pregnancy loss."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "UK context is secondary and cannot silently replace a US pathway. The June 2026 document update does not establish a 2026 evidence review for every recommendation.",
+        "Clinical review is required; never infer omitted findings or determine diagnosis, viability or individualized treatment.",
+        "This supplies no sensitivity estimate, reassurance, viability decision or diagnosis of loss."
+      ],
+      "intendedPopulation": "People with pregnancy complications up to and including 13 completed weeks in the UK NG126 setting; this is not a universal gestational limit for Module 2.",
+      "jurisdiction": "UK",
+      "productionApproved": false,
+      "contentHash": "f07eb3a0827078c5642412dcd36ccfce5032a4ff4cb20c881f6831e4b1afb30e"
+    },
+    {
+      "claimId": "M2NSymptoms",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "NICE-NG126-2026",
+      "supportedStatement": "Early-pregnancy pain or bleeding has to be interpreted with the reported examination and test findings; those symptoms alone cannot identify ectopic pregnancy.",
+      "retrievalText": "Integrate early-pregnancy symptoms with the clinical picture rather than diagnosing from pain or bleeding.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Clinical assessment of early-pregnancy symptoms is the context."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "UK context is secondary and cannot silently replace a US pathway. The June 2026 document update does not establish a 2026 evidence review for every recommendation.",
+        "Clinical review is required; never infer omitted findings or determine diagnosis, viability or individualized treatment.",
+        "A symptom list is not a complete urgent-rule combination, a probability or a diagnosis."
+      ],
+      "intendedPopulation": "People with pregnancy complications up to and including 13 completed weeks in the UK NG126 setting; this is not a universal gestational limit for Module 2.",
+      "jurisdiction": "UK",
+      "productionApproved": false,
+      "contentHash": "ba005903578e8399f3a6f8bf4dbfed251cc69ed8757afc6f21aac21d0794af34"
+    },
+    {
+      "claimId": "M2NSymptomsOverHcg",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "NICE-NG126-2026",
+      "supportedStatement": "In the UK unresolved-location pathway, symptoms that change or newly develop still need attention despite an earlier hCG result that appeared reassuring.",
+      "retrievalText": "Changed symptoms take precedence over reassurance drawn from previous hCG in PUL.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Symptoms change while pregnancy location is unresolved."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "UK context is secondary and cannot silently replace a US pathway. The June 2026 document update does not establish a 2026 evidence review for every recommendation.",
+        "Clinical review is required; never infer omitted findings or determine diagnosis, viability or individualized treatment.",
+        "Do not invent a symptom trigger or claim earlier reassuring results establish safety."
+      ],
+      "intendedPopulation": "People with pregnancy complications up to and including 13 completed weeks in the UK NG126 setting; this is not a universal gestational limit for Module 2.",
+      "jurisdiction": "UK",
+      "productionApproved": false,
+      "contentHash": "afcf5be875fb75c27ca027ed4b9630058b114cb6edb2de9f7379701054278e51"
+    },
+    {
+      "claimId": "M2NUrgentReferral",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "NICE-NG126-2026",
+      "supportedStatement": "Immediate independent emergency assessment is required in the UK pathway if the clinician reports haemodynamic instability or judges the pain or bleeding sufficiently concerning. The reason for those findings remains uncertain.",
+      "retrievalText": "UK emergency escalation based on clinician-assessed instability or concern over pain/bleeding; no numeric cutoff.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The clinician reports haemodynamic instability or significant concern about pain or bleeding."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "UK context is secondary and cannot silently replace a US pathway. The June 2026 document update does not establish a 2026 evidence review for every recommendation.",
+        "Clinical review is required; never infer omitted findings or determine diagnosis, viability or individualized treatment.",
+        "No numerical haemodynamic or bleeding cutoff is defined; the warning cannot establish an ectopic cause."
+      ],
+      "intendedPopulation": "People with pregnancy complications up to and including 13 completed weeks in the UK NG126 setting; this is not a universal gestational limit for Module 2.",
+      "jurisdiction": "UK",
+      "productionApproved": false,
+      "contentHash": "96158e1414e92c913b5552595cb6cca8b4734b6413c9306e16d20d99c7390961"
+    },
+    {
+      "claimId": "M2EctopicEmergency",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "ACOG-ECTOPIC-FAQ155",
+      "supportedStatement": "The FAQ's serious-symptom discussion includes dizziness and fainting alongside weakness, shoulder pain and sudden severe pain affecting the abdomen or pelvis. Its emergency-room instruction directly covers shoulder pain, weakness or pain that is sudden and severe. Do not expand that instruction to the additional serious symptoms.",
+      "retrievalText": "FAQ155 action coverage: sudden severe pain, shoulder pain or weakness; dizziness/fainting are separate concerns without that same direct action support.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Possible or known pregnancy and a compatible symptom must be explicitly current; resolve conflicts before evaluating a warning.",
+        "Retain the platform emergency-detection gate without treating it as a validated diagnostic instrument."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "FAQ155's serious-symptom list includes dizziness and fainting, but its emergency-room action names sudden severe pain, shoulder pain or weakness. Isolated dizziness/fainting lacks that FAQ action support.",
+        "This educational FAQ establishes no treatment, numeric threshold, admission decision or production approval."
+      ],
+      "intendedPopulation": "Public educational audience; limited urgent-symptom background, not professional guideline evidence.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "c2b15821ab74d21fdfec3b87403db548917a4009b849bac7b836512a234bdebf"
+    },
+    {
+      "claimId": "M2NPainAssessment",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "NICE-NG126-2026",
+      "supportedStatement": "Within the UK early-pregnancy pathway, current pain with signs or symptoms of a complication warrants assessment. The overall clinical presentation determines referral urgency, not the symptom alone.",
+      "retrievalText": "UK early-pregnancy pain assessment with presentation-dependent urgency and no diagnostic attribution.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Possible or known pregnancy through 13 completed weeks and current pain are explicitly reported; do not assume gestation."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "UK context is secondary and cannot silently replace a US pathway. The June 2026 document update does not establish a 2026 evidence review for every recommendation.",
+        "Clinical review is required; never infer omitted findings or determine diagnosis, viability or individualized treatment.",
+        "Do not impose an unconditional emergency deadline or individual disposition. The separate PUL passages 1.8.3 and 1.8.6 cannot substitute for this referral passage."
+      ],
+      "intendedPopulation": "People with pregnancy complications up to and including 13 completed weeks in the UK NG126 setting; this is not a universal gestational limit for Module 2.",
+      "jurisdiction": "UK",
+      "productionApproved": false,
+      "contentHash": "47aa443598890f3382ff1ae1bec1890a631c86afce11ca3a4633f3d7f9bd171d"
+    },
+    {
+      "claimId": "CDCFaintingCare",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "CDC-MATERNAL-WARNINGS-2024",
+      "supportedStatement": "For someone currently pregnant, reported current fainting or passing out calls for immediate medical care; this alone is not an instruction to attend an emergency department.",
+      "retrievalText": "Current pregnancy with current fainting: immediate care, without ectopic attribution or unconditional ED disposition.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Pregnancy is current and fainting or passing out is actually reported as current."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "US public-health warning information, not a professional diagnostic guideline or evidence that ectopic pregnancy or rupture is present.",
+        "Possible pregnancy alone does not satisfy the stated population. Immediate care does not imply an unconditional emergency-department instruction."
+      ],
+      "intendedPopulation": "Currently pregnant people with current symptoms; postpartum use is not enabled for Module 2.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "16163043c572a7db506972ff7fd640a2667ddfd05292d8284ae56148deffd075"
+    },
+    {
+      "claimId": "CDCPersistentDizzinessCare",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "CDC-MATERNAL-WARNINGS-2024",
+      "supportedStatement": "During a current pregnancy, dizziness or lightheadedness that continues, or recurs across many days, calls for immediate medical care. A single isolated episode does not meet this statement's duration condition.",
+      "retrievalText": "Current maternal dizziness with ongoing or multi-day recurrence; retain the persistence gate.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Pregnancy is current and dizziness/lightheadedness is ongoing or recurring over many days."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "US public-health warning information, not a professional diagnostic guideline or evidence that ectopic pregnancy or rupture is present.",
+        "Retain the duration condition; a generic isolated dizziness episode is not covered."
+      ],
+      "intendedPopulation": "Currently pregnant people with current symptoms; postpartum use is not enabled for Module 2.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "2e8a7734f3d8a12b6c07acaa73347275b4b4f1c1c27a3e3a57dc8920cbc22c77"
+    },
+    {
+      "claimId": "CDCEmergencyAccess",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "CDC-MATERNAL-WARNINGS-POSTER",
+      "supportedStatement": "Listed maternal warning signs call for prompt medical care. Emergency-room attendance is the stated fallback when a healthcare provider cannot be reached, rather than an unconditional action for every symptom.",
+      "retrievalText": "Maternal warning-sign access pathway: prompt care, then emergency room if the provider is unreachable.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The source concerns pregnancy now or within the previous year, but this module enables only current pregnancy/current symptoms. The emergency-room action additionally requires that a healthcare provider cannot be reached."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "US public-health warning information, not a professional diagnostic guideline or evidence that ectopic pregnancy or rupture is present.",
+        "Retain detailed symptom qualifications and the provider-access condition; do not infer a diagnostic threshold or treatment."
+      ],
+      "intendedPopulation": "Currently pregnant people with current symptoms; postpartum use is not enabled for Module 2.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "c65696c31b783c7a53e7b65fc449fac0173ecde4ee13dfd151312a6e98a0c849"
+    },
+    {
+      "claimId": "M2NSerialLimits",
+      "moduleId": "module_02_early_pregnancy",
+      "sourceId": "NICE-NG126-2026",
+      "supportedStatement": "Serial serum hCG measurements do not determine pregnancy location. In the UK unresolved-location pathway, a changing clinical picture requires review even after a reassuring trend; the application must not infer viability from that trend.",
+      "retrievalText": "UK PUL serial hCG limits: location unresolved, symptom change prioritized, no viability or monitoring-schedule inference.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "A positive test and a transvaginal scan without a visualized pregnancy are explicit, leaving the location unresolved."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "UK context is secondary and cannot silently replace a US pathway. The June 2026 document update does not establish a 2026 evidence review for every recommendation.",
+        "Clinical review is required; never infer omitted findings or determine diagnosis, viability or individualized treatment.",
+        "Interpretation only: no trend cutoff, monitoring timetable, treatment choice or inference of PUL or viability from a trend. The viability restriction is the application's safety boundary, not a quoted diagnostic rule."
+      ],
+      "intendedPopulation": "People with pregnancy complications up to and including 13 completed weeks in the UK NG126 setting; this is not a universal gestational limit for Module 2.",
+      "jurisdiction": "UK",
+      "productionApproved": false,
+      "contentHash": "1da2d7e3c7ff7f8b6c3f197d608078594c79af7455712b823b492036f0605d69"
+    }
+  ],
+  "contentHash": "1010224a16a4b76d2bf1b8e469fdc66c6431e0e7db27641d349c28f9e2003a34",
+  "competitionStatus": "competitionReady"
+}

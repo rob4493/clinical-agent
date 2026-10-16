@@ -79,7 +79,8 @@ def testRuntimeLabelComesFromActiveApplication(runtimeMode):
             assert readiness.status_code == 503
             assert client.get("/v1/modules").json()["modules"] == []
         if runtimeMode == "competition":
-            assert readiness.status_code == 503
+            assert readiness.status_code == 200
+            assert runtime.json()["evaluation"]["reviewStatus"] == "reviewedForEvaluation"
             assert client.get("/v1/modules").json()["modules"][0]["moduleId"] == "module_01_endo"
 
 

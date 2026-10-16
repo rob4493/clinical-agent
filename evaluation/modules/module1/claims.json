@@ -1,0 +1,1300 @@
+{
+  "schemaVersion": 1,
+  "packageId": "Module1PublicEvaluationV1",
+  "moduleId": "module_01_endo",
+  "contentKind": "projectAuthoredEvaluationSummaries",
+  "reviewStatus": "reviewedForEvaluation",
+  "productionApproved": false,
+  "notice": "Original project-authored evaluation summaries of clinical facts and guidance. These are not reproductions of, or replacements for, the cited publications and are not approved for clinical care.",
+  "sources": [
+    {
+      "sourceId": "ACOG-CPP",
+      "organization": "American College of Obstetricians and Gynecologists",
+      "title": "Chronic Pelvic Pain | ACOG",
+      "publicationDate": null,
+      "officialUrl": "https://www.acog.org/womens-health/faqs/chronic-pelvic-pain",
+      "urlVerificationStatus": "unresolved",
+      "lifecycleStatus": "pendingReview"
+    },
+    {
+      "sourceId": "ACOG-ECTOPIC",
+      "organization": "American College of Obstetricians and Gynecologists",
+      "title": "Ectopic Pregnancy | ACOG",
+      "publicationDate": "April 2020",
+      "officialUrl": "https://www.acog.org/womens-health/faqs/ectopic-pregnancy",
+      "urlVerificationStatus": "unresolved",
+      "lifecycleStatus": "pendingReview"
+    },
+    {
+      "sourceId": "CDC-PID",
+      "organization": "Centers for Disease Control and Prevention",
+      "title": "Pelvic Inflammatory Disease â€” STI Treatment Guidelines",
+      "publicationDate": "22 July 2021",
+      "officialUrl": "https://www.cdc.gov/std/treatment-guidelines/pid.htm",
+      "urlVerificationStatus": "verifiedOfficialRetrieval",
+      "lifecycleStatus": "pendingReview"
+    },
+    {
+      "sourceId": "NICE-NG73",
+      "organization": "National Institute for Health and Care Excellence",
+      "title": "Endometriosis: diagnosis and management",
+      "publicationDate": "6 September 2017",
+      "officialUrl": "https://www.nice.org.uk/guidance/ng73/chapter/Recommendations",
+      "urlVerificationStatus": "unresolved",
+      "lifecycleStatus": "pendingReview"
+    },
+    {
+      "sourceId": "NICHD-DX",
+      "organization": "Eunice Kennedy Shriver National Institute of Child Health and Human Development, NIH",
+      "title": "How do healthcare providers diagnose endometriosis?",
+      "publicationDate": null,
+      "officialUrl": "https://www.nichd.nih.gov/health/topics/endometri/conditioninfo/diagnose",
+      "urlVerificationStatus": "verifiedOfficialRetrieval",
+      "lifecycleStatus": "pendingReview"
+    },
+    {
+      "sourceId": "WHO-2025",
+      "organization": "World Health Organization",
+      "title": "Endometriosis",
+      "publicationDate": "15 October 2025",
+      "officialUrl": "https://www.who.int/news-room/fact-sheets/detail/endometriosis",
+      "urlVerificationStatus": "verifiedOfficialRetrieval",
+      "lifecycleStatus": "pendingReview"
+    }
+  ],
+  "claims": [
+    {
+      "claimId": "C01",
+      "moduleId": "module_01_endo",
+      "sourceId": "ACOG-CPP",
+      "supportedStatement": "More than one process can contribute to persistent pelvic pain. Urinary and bowel problems are among the possibilities, and assessment may leave the cause unresolved.",
+      "retrievalText": "Pelvic-pain interpretation: overlapping contributors, urinary or bowel context, unexplained symptoms.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Use only for an applicable reported pattern in an educational context."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "An association cannot attribute cause; symptoms cannot establish PID, and PID disposition requires an explicitly true structured status."
+      ],
+      "intendedPopulation": "Readers of public health education; these summaries are not professional standards of care.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "c38398672d78618981d68971ffcc3c453f7cb17b4f254a43084a6955e01290f5"
+    },
+    {
+      "claimId": "C02",
+      "moduleId": "module_01_endo",
+      "sourceId": "ACOG-CPP",
+      "supportedStatement": "A history of trauma or mental-health difficulties must not displace assessment of physical contributors to pelvic pain.",
+      "retrievalText": "Physical assessment remains relevant alongside psychological or trauma-related context.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Use only for an applicable reported pattern in an educational context."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "An association cannot attribute cause; symptoms cannot establish PID, and PID disposition requires an explicitly true structured status."
+      ],
+      "intendedPopulation": "Readers of public health education; these summaries are not professional standards of care.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "00753382e0accbcc40e3ff1bb0923318ad1d5cf915348b0a4b4ccfbfb338e62f"
+    },
+    {
+      "claimId": "C03",
+      "moduleId": "module_01_endo",
+      "sourceId": "ACOG-CPP",
+      "supportedStatement": "Pelvic inflammatory disease can be associated with either a short-lived or a persistent pelvic-pain presentation; pain alone cannot establish PID.",
+      "retrievalText": "PID as a possible pelvic-pain contributor, with structured diagnostic-status gating.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Use only for an applicable reported pattern in an educational context."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "An association cannot attribute cause; symptoms cannot establish PID, and PID disposition requires an explicitly true structured status."
+      ],
+      "intendedPopulation": "Readers of public health education; these summaries are not professional standards of care.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "9b4323938f6fe24632894257b99ee07ec6bb9a50648ab982781f90b76e92589f"
+    },
+    {
+      "claimId": "C04",
+      "moduleId": "module_01_endo",
+      "sourceId": "ACOG-CPP",
+      "supportedStatement": "Pain accompanying menstruation is one relevant pattern when reviewing pelvic pain.",
+      "retrievalText": "Menstrual pain and its relationship to a reported pelvic-pain presentation.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Use only for an applicable reported pattern in an educational context."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "An association cannot attribute cause; symptoms cannot establish PID, and PID disposition requires an explicitly true structured status."
+      ],
+      "intendedPopulation": "Readers of public health education; these summaries are not professional standards of care.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "6e43046e1a6cfaa07920fbc5b72f65415dcd90bb0d16dff78ec6c8a65a88dd91"
+    },
+    {
+      "claimId": "C05",
+      "moduleId": "module_01_endo",
+      "sourceId": "ACOG-CPP",
+      "supportedStatement": "Pelvic pain linked to menstruation or sexual activity can be compatible with endometriosis, without identifying it as the cause.",
+      "retrievalText": "Endometriosis consideration in menstrual and sexual pain; association only.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Use only for an applicable reported pattern in an educational context."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "An association cannot attribute cause; symptoms cannot establish PID, and PID disposition requires an explicitly true structured status."
+      ],
+      "intendedPopulation": "Readers of public health education; these summaries are not professional standards of care.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "929483def32f427733f3341a0f6b2db1cfe37872f010ffdb5bae51973bb9ef70"
+    },
+    {
+      "claimId": "C06",
+      "moduleId": "module_01_endo",
+      "sourceId": "ACOG-CPP",
+      "supportedStatement": "Adenomyosis is among the conditions relevant to pelvic pain accompanied by heavy menstrual bleeding or painful periods.",
+      "retrievalText": "Adenomyosis context: pelvic pain, menstrual bleeding burden and menstrual discomfort.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Use only for an applicable reported pattern in an educational context."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "An association cannot attribute cause; symptoms cannot establish PID, and PID disposition requires an explicitly true structured status."
+      ],
+      "intendedPopulation": "Readers of public health education; these summaries are not professional standards of care.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "2bfbd0b1c77545a025e66a279beb193d39e1350584566dbad7016c5d5e76335d"
+    },
+    {
+      "claimId": "C07",
+      "moduleId": "module_01_endo",
+      "sourceId": "ACOG-CPP",
+      "supportedStatement": "A reported fibroid is relevant to pelvic pressure, bleeding and pain, but these associations do not attribute an individual's symptoms to that finding.",
+      "retrievalText": "Fibroid-associated symptom context and limits on attributing a case's findings.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Use only for an applicable reported pattern in an educational context."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "An association cannot attribute cause; symptoms cannot establish PID, and PID disposition requires an explicitly true structured status."
+      ],
+      "intendedPopulation": "Readers of public health education; these summaries are not professional standards of care.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "2c1a98b53ebae3401c103ef02fea6c6f3d499f8f475d791706ef03cb903ba669"
+    },
+    {
+      "claimId": "C08",
+      "moduleId": "module_01_endo",
+      "sourceId": "ACOG-CPP",
+      "supportedStatement": "An ovarian cyst that twists or ruptures is among the possible explanations for acute pain that needs immediate medical attention; the symptom does not identify which condition is present.",
+      "retrievalText": "Acute pain safety context: ovarian cyst complications and immediate care without diagnosis.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Use only for an applicable reported pattern in an educational context."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "An association cannot attribute cause; symptoms cannot establish PID, and PID disposition requires an explicitly true structured status."
+      ],
+      "intendedPopulation": "Readers of public health education; these summaries are not professional standards of care.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "ea03001403d68ebfd03c75f4bd409d8a32d51b1c9ec5082c92ccd428486c66b9"
+    },
+    {
+      "claimId": "C09",
+      "moduleId": "module_01_endo",
+      "sourceId": "ACOG-CPP",
+      "supportedStatement": "Urinary contributors to pelvic pain include infection, stones and painful bladder syndrome.",
+      "retrievalText": "Pelvic-pain overlap with urinary infection, urinary stones and bladder pain.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Use only for an applicable reported pattern in an educational context."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "An association cannot attribute cause; symptoms cannot establish PID, and PID disposition requires an explicitly true structured status."
+      ],
+      "intendedPopulation": "Readers of public health education; these summaries are not professional standards of care.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "aa47e1b1ace0ebc3906e1425a615bcdb56f0752b5aaf8a3d4c99357b1bcf9ed4"
+    },
+    {
+      "claimId": "C10",
+      "moduleId": "module_01_endo",
+      "sourceId": "ACOG-CPP",
+      "supportedStatement": "Bowel-related contributors to pelvic pain include irritable bowel syndrome and inflammatory bowel disease.",
+      "retrievalText": "Pelvic-pain overlap with functional bowel symptoms and inflammatory bowel disease.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Use only for an applicable reported pattern in an educational context."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "An association cannot attribute cause; symptoms cannot establish PID, and PID disposition requires an explicitly true structured status."
+      ],
+      "intendedPopulation": "Readers of public health education; these summaries are not professional standards of care.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "b8e30ebd45d26d43f07834002d3de5545cb497fc608bbeac9097b08480b952f5"
+    },
+    {
+      "claimId": "C11",
+      "moduleId": "module_01_endo",
+      "sourceId": "ACOG-CPP",
+      "supportedStatement": "Low-back disorders and myofascial trigger points can be relevant to pelvic pain; pelvic muscle spasm is another musculoskeletal contributor.",
+      "retrievalText": "Musculoskeletal review: back symptoms, pelvic muscle spasm and trigger-point pain.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Use only for an applicable reported pattern in an educational context."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "An association cannot attribute cause; symptoms cannot establish PID, and PID disposition requires an explicitly true structured status."
+      ],
+      "intendedPopulation": "Readers of public health education; these summaries are not professional standards of care.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "e883dc8b9452097c2e9a93c097427d63c62fb5d3800a6b6ae4ded138f20248c2"
+    },
+    {
+      "claimId": "C14",
+      "moduleId": "module_01_endo",
+      "sourceId": "ACOG-CPP",
+      "supportedStatement": "Acute pelvic pain can require immediate care for conditions such as infection, ectopic pregnancy or an ovarian cyst complication involving twisting or rupture. It must not be assumed to be a chronic-pain episode.",
+      "retrievalText": "Independent acute-pain assessment; infection, pregnancy-related danger and cyst complications remain uncertain causes.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Use only for an applicable reported pattern in an educational context."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "An association cannot attribute cause; symptoms cannot establish PID, and PID disposition requires an explicitly true structured status."
+      ],
+      "intendedPopulation": "Readers of public health education; these summaries are not professional standards of care.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "dd8973e134f388f263635658e722844aec670e49369dd617fefdb94617c1b07b"
+    },
+    {
+      "claimId": "CdcAbscess",
+      "moduleId": "module_01_endo",
+      "sourceId": "CDC-PID",
+      "supportedStatement": "When PID is explicitly established, a reported tubo-ovarian abscess is a reason to assess the need for hospitalization.",
+      "retrievalText": "PID disposition review with an explicitly reported tubo-ovarian abscess.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The structured PID field must explicitly be true; symptoms cannot supply this status.",
+        "An abscess is explicitly reported."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Do not infer an abscess from the symptom pattern.",
+        "Hospitalization consideration only, not an individualized admission decision."
+      ],
+      "intendedPopulation": "People whose PID diagnosis or presumptive diagnosis is explicitly established; adolescent disposition is included.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "8b0120923f2a621b92ebf8c57d006dc89df46132ff9e44c4c0e23363e1cd5357"
+    },
+    {
+      "claimId": "CdcPregnancy",
+      "moduleId": "module_01_endo",
+      "sourceId": "CDC-PID",
+      "supportedStatement": "For a person with established PID, reported pregnancy is relevant to the decision about hospitalization.",
+      "retrievalText": "Hospitalization considerations for established PID with pregnancy reported.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The structured PID field must explicitly be true; symptoms cannot supply this status.",
+        "Pregnancy is explicitly reported."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Unreported pregnancy remains unknown; this is not an ectopic warning criterion.",
+        "Hospitalization consideration only, not an individualized admission decision."
+      ],
+      "intendedPopulation": "People whose PID diagnosis or presumptive diagnosis is explicitly established; adolescent disposition is included.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "1b0b28047544aae8622666587051d982059abc2c4a9f595ab3f3b4d272e5589b"
+    },
+    {
+      "claimId": "CdcResponse",
+      "moduleId": "module_01_endo",
+      "sourceId": "CDC-PID",
+      "supportedStatement": "Failure to improve clinically with oral antimicrobial treatment is a hospitalization consideration in established PID.",
+      "retrievalText": "PID disposition when the case explicitly reports no clinical response to oral antimicrobials.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The structured PID field must explicitly be true; symptoms cannot supply this status.",
+        "The history explicitly reports no clinical response to oral antimicrobials."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Do not assume a treatment failure or suggest medication changes.",
+        "Hospitalization consideration only, not an individualized admission decision."
+      ],
+      "intendedPopulation": "People whose PID diagnosis or presumptive diagnosis is explicitly established; adolescent disposition is included.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "12d93b22ad2ac4efbfa50c2fb214260d5f3fc0639ef9df921a68977c8db120a8"
+    },
+    {
+      "claimId": "CdcSevereIllness",
+      "moduleId": "module_01_endo",
+      "sourceId": "CDC-PID",
+      "supportedStatement": "In established PID, reported severe illness, nausea and vomiting belong in the assessment of hospitalization need.",
+      "retrievalText": "Established PID with severe systemic illness or nausea/vomiting: disposition context.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The structured PID field must explicitly be true; symptoms cannot supply this status.",
+        "Relevant severe illness, nausea and vomiting findings are explicitly reported."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Do not infer illness severity or diagnose PID from symptoms.",
+        "Hospitalization consideration only, not an individualized admission decision."
+      ],
+      "intendedPopulation": "People whose PID diagnosis or presumptive diagnosis is explicitly established; adolescent disposition is included.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "eca0f0c92570a11c36ec4c24537f57f3b2a92f05b009633c43ffbf982c0db5dc"
+    },
+    {
+      "claimId": "CdcSurgicalEmergency",
+      "moduleId": "module_01_endo",
+      "sourceId": "CDC-PID",
+      "supportedStatement": "If a surgical emergency has not been excluded in someone with established PID, hospitalization needs consideration.",
+      "retrievalText": "Unresolved surgical-emergency concern in PID; disposition rather than diagnosis.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The structured PID field must explicitly be true; symptoms cannot supply this status.",
+        "A possible surgical emergency remains unresolved in the clinical assessment."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Disposition criteria cannot establish a PID diagnosis; clinical judgment is required.",
+        "Hospitalization consideration only, not an individualized admission decision."
+      ],
+      "intendedPopulation": "People whose PID diagnosis or presumptive diagnosis is explicitly established; adolescent disposition is included.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "05ddca9c89b211ee97afc78637b1c34be7599d5f79d83e513cf7230753b6e329"
+    },
+    {
+      "claimId": "CdcTemperature",
+      "moduleId": "module_01_endo",
+      "sourceId": "CDC-PID",
+      "supportedStatement": "In established PID, an explicitly reported oral temperature greater than 38.5 degrees Celsius is a hospitalization consideration.",
+      "retrievalText": "PID disposition temperature boundary: oral reading strictly above 38.5 Celsius.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The structured PID field must explicitly be true; symptoms cannot supply this status.",
+        "An oral temperature is explicitly reported and exceeds 38.5 degrees Celsius."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "The greater-than-38.5 oral disposition threshold is distinct from the diagnostic-section 38.3 threshold; neither diagnoses PID here.",
+        "Hospitalization consideration only, not an individualized admission decision."
+      ],
+      "intendedPopulation": "People whose PID diagnosis or presumptive diagnosis is explicitly established; adolescent disposition is included.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "13940fba2a83d59c934b30ebc8c9c7802072f8f5c4fe3a52535e7bd66df836ca"
+    },
+    {
+      "claimId": "CdcTolerance",
+      "moduleId": "module_01_endo",
+      "sourceId": "CDC-PID",
+      "supportedStatement": "For established PID, inability to take, tolerate or follow the outpatient oral regimen is relevant to hospitalization assessment.",
+      "retrievalText": "PID disposition and reported inability to follow or tolerate outpatient oral treatment.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The structured PID field must explicitly be true; symptoms cannot supply this status.",
+        "Inability to follow or tolerate outpatient oral treatment is explicitly reported."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Do not initiate, stop, adjust, select or dose medication.",
+        "Hospitalization consideration only, not an individualized admission decision."
+      ],
+      "intendedPopulation": "People whose PID diagnosis or presumptive diagnosis is explicitly established; adolescent disposition is included.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "ace5232f753219b8b43dbf1ce002d0165161b0fadb0af05554c0f3bf9f660d0f"
+    },
+    {
+      "claimId": "CppDefinition",
+      "moduleId": "module_01_endo",
+      "sourceId": "ACOG-CPP",
+      "supportedStatement": "The cited public-education description uses a duration of at least six months for chronic pelvic pain and recognizes effects on daily functioning and physical or mental wellbeing.",
+      "retrievalText": "Chronic pelvic-pain terminology: six-month duration and effects on daily life and wellbeing.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Pelvic pain is reported or the question specifically asks about the chronic-pain concept."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Educational description, not a professional care standard or individualized treatment recommendation.",
+        "Several months does not establish a duration of at least six months; the term is descriptive, not a diagnosis."
+      ],
+      "intendedPopulation": "Public educational audience discussing pelvic pain; no exact age bounds are specified.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "58a101cc64ec4b2e1e6e22917081b8b3286c78769df1daf701157e608ae7bd1f"
+    },
+    {
+      "claimId": "CppHistory",
+      "moduleId": "module_01_endo",
+      "sourceId": "ACOG-CPP",
+      "supportedStatement": "A focused pelvic-pain history can connect onset, location, episode length, timing, frequency, severity and activity patterns with daily impact, aggravating or relieving factors, medical context, sexual history and previous pregnancies.",
+      "retrievalText": "Pelvic-pain history domains for a focused review, not a mandatory questionnaire.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Pelvic pain is reported or the question specifically asks about the chronic-pain concept."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Educational description, not a professional care standard or individualized treatment recommendation.",
+        "Do not attribute a combined knowledge-base checklist entirely to ACOG; retain unknowns and ask only a materially useful question."
+      ],
+      "intendedPopulation": "Public educational audience discussing pelvic pain; no exact age bounds are specified.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "b17ff10b440ddb11d04f5ebd8af140784b774719a4bdead31da7e42dbbfe8736"
+    },
+    {
+      "claimId": "CppPattern",
+      "moduleId": "module_01_endo",
+      "sourceId": "ACOG-CPP",
+      "supportedStatement": "A chronic pelvic-pain pattern may be continuous or intermittent rather than daily. Menstruation, bowel or bladder activity, meals and sexual activity can help characterize it.",
+      "retrievalText": "Characterizing persistent pelvic discomfort by recurrence, continuity and activity-related timing.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Pelvic pain is reported or the question specifically asks about the chronic-pain concept."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Educational description, not a professional care standard or individualized treatment recommendation.",
+        "A general chronic-pain pattern does not identify endometriosis or exclude disease."
+      ],
+      "intendedPopulation": "Public educational audience discussing pelvic pain; no exact age bounds are specified.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "773abee2d06dd315c2f8399fb86573efba49de7653176a9ffd294fc6a51c6f1a"
+    },
+    {
+      "claimId": "E01",
+      "moduleId": "module_01_endo",
+      "sourceId": "ACOG-ECTOPIC",
+      "supportedStatement": "Weakness, fainting and dizziness appear among the FAQ's concerning features, along with shoulder pain and pain in the abdomen or pelvis that starts suddenly and is severe. Pregnancy-compatible presentations remain subject to the existing emergency-warning gate, without identifying ectopic pregnancy.",
+      "retrievalText": "Pregnancy-related warning context including sudden severe pain; preserve the existing gate and the limits of FAQ action coverage.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Possible or known pregnancy and a compatible reported feature; retain the existing platform emergency gate."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "The combined platform gate is not an independently validated diagnostic rule. FAQ155's direct emergency-room wording covers sudden severe pain, shoulder pain or weakness; do not infer that identical action support exists for isolated dizziness or fainting."
+      ],
+      "intendedPopulation": "Readers of public health education; these summaries are not professional standards of care.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "79390958ec19cffbcd2d4ea9d7988a1f588cba37e56f9fb9b979842b7d2ad93a"
+    },
+    {
+      "claimId": "E02",
+      "moduleId": "module_01_endo",
+      "sourceId": "ACOG-ECTOPIC",
+      "supportedStatement": "A ruptured ectopic pregnancy can produce dangerous internal bleeding. Explaining that risk does not establish rupture in the submitted case.",
+      "retrievalText": "Reason for urgency in an already-triggered pregnancy warning: potential internal bleeding with rupture.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "A pregnancy-compatible warning has already fired and its risk is being explained."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Do not assert ectopic pregnancy or rupture is present in this case."
+      ],
+      "intendedPopulation": "Readers of public health education; these summaries are not professional standards of care.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "b0240e516b01c9bd4ae13d158aa2af05b8d0c8125cd8c963868d61676054bb75"
+    },
+    {
+      "claimId": "E03",
+      "moduleId": "module_01_endo",
+      "sourceId": "ACOG-ECTOPIC",
+      "supportedStatement": "Clinician evaluation described in the FAQ includes blood hCG measurement and ultrasound assessment of pregnancy location.",
+      "retrievalText": "General clinician evaluation using blood hCG and ultrasound; no individualized testing algorithm.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The question is about general blood hCG evaluation, not selection of an individual test."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "No home/urine-test exclusion rule, hCG cutoff, unknown-location algorithm or serial schedule is supplied."
+      ],
+      "intendedPopulation": "Readers of public health education; these summaries are not professional standards of care.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "aea7afabbea1e87466a640f7cb2fbe66b5abdfbc351420e7adfe4232c7aafc02"
+    },
+    {
+      "claimId": "N01",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "Persistent pelvic pain is one presentation in which endometriosis merits consideration, rather than a finding that establishes it.",
+      "retrievalText": "Endometriosis symptom context: chronic pelvic pain without diagnostic attribution.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The corresponding symptom is reported; the infertility criterion additionally requires another listed symptom or sign."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Symptom associations cannot confirm endometriosis; infertility on its own does not satisfy the combined criterion."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "3930ea2fb9c23e774618c8417bfb47c559f33e7d7475e3c3027f7a0636a8004e"
+    },
+    {
+      "claimId": "N02",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "Menstrual pain that disrupts daily functioning or quality of life is relevant when considering endometriosis.",
+      "retrievalText": "Functional impact of period-related pain in an endometriosis review.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The corresponding symptom is reported; the infertility criterion additionally requires another listed symptom or sign."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Symptom associations cannot confirm endometriosis; infertility on its own does not satisfy the combined criterion."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "98a1374952c5d8372eabe8ba803fbfb4c1a65e30d8cd03e9ed7ba502d52435c1"
+    },
+    {
+      "claimId": "N03",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "Deep pain with intercourse, including pain afterwards, is relevant to an endometriosis assessment.",
+      "retrievalText": "Endometriosis consideration with deep sexual pain during or after intercourse.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The corresponding symptom is reported; the infertility criterion additionally requires another listed symptom or sign."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Symptom associations cannot confirm endometriosis; infertility on its own does not satisfy the combined criterion."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "d97dcf0bbd03f84d22d016094bc8d19724004810eb112c9e9a7b1c93befb390f"
+    },
+    {
+      "claimId": "N04",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "Bowel symptoms that recur with the menstrual cycle, especially pain on defecation, are relevant to considering endometriosis.",
+      "retrievalText": "Cycle-linked bowel symptoms and painful defecation in an endometriosis review.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The corresponding symptom is reported; the infertility criterion additionally requires another listed symptom or sign."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Symptom associations cannot confirm endometriosis; infertility on its own does not satisfy the combined criterion."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "70c1e9201d1754b7d62fbc2d145ae062f350d737aa8b69d3c200828f8b923e0f"
+    },
+    {
+      "claimId": "N05",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "Urinary symptoms recurring with the menstrual cycle, including painful urination or haematuria, are relevant to an endometriosis assessment.",
+      "retrievalText": "Cycle-linked urinary symptoms: dysuria or haematuria, without diagnostic inference.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The corresponding symptom is reported; the infertility criterion additionally requires another listed symptom or sign."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Symptom associations cannot confirm endometriosis; infertility on its own does not satisfy the combined criterion."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "ce20812334bf7c38c6f008e2b9803ad1d965b05f7a61a075601c0ad959f92ae6"
+    },
+    {
+      "claimId": "N06",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "Infertility belongs in this endometriosis symptom criterion only when accompanied by another listed symptom or sign.",
+      "retrievalText": "Combined criterion: infertility plus an additional listed endometriosis feature.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The corresponding symptom is reported; the infertility criterion additionally requires another listed symptom or sign."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Symptom associations cannot confirm endometriosis; infertility on its own does not satisfy the combined criterion."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "19e8a335e19247da4f8211c1f68bf23f0dedd9bf966d45767faddbdeff39a62b"
+    },
+    {
+      "claimId": "N07",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "Whether a first-degree relative has endometriosis is relevant history to ask about; it does not determine an individual's diagnosis or numerical risk.",
+      "retrievalText": "First-degree family history as context for endometriosis assessment.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Family history is relevant to the question."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Do not convert family history to an individual probability.",
+        "UK pathway context must not be silently applied in other jurisdictions."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "8130190a1e6de9cbd4aa5ccc2111eaab5f930b1f118e479f59693c91da11ea2d"
+    },
+    {
+      "claimId": "N08",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "Recording when pain and other symptoms occur can give the clinician and patient a clearer basis for discussion when endometriosis is suspected or established. Such records are not a diagnostic test.",
+      "retrievalText": "Discussion aid for endometriosis: patient-recorded symptom timing, without diagnostic weight.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Symptom timing or communication about symptoms is relevant."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "A recorded symptom history is a discussion aid, not diagnostic proof.",
+        "UK pathway context must not be silently applied in other jurisdictions."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "f2ee0fbf6a7d55b7eef19b0e129c3b1bbf0ed8b126559232594567e65147b273"
+    },
+    {
+      "claimId": "N09",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "Culture, socioeconomic circumstances and neurodiversity can affect how pain is experienced or communicated. Expression alone cannot establish pain severity, disease stage or credibility.",
+      "retrievalText": "Context-sensitive interpretation of pain reporting without judging credibility or inferring stage.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The context of pain communication is relevant."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Do not judge severity, disease stage or truthfulness from how pain is expressed.",
+        "UK pathway context must not be silently applied in other jurisdictions."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "45795b80bfbe5c03a91a0e7fabebff75c627bf6dbf6f6d2c3a90fa735bb83227"
+    },
+    {
+      "claimId": "N12",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "Assessment for suspected endometriosis includes abdominal and internal pelvic examination to look for masses and relevant pelvic findings.",
+      "retrievalText": "Examination context for endometriosis: abdominal assessment, internal pelvic findings and masses.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Examination for suspected endometriosis is relevant."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Describe the pathway without ordering an examination for an individual.",
+        "UK pathway context must not be silently applied in other jurisdictions."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "f6dcffcec5ddef05e8ca00849d936ddd50799569158344e54d0a4ec0bbca663e"
+    },
+    {
+      "claimId": "N13",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "When an internal pelvic examination is unsuitable or declined, the UK pathway describes abdominal examination instead.",
+      "retrievalText": "Examination alternative only where internal assessment is declined or unsuitable.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Internal examination is explicitly unsuitable or declined."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Silence does not establish consent or suitability.",
+        "UK pathway context must not be silently applied in other jurisdictions."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "c2af35151055b773506de800bd2033cf14f3f078e2568ec9a4bbcd79843449fb"
+    },
+    {
+      "claimId": "N14",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "A normal abdominal or pelvic examination does not remove the role of transvaginal ultrasound in assessing suspected endometriosis.",
+      "retrievalText": "Transvaginal ultrasound remains relevant despite a reported normal examination.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Suspected endometriosis and transvaginal ultrasound are the relevant context."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Keep the transvaginal test identity; do not extend this to MRI or all imaging.",
+        "UK pathway context must not be silently applied in other jurisdictions."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "751185d64e37ac4c15e6f5e2d31edd8efd7d71af0474b7734b804371897792e5"
+    },
+    {
+      "claimId": "N15",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "Transvaginal ultrasound can contribute findings about endometriomas, deep endometriosis or other pathology and help inform referral decisions.",
+      "retrievalText": "Transvaginal scan findings relevant to endometrioma, deep disease, other pathology and referral context.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The requested interpretation concerns transvaginal ultrasound."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "A negative scan cannot exclude endometriosis.",
+        "UK pathway context must not be silently applied in other jurisdictions."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "d065aa6b3ef902ea34685d0994760be0b6b6a1dfb306a08fa56e2e2a7ca79eb3"
+    },
+    {
+      "claimId": "N16",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "The UK pathway describes a transabdominal pelvic scan as an alternative when transvaginal ultrasound is unsuitable or declined.",
+      "retrievalText": "Alternative ultrasound route when transvaginal scanning cannot be accepted or used.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Transvaginal ultrasound is explicitly unsuitable or declined."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Do not transfer performance claims between scan routes or other modalities.",
+        "UK pathway context must not be silently applied in other jurisdictions."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "446fede93c457cffafa2001c237aede23bb287a2a9df8045b9254babac55f493"
+    },
+    {
+      "claimId": "N17",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "Endometriosis remains possible after a normal abdominal or pelvic examination, and referral can still be needed.",
+      "retrievalText": "Limits of a reported normal examination; persistent referral relevance without positive diagnostic proof.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "A normal abdominal or pelvic examination is explicitly reported."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Failure to exclude disease is not evidence positively identifying it.",
+        "UK pathway context must not be silently applied in other jurisdictions."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "daf7ec920ef291d4c49266e4096e5400d745bbe9a2cfebb0fd1df2bbb219c73c"
+    },
+    {
+      "claimId": "N18",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "Endometriosis remains possible despite a normal transvaginal ultrasound result; referral can still be needed.",
+      "retrievalText": "Negative transvaginal scan interpretation without excluding endometriosis or ending referral consideration.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Ultrasound is being discussed in the transvaginal context."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "This does not establish MRI, CA-125 or all-imaging performance.",
+        "UK pathway context must not be silently applied in other jurisdictions."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "8e56790a4ec730e7aafc8f8ae957f43a02ee6b6be91712ce23080c361b7e8bdb"
+    },
+    {
+      "claimId": "N19",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "Specialist assessment with transvaginal ultrasound or pelvic MRI can inform review of deep endometriosis and its extent; specialist planning and interpretation are part of that pathway.",
+      "retrievalText": "Deep endometriosis imaging in a specialist setting, with explicit planning and interpretation requirements.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The question concerns specialist imaging or deep endometriosis."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Symptoms cannot establish disease stage or extent.",
+        "UK pathway context must not be silently applied in other jurisdictions."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "c317b12477603216f9a95da0cafd5db00002b06e6a6b9c65eafb07f6690fff17"
+    },
+    {
+      "claimId": "N20",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "Normal ultrasound or MRI findings do not prevent consideration of laparoscopy for suspected endometriosis. This is an option for evaluation, not an automatic requirement for surgery.",
+      "retrievalText": "Further evaluation after normal named imaging: laparoscopy may be considered but is not inevitable.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "A normal ultrasound or MRI is relevant to suspected endometriosis."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "The option to consider laparoscopy is not a requirement to operate.",
+        "UK pathway context must not be silently applied in other jurisdictions."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "7a47918cf144e16d07f45b5dfd1d0987786255b4aaf82d38c89d9fbc4840c878"
+    },
+    {
+      "claimId": "N21",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "In the UK pathway for operative evaluation of suspected deep endometriosis, specialist imaging comes first: pelvic ultrasound or MRI precedes operative laparoscopy.",
+      "retrievalText": "Suspected deep disease: specialist imaging precedes operative laparoscopy in the UK pathway.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Deep endometriosis is suspected and operative evaluation is the topic."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Do not choose an operation for an individual.",
+        "UK pathway context must not be silently applied in other jurisdictions."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "da2e88ff3edeac3e7fccab24924463e4a6cdde8b3f297c4ec893ba7164ae2338"
+    },
+    {
+      "claimId": "N22",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "Serum CA-125 is not an endometriosis diagnostic test in this pathway; no result cutoff or individualized interpretation is supplied here.",
+      "retrievalText": "CA-125 diagnostic restriction for endometriosis, without an exclusion threshold.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The question concerns serum CA-125."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "No exclusion cutoff, likelihood ratio or interpretation of an elevated result is supplied.",
+        "UK pathway context must not be silently applied in other jurisdictions."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "9bb7abeb77fe211ec24ffffbbcc63c5a4ea11157f1a1d80e65b8195bb41decc6"
+    },
+    {
+      "claimId": "N25",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "The UK pathway calls for gynecology referral when initial treatment is ineffective, intolerable or contraindicated, when daily life is adversely affected, when symptoms persist or recur, or when pelvic signs are present without suspected deep disease.",
+      "retrievalText": "UK gynecology referral criteria: treatment constraints, daily impact, recurrent symptoms or qualifying pelvic signs.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "At least one specified referral factor is explicitly reported within the UK pathway."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Preserve referral as the action, rather than weakening it to optional consideration or universalizing UK practice.",
+        "UK pathway context must not be silently applied in other jurisdictions."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "ec8043f45d232bee8f79bbd6c059e1a776df6055343690d818168e828a96ee65"
+    },
+    {
+      "claimId": "N26",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "Disease outside the pelvis and deep disease affecting the ureter, bowel or bladder belong in the UK specialist-referral pathway, as does an endometrioma that is suspected or confirmed.",
+      "retrievalText": "Specialist referral for endometrioma, specified deep organ involvement or extra-pelvic disease.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The specified disease finding is explicitly reported in the UK pathway."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Severe pain cannot establish deep disease.",
+        "UK pathway context must not be silently applied in other jurisdictions."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "3fdc61e8ccf51dd336932006dbf2dd23a5045f4c48a6982412f9dff90c93810d"
+    },
+    {
+      "claimId": "N27",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICE-NG73",
+      "supportedStatement": "In the UK pathway, a person younger than 18 with suspected or established endometriosis is referred to an adolescent/pediatric gynecology service or an endometriosis specialist service.",
+      "retrievalText": "UK referral destination for endometriosis where age is explicitly established as 17 or younger.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Age is explicitly established to be no greater than 17 within the UK pathway."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "A broad age range that includes an adult cannot satisfy the age gate.",
+        "UK pathway context must not be silently applied in other jurisdictions."
+      ],
+      "intendedPopulation": "People being assessed for, or already known to have, endometriosis; adolescents are included.",
+      "jurisdiction": "United Kingdom",
+      "productionApproved": false,
+      "contentHash": "3e4438ac00bbf62283dc899121e863e10b5f8ebe300818ac14acbee24acd9b3a"
+    },
+    {
+      "claimId": "NichdConfirmationPosition",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICHD-DX",
+      "supportedStatement": "The NICHD information page dated 2020 presents surgical confirmation of endometriosis. That historical position must remain distinct from newer descriptions of clinical assessment.",
+      "retrievalText": "Dated source-position comparison: NICHD's surgical confirmation discussion, without directing surgery.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Comparing the dated source's position on confirmation."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "The 2020 description is not a compulsory current surgical pathway; retain WHO's distinct clinical-assessment position."
+      ],
+      "intendedPopulation": "People undergoing assessment for endometriosis; no specific age interval is given.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "6b780364344b5b1ec8253c6468b768d9699f93e35a739660bcc0078d80601b36"
+    },
+    {
+      "claimId": "NichdMriLimits",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICHD-DX",
+      "supportedStatement": "MRI can reveal larger nodules or cysts while smaller lesions and adhesions may not be seen. A normal MRI therefore must not be treated as establishing absence or requiring surgery.",
+      "retrievalText": "MRI-specific visibility limitations for small lesions and adhesions compared with larger findings.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The question specifically concerns MRI."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Do not transfer this statement to another test or infer a surgical requirement from a normal MRI."
+      ],
+      "intendedPopulation": "People undergoing assessment for endometriosis; no specific age interval is given.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "d1f3be8ca1e702395fde2a31a8a093a3ecfc3066ffe9155a6d6814829a641909"
+    },
+    {
+      "claimId": "NichdUltrasoundLimits",
+      "moduleId": "module_01_endo",
+      "sourceId": "NICHD-DX",
+      "supportedStatement": "Ultrasound can reveal larger nodules or cysts but may miss small lesions and adhesions. This describes visibility limits, not a disease or stage determination.",
+      "retrievalText": "Ultrasound-specific limitations for small lesions and adhesions; distinct from the NICE normal-TVUS pathway.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "The question specifically concerns ultrasound."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Do not substitute this visibility discussion for NICE's normal-transvaginal-scan recommendation or infer presence, absence or stage."
+      ],
+      "intendedPopulation": "People undergoing assessment for endometriosis; no specific age interval is given.",
+      "jurisdiction": "United States",
+      "productionApproved": false,
+      "contentHash": "068bdae8ff5e761b33a8c6803b1176b0e98e27499fbbdfc18f72c15cc654a22f"
+    },
+    {
+      "claimId": "WhoClinicalPosition",
+      "moduleId": "module_01_endo",
+      "sourceId": "WHO-2025",
+      "supportedStatement": "WHO describes assessment based on symptoms and imaging that need not await surgery before treatment. This source position does not authorize the application to diagnose or choose treatment.",
+      "retrievalText": "WHO clinical-assessment position compared with surgical confirmation; no individualized treatment decision.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Comparing source positions on clinical assessment and surgical confirmation."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Keep the older NICHD surgical-confirmation position separate; describing WHO's position does not select treatment."
+      ],
+      "intendedPopulation": "People affected by endometriosis, including transgender men and nonbinary people who menstruate.",
+      "jurisdiction": "Global",
+      "productionApproved": false,
+      "contentHash": "fa4e3ab12d5f0bb9aaa4efd1f6b593ac2386ac859512030ea21b03ff60e9bdb8"
+    },
+    {
+      "claimId": "WhoImpact",
+      "moduleId": "module_01_endo",
+      "sourceId": "WHO-2025",
+      "supportedStatement": "Endometriosis symptoms can affect school, employment, sexual wellbeing and overall quality of life, without showing how extensive the disease is.",
+      "retrievalText": "Functional and wellbeing impact of reported endometriosis symptoms, separate from staging.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Functional impact is reported."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Daily-life impact does not measure stage or extent."
+      ],
+      "intendedPopulation": "People affected by endometriosis, including transgender men and nonbinary people who menstruate.",
+      "jurisdiction": "Global",
+      "productionApproved": false,
+      "contentHash": "ce2df29c54689685f8328eb5bc850f5ef7d52542fa98b74f1430c2156eb8c699"
+    },
+    {
+      "claimId": "WhoPriorities",
+      "moduleId": "module_01_endo",
+      "sourceId": "WHO-2025",
+      "supportedStatement": "A person's preferences and pregnancy goals are relevant context for care decisions, without determining a treatment choice here.",
+      "retrievalText": "Reported reproductive priorities and personal preferences in clinician review.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Pregnancy goals or fertility priorities are reported."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Preferences do not authorize treatment selection."
+      ],
+      "intendedPopulation": "People affected by endometriosis, including transgender men and nonbinary people who menstruate.",
+      "jurisdiction": "Global",
+      "productionApproved": false,
+      "contentHash": "44fdf2a7661af3bc4fb297cbc7ac123b790ebbe4a4115592aa5278d565b162ab"
+    },
+    {
+      "claimId": "WhoRecurrence",
+      "moduleId": "module_01_endo",
+      "sourceId": "WHO-2025",
+      "supportedStatement": "After treatment, including surgery, lesions or symptoms can recur; recurrence alone does not identify a cause or a next treatment.",
+      "retrievalText": "Reported recurrence after previous treatment, without attribution or treatment selection.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Recurrence is reported."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "Recurrence alone cannot attribute cause or determine treatment."
+      ],
+      "intendedPopulation": "People affected by endometriosis, including transgender men and nonbinary people who menstruate.",
+      "jurisdiction": "Global",
+      "productionApproved": false,
+      "contentHash": "2f8a01f56cb0af59a32b60726e02dfa15ccece4772c48d999bca6cd6c991f448"
+    },
+    {
+      "claimId": "WhoSymptoms",
+      "moduleId": "module_01_endo",
+      "sourceId": "WHO-2025",
+      "supportedStatement": "The symptom spectrum can include menstrual or persistent pelvic pain, bleeding and bowel, urinary or sexual difficulties. These patterns are associations rather than diagnostic findings.",
+      "retrievalText": "Endometriosis symptom review across pain, bleeding and bowel, bladder or sexual domains.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Reviewing reported symptoms."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "An association is not a diagnostic finding."
+      ],
+      "intendedPopulation": "People affected by endometriosis, including transgender men and nonbinary people who menstruate.",
+      "jurisdiction": "Global",
+      "productionApproved": false,
+      "contentHash": "5bff67ed3a45f9a26e2fe6f447c9dc9db36fba0bb999221bef5547db51e239c5"
+    },
+    {
+      "claimId": "WhoVariation",
+      "moduleId": "module_01_endo",
+      "sourceId": "WHO-2025",
+      "supportedStatement": "People affected by endometriosis do not all have the same symptoms, and some report none. A missing symptom cannot settle whether disease is present.",
+      "retrievalText": "Variation and asymptomatic presentations without diagnostic exclusion from absent symptoms.",
+      "conditions": [
+        "Use only for the explicitly selected module and a relevant clinical question.",
+        "Stop for contradictory case information; absent findings remain unknown.",
+        "Interpreting symptom uncertainty."
+      ],
+      "limitations": [
+        "Do not diagnose, exclude disease, estimate probability, assign stage, prescribe or choose an individual's treatment.",
+        "Do not add clinical facts beyond this bounded evaluation summary.",
+        "A symptom's absence does not settle whether endometriosis is present."
+      ],
+      "intendedPopulation": "People affected by endometriosis, including transgender men and nonbinary people who menstruate.",
+      "jurisdiction": "Global",
+      "productionApproved": false,
+      "contentHash": "31858f0c2de8971c931958427e29a01beb45b321722fda8b505cb86eedb67b6c"
+    }
+  ],
+  "contentHash": "9a4bf4a7862eb144da4e7d1c1fb4bbffd66d8af15f63d8f5a6c01e9ff83c2bea",
+  "competitionStatus": "competitionReady"
+}

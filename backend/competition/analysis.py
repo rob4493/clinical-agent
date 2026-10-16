@@ -60,6 +60,11 @@ class CompetitionAnalysis(AnalysisService):
             byId = {claim.claimId: claim for claim in package.claims}
             warningClaims = [byId[claimId] for warning in warnings for claimId in WarningClaims[warning.ruleId.value]]
             if any(warning.ruleId.value == "U1" for warning in warnings):
+                if getattr(self.registry, "publicEvaluation", False) and not any(safety.criterionStates.get(name) is True for name in ("suddenSevereAbdominalOrPelvicPain", "shoulderPain", "weakness")):
+                    # E01 preserves detection, not an unsupported FAQ action for
+                    # isolated dizziness/fainting. Do not emit partial routine output.
+                    return self.presentCompetition(EvidenceInsufficientResponse(moduleId=package.moduleId,
+                        message="Evidence coverage is insufficient to provide a validated urgent action for this reported pattern. No routine clinical analysis was generated."), [], [], package).model_copy(update={"serviceUnavailable": True})
                 # Emergency action must not depend on ordinary retrieval or a model.
                 # Explain only positively established criteria, never echo case text.
                 labels = {"suddenSevereAbdominalOrPelvicPain": "sudden severe abdominal or pelvic pain",

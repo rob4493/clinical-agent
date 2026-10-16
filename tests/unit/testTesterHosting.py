@@ -62,7 +62,6 @@ def testHostedSourceFreeModes(mode, monkeypatch):
     {"CLINICAL_DEMO_MODE": "true"},
     {"CLINICAL_DEMO_MODE": "TRUE"},
     {"CLINICAL_EVIDENCE_ROOT": ""},
-    {"CLINICAL_RUNTIME_MODE": "competition"},
     {"CLINICAL_RUNTIME_MODE": "competition", "CLINICAL_EVIDENCE_ROOT": "relative"},
 ])
 def testInvalidHostingFailsClosed(settings, monkeypatch, caplog):
@@ -81,6 +80,15 @@ def testNoInImageCompetitionEvidence(monkeypatch):
     monkeypatch.setenv("CLINICAL_EVIDENCE_ROOT", str(project / "privateEvidence"))
     with pytest.raises(serveTester.HostingError):
         serveTester.buildApp()
+
+
+def testCompetitionUsesPublicPackagesWithoutPrivateMount(monkeypatch):
+    clearHost(monkeypatch)
+    monkeypatch.setenv("CLINICAL_RUNTIME_MODE", "competition")
+    app = serveTester.buildApp()
+    assert app.state.registry.publicEvaluation is True
+    assert app.state.analysis.isReady()
+    assert all(not config.active for config in app.state.authenticRegistry.moduleConfigs.values())
 
 
 def testMissingPrivateMountFailsClosed(tmp_path, monkeypatch):
@@ -125,13 +133,13 @@ def testOnlyExplicitCompetitionEvaluatorIsInjected(provider, monkeypatch):
     monkeypatch.setenv("CLINICAL_RUNTIME_MODE", "competition")
     monkeypatch.setattr(serveTester, "configureHost", lambda: provider)
     import backend.app.main as application
-    from tests.support.competitionLanguage import CompetitionLanguage
+    from backend.competition.deterministic import EvaluationLanguage
     create = Mock(return_value="Synthetic app sentinel")
     monkeypatch.setattr(application, "createApp", create)
     assert serveTester.buildApp() == "Synthetic app sentinel"
     assert create.call_args.args[0].runtimeMode() == "competition"
     language = create.call_args.kwargs["language"]
-    assert isinstance(language, CompetitionLanguage) if provider == "deterministic" else language is None
+    assert isinstance(language, EvaluationLanguage) if provider == "deterministic" else language is None
 
 
 def testHostedServerBindingAndPrivacy(monkeypatch):
@@ -165,16 +173,18 @@ def testFileBasedDebugCannotEnableHostedDebug(monkeypatch):
 def testNetlifyConfiguration():
     project = Path(__file__).resolve().parents[2]
     config = tomllib.loads((project / "netlify.toml").read_text(encoding="utf-8"))
-    assert config["build"]["base"] == "frontend"
-    assert config["build"]["publish"] == "dist"
+    assert config["build"]["base"] == "."
+    assert config["build"]["publish"] == "frontend/dist"
     assert (project / config["build"]["base"] / config["build"]["publish"]).relative_to(project).as_posix() == "frontend/dist"
-    assert config["build"]["command"] == "npm run build"
+    assert config["build"]["command"] == "npm --prefix frontend ci --ignore-scripts --no-audit --no-fund && npm --prefix frontend run build"
     assert config["build"]["environment"] == {"NODE_VERSION": "24.21.0"}
     assert config["redirects"] == [
-        {"from": "/api/*", "to": "/backend-unavailable.json", "status": 404, "force": True},
+        {"from": "/api/*", "to": "/.netlify/functions/evaluate/:splat", "status": 200, "force": True},
         {"from": "/*", "to": "/index.html", "status": 200},
     ]
     assert not any("http" in route["to"] for route in config["redirects"])
+    assert config["functions"] == {"directory": "netlify/functions", "node_bundler": "esbuild", "included_files": ["netlify/RuntimeNotice.txt"]}
+    assert config["dev"]["framework"] == "#static"
     unavailable = json.loads((project / "frontend/public/backend-unavailable.json").read_bytes())
     assert unavailable == {"detail": "Analysis is unavailable. No backend is configured for this site."}
     assert all(header["values"]["Cache-Control"] == "no-store" for header in config["headers"])
