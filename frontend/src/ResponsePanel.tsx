@@ -18,6 +18,7 @@ export default function ResponsePanel({ review, synthetic = false, pending = fal
   const urgentOnly = review.warnings.length > 0 && review.considerations.length === 0 && review.messages.length === 0 && !review.question;
   return <section className={`card responseCard ${presentation.tone}`} aria-label="Clinical evidence review">
     {review.warnings.length > 0 && <div className="urgentPanel" role="alert"><h2 tabIndex={-1} id="urgentTitle">Urgent assessment</h2><p className="urgentLabel">Priority warning — review first</p>{review.warnings.map((warning, index) => <p key={index}><Citation statement={warning} /></p>)}</div>}
+    {review.scopeNotice && <p className="scopeNotice" role="note">{review.scopeNotice}</p>}
     {synthetic && <p className="syntheticLabel">Synthetic demonstration response</p>}
     {!urgentOnly && <>{!synthetic && <p className="outcomeLabel">{presentation.label}</p>}<h2 tabIndex={-1} id="reviewTitle">{review.heading}</h2>
     {review.context && <p className="reviewContext">{review.context}</p>}</>}

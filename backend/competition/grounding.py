@@ -4,6 +4,7 @@ import re
 from dataclasses import dataclass, field
 
 from backend.app.services.cancellation import checkCancelled
+from backend.competition.requestPolicy import indeterminateContext
 
 
 @dataclass(frozen=True)
@@ -111,10 +112,7 @@ class GroundingPolicy:
             "Pain or bleeding in early pregnancy may warrant early-pregnancy assessment, but these symptoms alone do not identify the cause or confirm ectopic pregnancy. The urgency of referral depends on the overall clinical presentation.", True)
         # Removing population metadata from case-specific prose is permitted only
         # after independently checking the population that supports this policy.
-        stableEd = (context.pregnancyTestResult == "positive" and context.careSetting == "emergencyDepartment"
-            and context.clinicallyStable is True and context.previousIntrauterinePregnancyConfirmed is False
-            and context.assistedReproduction is False and context.abdominalTrauma is False
-            and context.ultrasoundRoute == "transvaginal" and context.ultrasoundFinding == "indeterminate")
+        stableEd = indeterminateContext(context)
         if stableEd:
             self.add(("M2AIndeterminateHcg", "M2ASerialScope"),
                 "A single serum hCG result does not exclude ectopic pregnancy after an indeterminate transvaginal ultrasound; the available evidence does not support generating an individualized serial-testing schedule.", True)

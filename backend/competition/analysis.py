@@ -16,6 +16,7 @@ from backend.competition.grounding import GroundingPolicy
 from backend.competition.package import PackageError, loadPackage
 from backend.competition.retrieval import CompetitionRetrieval, isNonspecific
 from backend.competition.synthesis import buildFocus, hasUnsupportedFindings
+from backend.competition.requestPolicy import evidenceNotes, prescribingIntent, PrescribingNotice, scopeResult
 
 WarningClaims = {"U1": ("E01", "E02"), "U2": ("C14",), "U3": (
     "CdcSurgicalEmergency", "CdcAbscess", "CdcPregnancy", "CdcSevereIllness", "CdcTemperature", "CdcTolerance", "CdcResponse")}
@@ -44,6 +45,10 @@ class CompetitionAnalysis(AnalysisService):
             return False
 
     def analyzeCase(self, caseInput):
+        notes = caseInput.additionalNotes if isinstance(caseInput, ClinicalCaseInput) else caseInput.get("additionalNotes") if isinstance(caseInput, dict) else None
+        return scopeResult(self.analyzeSelected(caseInput), notes)
+
+    def analyzeSelected(self, caseInput):
         checkCancelled()
         try:
             case = ClinicalCaseInput.model_validate(caseInput.model_dump() if isinstance(caseInput, ClinicalCaseInput) else caseInput, context=self.safety.settings)
@@ -83,6 +88,11 @@ class CompetitionAnalysis(AnalysisService):
                 return self.presentCompetition(outcome, [immediate], [byId["E01"]], package)
             if InjectionPattern.search(case.additionalNotes or ""):
                 return self.presentCompetition(EvidenceInsufficientResponse(moduleId=package.moduleId, message="The submitted instructions cannot be used as clinical evidence. Please provide only de-identified case information."), warnings, warningClaims, package)
+            if prescribingIntent(case.additionalNotes):
+                permitted = evidenceNotes(case.additionalNotes)
+                if not permitted:
+                    return self.presentCompetition(OutsideScope(moduleId=package.moduleId, message=PrescribingNotice), warnings, warningClaims, package)
+                case = case.model_copy(update={"additionalNotes": permitted})
             if OutsidePattern.search(case.additionalNotes or ""):
                 return self.presentCompetition(OutsideScope(moduleId=package.moduleId), warnings, warningClaims, package)
             claims = self.retrieval.retrieve(case)

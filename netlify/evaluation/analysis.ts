@@ -4,6 +4,7 @@ import { CaseInput, context, RecordFields, weeks } from './input';
 import { Claim, DecisionNotice, Module1, Module2, Package } from './packages';
 import { caseText, nonspecific, retrieve1, retrieve2 } from './retrieval';
 import { evaluateSafety, halt, Halt, Safety, Warning, warningCoverage } from './safety';
+import { evidenceNotes, prescribingIntent, PrescribingNotice, hcgClarification } from './requestPolicy';
 
 export interface Envelope { warnings:Warning[]; response:RecordFields; sources:{number:number;source:RecordFields}[]; renderedText:string }
 export interface Analysis { status:number; envelope:Envelope }
@@ -77,6 +78,16 @@ export function unavailable():Analysis {
  return {status:503,envelope:{warnings:[],response:{responseType:'EvidenceInsufficient',moduleId:null,message:'Analysis is unavailable. Please try again later.',decisionSupportNotice:DecisionNotice},sources:[],renderedText:'Analysis is unavailable. Please try again later.\n\n'+DecisionNotice}};
 }
 export function analyze(caseInput:CaseInput,packages:Package[]):Analysis {
+ const result=analyzeClinical(caseInput,packages);
+ if(!prescribingIntent(caseInput.additionalNotes)||['DataConflict','ClarificationRequired'].includes(result.envelope.response.responseType as string))return result;
+ const paragraphs=result.envelope.renderedText.split('\n\n'),position=result.envelope.warnings.length;
+ if(result.envelope.response.responseType==='OutsideScope') {
+  result.envelope.response={...result.envelope.response,message:PrescribingNotice};paragraphs[position]=PrescribingNotice;
+ } else paragraphs.splice(position,0,PrescribingNotice);
+ result.envelope.renderedText=paragraphs.join('\n\n');
+ return result;
+}
+function analyzeClinical(caseInput:CaseInput,packages:Package[]):Analysis {
  const moduleId=caseInput.moduleHint==='EndometriosisChronicPelvicPain'?Module1:caseInput.moduleHint;
  const entry=packages.find(candidate=>candidate.moduleId===moduleId);
  if(!entry)return finish(caseInput,undefined,{responseType:moduleId==='NotSure'?'SelectModuleRequired':'ModuleUnavailable',...(moduleId==='NotSure'?{}:{moduleHint:'Unavailable'}),message:moduleId==='NotSure'?'No clinical module was selected. Please select an approved clinical module before submitting a case.':'The selected module is unavailable.'},[],[],[],null,moduleId==='NotSure'?200:404);
@@ -95,13 +106,20 @@ export function analyze(caseInput:CaseInput,packages:Package[]):Analysis {
   }
   if(moduleId===Module2||warnings.some(warning=>warning.ruleId==='U1'))return finish(caseInput,entry,{responseType:'AgentResponse'},warnings,warningClaims);
  }
- const text=caseInput.additionalNotes||'';
+ let text=caseInput.additionalNotes||'';
  const insufficient=(message=Insufficient)=>finish(caseInput,entry,{responseType:'EvidenceInsufficient',moduleId,message},warnings,warningClaims);
  if(moduleId===Module2&&weeks(caseInput)!==null&&weeks(caseInput)!>13)return finish(caseInput,entry,{responseType:'OutsideScope',moduleId,message:"This request is outside the selected module's evidence-support scope."});
  if(Injection.test(text))return insufficient(moduleId===Module1?'The submitted instructions cannot be used as clinical evidence. Please provide only de-identified case information.':Insufficient);
+ if(prescribingIntent(text)) {
+  text=evidenceNotes(text);
+  if(!text)return finish(caseInput,entry,{responseType:'OutsideScope',moduleId,message:PrescribingNotice},warnings,warningClaims);
+  caseInput={...caseInput,additionalNotes:text};
+ }
  if(Outside.test(text)||moduleId===Module2&&caseInput.pregnancyPossible===false)return finish(caseInput,entry,{responseType:'OutsideScope',moduleId,message:"This request is outside the selected module's evidence-support scope."},warnings,warningClaims);
  if(moduleId===Module2&&caseInput.pregnancyPossible===null)return finish(caseInput,entry,{responseType:'ClarificationRequired',fieldName:'pregnancyPossible',structuredValue:null,clarificationRequest:'Please confirm whether pregnancy is possible or known.'});
  if(moduleId===Module2&&weeks(caseInput)===null)return finish(caseInput,entry,{responseType:'ClarificationRequired',fieldName:'earlyPregnancy.gestationalWeeks',structuredValue:null,clarificationRequest:'Please provide the reported gestational context; missing information remains unknown.'});
+ const clarification=moduleId===Module2?hcgClarification(caseInput):null;
+ if(clarification)return finish(caseInput,entry,{responseType:'ClarificationRequired',fieldName:'earlyPregnancy',structuredValue:null,clarificationRequest:clarification});
  let claims=moduleId===Module2?retrieve2(caseInput,entry):retrieve1(caseInput,entry),atoms:Atom[]=[],question:string|null=null;
  const focus=moduleId===Module1?structuralFocus(caseInput,entry):null;
  if(moduleId===Module1&&unsupportedFindings(caseInput,focus!==null))return insufficient('The verified evidence cannot support a complete, finding-specific review of the reported abnormal findings. They must not be treated as normal.');

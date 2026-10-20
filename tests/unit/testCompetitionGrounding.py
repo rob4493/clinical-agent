@@ -25,7 +25,7 @@ def policyFor(claimIds, **changes):
 
 
 def edContext(**changes):
-    return dict(gestationalWeeks=6.0, pregnancyTestResult="positive", careSetting="emergencyDepartment",
+    return dict(gestationalWeeks=6.0, pregnancyTestType="serum", pregnancyTestResult="positive", careSetting="emergencyDepartment",
         clinicallyStable=True, previousIntrauterinePregnancyConfirmed=False, assistedReproduction=False,
         abdominalTrauma=False, ultrasoundRoute="transvaginal", ultrasoundFinding="indeterminate", **changes)
 
@@ -72,7 +72,7 @@ def testUnknownFactsAndInstructionsNeverPassByKeywordOverlap(suffix, caplog):
 @pytest.mark.parametrize("field,changed", [
     ("clinicallyStable", False), ("careSetting", "other"), ("pregnancyTestResult", "negative"),
     ("abdominalTrauma", True), ("assistedReproduction", True), ("previousIntrauterinePregnancyConfirmed", True),
-    ("ultrasoundFinding", "noPregnancyVisualized"), ("ultrasoundRoute", "transabdominal"),
+    ("ultrasoundFinding", "other"), ("ultrasoundRoute", "transabdominal"),
     ("gestationalWeeks", 14.0),
 ])
 def testCompactCaseSpecificStatementCannotBroadenItsPopulation(field, changed):
@@ -114,7 +114,7 @@ class ParaphraseLanguage(CompetitionLanguage):
 def testEndpointRetainsNaturalModelTextAndCitesOnlyItsSource():
     with TestClient(makeApp(ParaphraseLanguage())) as client:
         result = client.post("/v1/analyze", json=makeCase(earlyPregnancy=edContext(),
-            additionalNotes="Stable initial presentation with pain. What does an initial serum hCG result establish after the indeterminate scan, and is a serial schedule supported?"))
+            additionalNotes="Stable initial presentation with pelvic pain. What does an initial serum hCG result establish after the indeterminate scan, and is a serial schedule supported?"))
         details = client.get("/v1/competition/sources/ACEP-EARLYPREG-2017").json()
     body = result.json()
     assert body["response"]["responseType"] == "AgentResponse"

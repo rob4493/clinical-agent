@@ -22,6 +22,7 @@ from backend.competition.generation import CompetitionDraft, Instructions
 from backend.competition.integrity import Module2PackageHash
 from backend.competition.grounding import GroundingPolicy
 from backend.competition.package import loadPackage
+from backend.competition.requestPolicy import evidenceNotes, prescribingIntent, PrescribingNotice, indeterminateContext, hcgClarification
 
 from backend.competition.storage import evidenceRoot
 
@@ -63,12 +64,16 @@ class PregnancyRetrieval:
         byId = {claim.claimId: claim for claim in package.claims}
         locationUnknown = (context.pregnancyTestResult == "positive" and context.ultrasoundRoute == "transvaginal"
             and context.ultrasoundFinding == "noPregnancyVisualized" and context.previousIntrauterinePregnancyConfirmed is False)
-        acep = (context.pregnancyTestResult == "positive" and context.careSetting == "emergencyDepartment" and context.clinicallyStable is True
-            and context.previousIntrauterinePregnancyConfirmed is False and context.assistedReproduction is False
-            and context.abdominalTrauma is False and context.ultrasoundRoute == "transvaginal"
-            and context.ultrasoundFinding == "indeterminate")
+        acep = indeterminateContext(context) and True in reportedStates(case.additionalNotes, r"(?:pelvic|abdominal) (?:pain|discomfort)|spotting|(?:light |vaginal )?bleeding")
         if re.search(r"\bhcg\b|serum|pregnancy location|where.*pregnancy", narrative):
-            selected = ["M2NSerialLimits" if re.search(r"serial|trend|repeat", narrative) else "M2NHcgLocation"] if locationUnknown else ["M2AIndeterminateHcg", "M2ASerialScope"] if acep and "serial" in narrative else ["M2AIndeterminateHcg"] if acep else []
+            acepQuestion = bool(re.search(r"exclude|rule out|single|one result|schedule", narrative))
+            if acepQuestion and not acep:
+                return ()
+            selected = (["M2AIndeterminateHcg", "M2ASerialScope"] if acep and acepQuestion else
+                ["M2NSerialLimits" if re.search(r"serial|trend|repeat", narrative) else "M2NHcgLocation"] if locationUnknown else
+                ["M2AIndeterminateHcg", "M2ASerialScope"] if acep and "serial" in narrative else ["M2AIndeterminateHcg"] if acep else [])
+            if acep and acepQuestion:
+                return tuple(byId[claimId] for claimId in selected)
             if locationUnknown and re.search(r"new|chang|worsen|reassur|trend", narrative):
                 selected.append("M2NSymptomsOverHcg")
             if locationUnknown and re.search(r"ultrasound|scan", narrative):
@@ -207,12 +212,20 @@ class PregnancyAnalysis(AnalysisService):
             narrative = case.additionalNotes or ""
             if InjectionPattern.search(narrative):
                 return self.present(EvidenceInsufficientResponse(moduleId=Module2Id), package=package)
+            if prescribingIntent(narrative):
+                narrative = evidenceNotes(narrative)
+                if not narrative:
+                    return self.present(OutsideScope(moduleId=Module2Id, message=PrescribingNotice), package=package)
+                case = case.model_copy(update={"additionalNotes": narrative})
             if OutsidePattern.search(narrative) or case.pregnancyPossible is False:
                 return self.present(OutsideScope(moduleId=Module2Id), package=package)
             if case.pregnancyPossible is None:
                 return self.present(ClarificationRequired(fieldName="pregnancyPossible", clarificationRequest="Please confirm whether pregnancy is possible or known."), package=package)
             if context.gestationalWeeks is None:
                 return self.present(ClarificationRequired(fieldName="earlyPregnancy.gestationalWeeks", clarificationRequest="Please provide the reported gestational context; missing information remains unknown."), package=package)
+            clarification = hcgClarification(case)
+            if clarification:
+                return self.present(ClarificationRequired(fieldName="earlyPregnancy", clarificationRequest=clarification), package=package)
             claims = self.retrieval.retrieve(case, package)
             if not claims:
                 return self.present(EvidenceInsufficientResponse(moduleId=Module2Id,

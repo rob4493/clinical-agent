@@ -1,4 +1,5 @@
 import Policy from './policy.json';
+import { indeterminateContext } from './requestPolicy';
 import { currentClauses, phraseState, reportedStates } from './assertions';
 import { CaseInput, context, pattern, weeks } from './input';
 import { Claim, Package, Module2 } from './packages';
@@ -65,9 +66,12 @@ export function retrieve2(caseInput:CaseInput,entry:Package):Claim[] {
  if(weeks(caseInput)===null||weeks(caseInput)!>13||caseInput.pregnancyPossible!==true)return [];
  if(ctx.pregnancyTestResult==='negative'||/rh\b|anti.d|urine|medication|dose|threshold|cut.?off|\bcrl\b|\bmsd\b/.test(text))return [];
  const location=ctx.pregnancyTestResult==='positive'&&ctx.ultrasoundRoute==='transvaginal'&&ctx.ultrasoundFinding==='noPregnancyVisualized'&&ctx.previousIntrauterinePregnancyConfirmed===false;
- const acep=ctx.pregnancyTestResult==='positive'&&ctx.careSetting==='emergencyDepartment'&&ctx.clinicallyStable===true&&ctx.previousIntrauterinePregnancyConfirmed===false&&ctx.assistedReproduction===false&&ctx.abdominalTrauma===false&&ctx.ultrasoundRoute==='transvaginal'&&ctx.ultrasoundFinding==='indeterminate';
+ const acep=indeterminateContext(ctx)&&reportedStates(caseInput.additionalNotes,'(?:pelvic|abdominal) (?:pain|discomfort)|spotting|(?:light |vaginal )?bleeding').has(true);
  let selected:string[]=[];
  if(/\bhcg\b|serum|pregnancy location|where.*pregnancy/.test(text)) {
+  const acepQuestion=/exclude|rule out|single|one result|schedule/.test(text);
+  if(acepQuestion&&!acep)return [];
+  if(acep&&acepQuestion)return ['M2AIndeterminateHcg','M2ASerialScope'].map(id=>entry.claims.find(claim=>claim.claimId===id)!);
   selected=location?[/serial|trend|repeat/.test(text)?'M2NSerialLimits':'M2NHcgLocation']:acep&&text.includes('serial')?['M2AIndeterminateHcg','M2ASerialScope']:acep?['M2AIndeterminateHcg']:[];
   if(location&&/new|chang|worsen|reassur|trend/.test(text))selected.push('M2NSymptomsOverHcg');
   if(location&&/ultrasound|scan/.test(text))selected.push('M2NEmptyUterus');

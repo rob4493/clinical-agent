@@ -4,6 +4,7 @@ export const DemoNotice = 'Synthetic demonstration — uses fictional test evide
 export const SyntheticNotice = 'Synthetic demonstration only; not a diagnosis, treatment selection, or substitute for clinical judgment.';
 export const CompetitionNotice = 'Decision-support notice: Evidence support only; not a diagnosis, treatment selection, or substitute for clinical judgment.';
 export const CompetitionBanner = 'Reviewed with healthcare professionals for evaluation and feedback. Not validated or approved for patient care.';
+export const PrescribingNotice = 'Medication selection, dosing and patient-specific prescribing are outside this system’s scope.';
 export type RuntimeMode = 'standard' | 'synthetic' | 'competition' | 'production';
 
 export interface ClinicalModule { moduleId: string; displayName: string; supportedCaseTypes: string[] }
@@ -26,7 +27,7 @@ export interface CaseInput {
 }
 export interface Source { number: number; sourceId: string; title: string; verifiedUrl: string | null; organization?: string; date?: string }
 export interface Statement { text: string; numbers: number[] }
-export interface Review { heading: string; warnings: Statement[]; considerations: Statement[]; messages: string[]; question: string | null; sources: Source[]; notice: string; context?: string }
+export interface Review { heading: string; warnings: Statement[]; considerations: Statement[]; messages: string[]; question: string | null; sources: Source[]; notice: string; context?: string; scopeNotice?: string }
 
 function record(payload: unknown): Record<string, unknown> {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new Error(UnexpectedMessage);
@@ -121,6 +122,13 @@ export function readReview(payload: unknown, synthetic = false, runtimeMode: Run
   let question: string | null = null;
   let heading: string;
   let context: string | undefined;
+  let scopeNotice: string | undefined;
+  // Recognize only the server's fixed safety preface, never arbitrary extra prose.
+  const renderedParagraphs = typeof envelope.renderedText === 'string' ? envelope.renderedText.split('\n\n') : [];
+  if (renderedParagraphs[warnings.length] === PrescribingNotice && outcome.responseType !== 'OutsideScope') {
+    scopeNotice = PrescribingNotice;
+    renderedParagraphs.splice(warnings.length, 1);
+  }
   switch (outcome.responseType) {
     case 'AgentResponse': {
       heading = synthetic ? warnings.length ? 'Essential uncertainty' : 'Clinical considerations' : 'Evidence-supported considerations';
@@ -143,7 +151,7 @@ export function readReview(payload: unknown, synthetic = false, runtimeMode: Run
       // The existing envelope carries its optional trusted question only in renderedText.
       // Recognize the exact known body first; never display arbitrary leftover paragraphs.
       if (typeof envelope.renderedText !== 'string' || !envelope.renderedText.endsWith(notice)) throw new Error(UnexpectedMessage);
-      const paragraphs = envelope.renderedText.split('\n\n');
+      const paragraphs = renderedParagraphs;
       const body = paragraphs.slice(0, paragraphs.includes('Sources') ? paragraphs.indexOf('Sources') : paragraphs.length - 1);
       const expected = [...warnings, ...considerations].map(statement => statement.text + (statement.numbers.length ? ' [' + statement.numbers.join(',') + ']' : ''));
       if (body.slice(0, expected.length).some((paragraph, index) => paragraph !== expected[index]) || body.length < expected.length) throw new Error(UnexpectedMessage);
@@ -165,5 +173,5 @@ export function readReview(payload: unknown, synthetic = false, runtimeMode: Run
     default: throw new Error(UnexpectedMessage);
   }
   // Validate the wire notice first; the authoritative response mode controls this display-only notice.
-  return { heading, warnings, considerations, messages, question, sources: sources.filter(source => citedIds.has(source.sourceId)), notice: synthetic ? SyntheticNotice : notice, ...(context ? { context } : {}) };
+  return { heading, warnings, considerations, messages, question, sources: sources.filter(source => citedIds.has(source.sourceId)), notice: synthetic ? SyntheticNotice : notice, ...(context ? { context } : {}), ...(scopeNotice ? { scopeNotice } : {}) };
 }

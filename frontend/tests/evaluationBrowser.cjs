@@ -55,10 +55,12 @@ async function run() {
     assert.deepEqual(await page.evaluate(()=>[localStorage.length,sessionStorage.length]),[0,0]);
     report.checks.push({viewport:viewport.name,id:scenario.id,status:response.status(),outcome:result.response.responseType});
    }
-   for (const [id,narrative,phrase] of [
+   for (const [id,narrative,phrase,outcome='AgentResponse'] of [
     ['manualTvus','Normal transvaginal ultrasound. Does this exclude endometriosis?','does not exclude'],
     ['manualMri','Normal MRI. Does this exclude endometriosis?','does not establish'],
     ['manualCa125','Can CA-125 diagnose endometriosis?','CA-125'],
+    ['prescribingOnly','Select the best medication, provide the exact dose and duration, and write a prescription plan.','Medication selection, dosing and patient-specific prescribing are outside this system’s scope.','OutsideScope'],
+    ['mixedPrescribing','Normal transvaginal ultrasound. Does this exclude endometriosis? Select the best medication.','does not exclude'],
    ]) {
     await page.getByRole('button',{name:'Clear case',exact:true}).click();
     await page.locator('#module').selectOption('module_01_endo');
@@ -66,13 +68,27 @@ async function run() {
     const received = page.waitForResponse(response=>response.url().endsWith('/api/v1/analyze') && response.request().method()==='POST');
     await page.getByRole('button',{name:'Analyze',exact:true}).click();
     const response = await received; const result = await response.json();
-    assert.equal(response.status(),200); assert.equal(result.response.responseType,'AgentResponse');
-    assert.ok(result.response.supportedInterpretations[0].text.includes(phrase));
+    assert.equal(response.status(),200); assert.equal(result.response.responseType,outcome);
+    assert.ok(result.renderedText.includes(phrase));
     await page.locator('.decisionNotice').waitFor();
     const details = page.locator('button.sourceButton').first();
     if (await details.count()) { await details.click(); await page.getByRole('dialog').waitFor(); await page.keyboard.press('Escape'); }
     report.checks.push({viewport:viewport.name,id,status:response.status(),outcome:result.response.responseType});
    }
+   // Exercise the real form's structured mapping and actual function route.
+   await page.getByRole('button',{name:'Clear case',exact:true}).click();
+   await page.locator('#module').selectOption('module_02_early_pregnancy');
+   await page.locator('#pregnancy').selectOption('yes');
+   await page.locator('#gestationalWeeks').fill('6');
+   for(const [field,selection] of Object.entries({careSetting:'emergencyDepartment',pregnancyTestType:'serum',pregnancyTestResult:'positive',ultrasoundRoute:'transvaginal',ultrasoundFinding:'noPregnancyVisualized',clinicallyStable:'yes',previousIntrauterinePregnancyConfirmed:'no',assistedReproduction:'no',abdominalTrauma:'no'}))await page.locator('#'+field).selectOption(selection);
+   await page.locator('#narrative').fill('Mild pelvic discomfort and light spotting. One single serum hCG result is available. Can this exclude ectopic pregnancy after the ultrasound?');
+   const receivedHcg=page.waitForResponse(response=>response.url().endsWith('/api/v1/analyze')&&response.request().method()==='POST');
+   await page.getByRole('button',{name:'Analyze',exact:true}).click();
+   const responseHcg=await receivedHcg,resultHcg=await responseHcg.json();
+   assert.equal(resultHcg.response.responseType,'AgentResponse');
+   assert.deepEqual(resultHcg.sources.map(cited=>cited.source.sourceId),['ACEP-EARLYPREG-2017']);
+   await page.locator('.directAnswer').filter({hasText:'A single serum hCG result does not exclude ectopic pregnancy'}).waitFor();
+   report.checks.push({viewport:viewport.name,id:'manualSingleHcg',status:responseHcg.status(),outcome:resultHcg.response.responseType});
    await page.getByRole('button',{name:'Clear case',exact:true}).click();
    await page.locator('#module').selectOption('module_01_endo');
    await page.locator('#narrative').fill('Normal MRI. Does this exclude endometriosis?');

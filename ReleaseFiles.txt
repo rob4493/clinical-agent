@@ -82,6 +82,7 @@ backend/competition/integrity.py
 backend/competition/maternalEvaluation.py
 backend/competition/package.py
 backend/competition/registry.py
+backend/competition/requestPolicy.py
 backend/competition/retrieval.py
 backend/competition/storage.py
 backend/competition/synthesis.py
@@ -109,6 +110,7 @@ backend/requirements.txt
 backend/requirementsTest.txt
 evaluation/ClaimInventory.csv
 evaluation/README.md
+evaluation/RequestPolicy.md
 evaluation/integrity.json
 evaluation/modules/module1/claims.json
 evaluation/modules/module2/claims.json
@@ -137,6 +139,7 @@ frontend/tests/CompetitionPresentation.test.tsx
 frontend/tests/DemoCases.test.tsx
 frontend/tests/Module02.test.tsx
 frontend/tests/NetlifyFunction.test.ts
+frontend/tests/RequestPolicy.test.ts
 frontend/tests/SourceDetails.test.tsx
 frontend/tests/SyntheticPresentation.test.tsx
 frontend/tests/api.test.ts
@@ -158,6 +161,7 @@ netlify/evaluation/assertions.ts
 netlify/evaluation/input.ts
 netlify/evaluation/packages.ts
 netlify/evaluation/policy.json
+netlify/evaluation/requestPolicy.ts
 netlify/evaluation/retrieval.ts
 netlify/evaluation/reviewSeal.ts
 netlify/evaluation/safety.ts
@@ -212,6 +216,7 @@ tests/unit/testNaming.py
 tests/unit/testPiiFilter.py
 tests/unit/testPublicEvaluation.py
 tests/unit/testRegistry.py
+tests/unit/testRequestPolicy.py
 tests/unit/testRetrieval.py
 tests/unit/testReviews.py
 tests/unit/testSafetyService.py
