@@ -35,14 +35,12 @@ from backend.app.models.input import ClinicalCaseInput, CaseType
 from backend.app.models.module import (
     ClinicalModuleConfig,
     ModuleStatus,
-    SourceEntry,
 )
 from backend.app.models.output import (
     AgentResponse,
     AuditEvent,
     AuditEventType,
     AuditOutcome,
-    AuditSummary,
     CitationValidationOutcome,
     ClarificationRequired,
     ClinicalConsideration,
@@ -50,7 +48,6 @@ from backend.app.models.output import (
     DecisionSupportNotice,
     EvidenceCitation,
     EvidenceInsufficientResponse,
-    MissingInformation,
     ModuleUnavailable,
     ReportedFacts,
     SelectModuleRequired,
@@ -775,11 +772,9 @@ class TestAuditEvent:
 
     def testNoDictOrFreeTextFields(self) -> None:
         """AuditEvent must have no dict-typed fields that could hold arbitrary content."""
-        import typing
         for fieldName, fieldInfo in AuditEvent.model_fields.items():
             annotation = fieldInfo.annotation
             # Unwrap Optional/Union to get the inner type
-            origin = getattr(annotation, "__origin__", None)
             args = getattr(annotation, "__args__", ())
             innerTypes = list(args) if args else [annotation]
             for t in innerTypes:

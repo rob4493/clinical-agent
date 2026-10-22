@@ -7,6 +7,7 @@ const Origin = process.env.EVALUATION_ORIGIN || 'http://127.0.0.1:5191';
 assert.equal(new URL(Origin).hostname, '127.0.0.1');
 const Banner = 'Reviewed with healthcare professionals for evaluation and feedback. Not validated or approved for patient care.';
 const PregnancyCases = require('../src/PregnancyCases.json');
+const SchemaCases = require('../../tests/fixtures/clinicalDataCases.json');
 const Expected = { pregBrief:[200,'AgentResponse'], pregDetailed:[200,'AgentResponse'], pregEmergency:[200,'AgentResponse'], pregDizziness:[200,'AgentResponse'], pregUnsupported:[503,'EvidenceInsufficient'], pregConflict:[200,'DataConflict'], pregTesting:[200,'EvidenceInsufficient'], pregSerial:[200,'AgentResponse'], pregOutside:[200,'OutsideScope'], pregInjection:[200,'EvidenceInsufficient'] };
 const Module1Cases = [['Brief','AgentResponse'],['Mild/nonurgent','AgentResponse'],['Detailed','AgentResponse'],['Urgent warning','AgentResponse'],['Conflict','DataConflict'],['Clarification','ClarificationRequired'],['Outside scope','OutsideScope']];
 const report = { checks:[], externalRequests:0, pageErrors:0, routes:[] };
@@ -44,6 +45,8 @@ async function run() {
     if (result.warnings.length) assert.ok(result.renderedText.startsWith(result.warnings[0].text));
     assert.ok(result.renderedText.endsWith(result.response.decisionSupportNotice));
     await page.locator('.decisionNotice').waitFor();
+    const sourceToggle = page.getByRole('button', { name: /^Sources \(/ });
+    if (await sourceToggle.count()) await sourceToggle.click();
     for (const link of await page.locator('a.sourceButton').all()) {
      assert.equal(await link.getAttribute('target'),'_blank');
      assert.equal(await link.getAttribute('rel'),'noopener noreferrer');
@@ -71,6 +74,8 @@ async function run() {
     assert.equal(response.status(),200); assert.equal(result.response.responseType,outcome);
     assert.ok(result.renderedText.includes(phrase));
     await page.locator('.decisionNotice').waitFor();
+    const sourceToggle = page.getByRole('button', { name: /^Sources \(/ });
+    if (await sourceToggle.count()) await sourceToggle.click();
     const details = page.locator('button.sourceButton').first();
     if (await details.count()) { await details.click(); await page.getByRole('dialog').waitFor(); await page.keyboard.press('Escape'); }
     report.checks.push({viewport:viewport.name,id,status:response.status(),outcome:result.response.responseType});
@@ -87,8 +92,14 @@ async function run() {
    const responseHcg=await receivedHcg,resultHcg=await responseHcg.json();
    assert.equal(resultHcg.response.responseType,'AgentResponse');
    assert.deepEqual(resultHcg.sources.map(cited=>cited.source.sourceId),['ACEP-EARLYPREG-2017']);
-   await page.locator('.directAnswer').filter({hasText:'A single serum hCG result does not exclude ectopic pregnancy'}).waitFor();
+   await page.locator('.directAnswer').filter({hasText:'One blood pregnancy-hormone result cannot rule out ectopic pregnancy'}).waitFor();
    report.checks.push({viewport:viewport.name,id:'manualSingleHcg',status:responseHcg.status(),outcome:resultHcg.response.responseType});
+   const canonicalResult=await page.evaluate(async canonical=>{
+    const response=await fetch('/api/v1/analyze',{method:'POST',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify(canonical)});
+    const result=await response.json();return {status:response.status,outcome:result.response?.responseType,sourceIds:result.sources?.map(cited=>cited.source.sourceId)};
+   },SchemaCases.cases.find(example=>example.id==='module2').case);
+   assert.equal(canonicalResult.status,200);assert.equal(canonicalResult.outcome,'AgentResponse');assert.deepEqual(canonicalResult.sourceIds,['ACEP-EARLYPREG-2017']);
+   report.checks.push({viewport:viewport.name,id:'canonicalRequest',status:canonicalResult.status,outcome:canonicalResult.outcome});
    await page.getByRole('button',{name:'Clear case',exact:true}).click();
    await page.locator('#module').selectOption('module_01_endo');
    await page.locator('#narrative').fill('Normal MRI. Does this exclude endometriosis?');

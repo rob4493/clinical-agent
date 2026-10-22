@@ -15,7 +15,7 @@ from backend.app.config import Settings
 from backend.app.main import createApp
 from backend.app.models.output import SyntheticNotice
 from backend.app.services.evidence import EvidenceLoader, EvidenceUnavailableError
-from backend.demo.runtime import composeDemo, DemoNotice, BriefText, DetailedText, BriefParts, DetailedParts
+from backend.demo.runtime import composeDemo, DemoNotice, BriefText, DetailedText
 from backend.demo.runtime import DemoWarnings
 from backend.demo.cases import BriefNarrative, DetailedNarrative, CaseParts
 

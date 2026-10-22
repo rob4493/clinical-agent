@@ -8,6 +8,7 @@ import { analysisResult } from './fixtures';
 
 function mockApi() {
   const requests = vi.fn(async (url: string, options?: RequestInit) => {
+    if (url.endsWith('/v1/analyze')) expect(options?.method).toBe('POST');
     let payload: unknown;
     if (url.endsWith('/v1/modules')) payload = { modules: [
       { moduleId: 'module_01_endo', displayName: 'Endometriosis competition', supportedCaseTypes: ['brief', 'detailed'] },

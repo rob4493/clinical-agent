@@ -1,8 +1,12 @@
-# Clinical Evidence Assistant
+# Endo
+
+Clinical Evidence Assistant
 
 A local demonstration that helps healthcare professionals review case information alongside supporting medical evidence. You can explore it without medical expertise by loading the supplied example cases.
 
 **Use fictional cases only. This application is not approved for patient care.** It does not diagnose, estimate disease probability, infer disease stage or pregnancy viability, prescribe, provide medication doses, or choose treatment for a person.
+
+Developers and future integrations share a [versioned clinical-data contract](shared/README.md). Existing submissions remain compatible. Optional de-identified document review is available, with explicit clinician confirmation before analysis.
 
 ## What works today
 
@@ -24,7 +28,7 @@ Use **Windows PowerShell**, **Python 3.12**, and **Node.js 24.15.0 or later with
 
 You need internet access for initial dependency installation. The offline application does not need an IBM account, API keys, Docker, a running Milvus service or a real `.env` file.
 
-After this source-free release is published, download it through GitHub or use:
+Download the published release through GitHub or clone it:
 
 ```powershell
 git clone https://github.com/rob4493/clinical-agent.git
@@ -45,7 +49,7 @@ py -3.12 -m venv .venvMilvus
 .\.venvMilvus\Scripts\python.exe -m pip install -c backend/constraintsMilvus.txt setuptools==81.0.0 -r backend/requirements.txt -r backend/requirementsTest.txt
 .\.venvMilvus\Scripts\python.exe -m pip check
 Set-Location frontend
-npm ci
+npm ci --ignore-scripts
 Set-Location ..
 ```
 
@@ -55,13 +59,13 @@ Set-Location ..
 
 Open two PowerShell windows in the project folder. Keep both windows open.
 
-**Window 1 — backend:**
+**Window 1 â€” backend:**
 
 ```powershell
 .\.venvMilvus\Scripts\python.exe -B -m tools.runDemo --mode synthetic
 ```
 
-**Window 2 — website:**
+**Window 2 â€” website:**
 
 ```powershell
 Set-Location frontend
@@ -81,9 +85,9 @@ No source download or private installation is needed for the public evaluation p
 .\.venvMilvus\Scripts\python.exe -B -m tools.runDemo --mode competition
 ```
 
-Use the same frontend command above. Confirm **Competition evaluation mode** and explicitly select **Endometriosis and Chronic Pelvic Pain** or **Early Pregnancy Pain and Bleeding**. Responses are composed deterministically from the reviewed public summaries; no live model is connected. Authentic sources remain pending review and authentic modules inactive. Missing or altered public packages or safety code invalidate evaluation readiness. Do not edit hashes to bypass review.
+Use the same frontend command above. Confirm **Reviewed with healthcare professionals for evaluation and feedback. Not validated or approved for patient care.** and explicitly select **Endometriosis and Chronic Pelvic Pain** or **Early Pregnancy Pain and Bleeding**. Responses are composed deterministically from the reviewed public summaries; no live model is connected. Authentic sources remain pending review and authentic modules inactive. Missing or altered public packages or safety code invalidate evaluation readiness. Do not edit hashes to bypass review.
 
-Keep age range and case type in dropdowns rather than repeating them in the narrative. Pregnancy and PID have Yes, No and Unknown states; PID means pelvic inflammatory disease, and this field records a clinician-reported diagnosis rather than one made by the app. Module 2 has additional pregnancy-test and ultrasound context. Responses use numbered citations with sources at the bottom. Absence of a warning does not prove safety.
+Keep age range and case type in dropdowns rather than repeating them in the narrative. Pregnancy and PID have Yes, No and Unknown states; PID means pelvic inflammatory disease, and this field records a clinician-reported diagnosis rather than one made by the app. Module 2 has additional pregnancy-test and ultrasound context. Results start with a short Summary when an exact reviewed mapping is available. Key points, full clinical details and Sources expand on request. Click a numbered citation to open its source list; urgent warnings and prescribing boundaries stay visible. Absence of a warning does not prove safety.
 
 Both commands bind only to localhost and disable access logs. They are offline local evaluation launchers, not public deployment commands. No live model or vector client is created.
 
@@ -97,21 +101,24 @@ Natural paraphrases are checked against bounded supported propositions, not acce
 
 ## Check the installation
 
-Source-free backend checks run against the explicit inactive registry:
+Source-free backend checks run against the explicit inactive registry. Run these from the project root:
 
 ```powershell
 $env:MODULE_ROOT = (Resolve-Path backend/releaseModules).Path
-.\.venvMilvus\Scripts\python.exe -B -m pytest tests/unit/testEvidenceInstallation.py tests/unit/testSyntheticDemo.py -v
+.\.venvMilvus\Scripts\python.exe -B -m pytest tests/unit/testPublicEvaluation.py tests/unit/testEvaluationPackages.py tests/unit/testRequestPolicy.py tests/unit/testEvidenceInstallation.py tests/unit/testClinicalSchema.py tests/unit/testDocumentBridge.py tests/unit/testResponsePresentation.py -q
+.\.venvMilvus\Scripts\python.exe -m tools.schemaSync --check
 .\.venvMilvus\Scripts\python.exe -m pip check
 Set-Location frontend
-npm test
+npm test -- --maxWorkers=1
 npm run build
+node tests/uploadBuild.mjs
 npm ls --depth=0
+Set-Location ..
 ```
 
 The full historical backend command remains `python -B -m pytest tests/ -v`. It requires the private evidence/knowledge/review fixtures at their original ignored paths in an authorized developer workspace; it does not silently invent or skip absent evidence. Clear `MODULE_ROOT` before running that original full suite. No historical assertions have been weakened. A public source-only clone cannot execute evidence-bearing regressions without those separately supplied fixtures.
 
-`npm run build` produces `frontend/dist`, not a running server. It contains no source files or claim packages. A future static host needs a same-origin `/api/*` reverse proxy preserving runtime headers, TLS, access controls and disabled body logging. A controlled competition deployment can mount verified evidence privately after image creation; it must never bake it into image layers. No deployment or live-provider connection is performed by these instructions.
+`npm run build` produces `frontend/dist`; it does not start a server. The public site uses the same-origin Netlify Function in this repository. It needs no separately hosted backend or private evidence. Plain static hosting alone cannot provide analysis. FastAPI is retained as a separate local-development option. No live IBM or Milvus connection is enabled.
 
 To create a source-only distribution in a new directory:
 
@@ -140,10 +147,28 @@ Press **Ctrl+C in both windows** to stop. Closing the browser alone does not sto
 
 `backend`, `frontend`, `tests` and `tools` contain original application code, configuration, synthetic test fixtures and test tools. Requirements and the npm lockfile declare separately installed dependencies. `backend/releaseModules` holds inactive configurations without evidence. `EvidenceSources.example.json` holds only identities, filenames, official links, hashes and claim IDs. `ReleaseFiles.txt` is the exact source-release inventory.
 
-Protected source originals, complete clinical packages, knowledge documents, intake originals, source-derived review packets, environments, node_modules, builds, screenshots, logs, local coding instructions and historical reports stay untracked. They must not be included in archives, frontend assets or image contexts. Apache 2.0 covers only original project work; it does not grant source rights, trademarks or third-party dependency rights.
+Protected source originals, private source-runtime packages, knowledge documents, intake originals, source-derived review packets, environments, node_modules, builds, screenshots, logs, local coding instructions and historical reports stay untracked. They must not be included in archives, frontend assets or image contexts. Apache 2.0 covers only original project work; it does not grant source rights, trademarks or third-party dependency rights.
 
 ## Tester hosting configuration
 
 The public evaluation site runs entirely on Netlify: the React interface calls a same-origin TypeScript Function through `/api/*`. No separate backend, API key or private evidence installation is required. The root `netlify.toml` pins Node 24.21.0, installs and builds through `npm --prefix frontend`, publishes only `frontend/dist`, and supports page refreshes. Its repository-root base keeps function paths consistent. Run `npm ci` and `npm run build` inside `frontend`.
 
 Modules 1 and 2 use the repository's original evaluation summaries and deterministic server-side composition. They are reviewedForEvaluation and competitionReady, never approved for patient care. Original clinical publications are not distributed. FastAPI remains available for local development. See [hosting, health checks, local emulation and rollback](TesterDeployment.md). A failed integrity or availability check keeps Analyze unavailable. No deployment is performed by these files.
+
+
+## Optional document review
+
+You can add a de-identified PDF, DOCX or TXT note using **Upload de-identified note or report**. Read the privacy warning first. Files stay in browser memory; original files are not sent to the server or saved by the application.
+
+View the extracted text, review and correct every item, then select **Confirm reviewed information** before Analyze. This does not verify the medical accuracy of the document. Remove names, birth dates, contact details and record numbers yourself; automated screening can miss identifiers.
+
+Use short text documents: up to 1 MB each, three files and 2 MB total. Scans and medical images are unsupported. PDF previews show text and page numbers, not original page layout. Your manual notes plus confirmed text must fit the existing 2,000-character analysis limit. Clear case or refresh removes the upload session.
+
+See [Document review and limits](shared/DocumentReview.md) for supported formats, safety limits and current limitations.
+
+
+## Endo interface
+
+Endo is the Clinical Evidence Assistant shown in the browser. The centered case workspace keeps explicit module selection, document review and evidence safeguards. There is no separate reviewer agent or Review Companion panel. See [Endo design and accessibility](shared/EndoDesign.md) for the visual system and its differences from the design reference.
+
+Response display and reviewed plain-language wording: see [Response presentation](shared/ResponsePresentation.md).

@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 
 from backend.app.main import createApp
 from backend.app.services.watsonx import WatsonxLanguage
+# noNetwork is imported as a pytest fixture discovered by name.
 from tests.unit.testWatsonx import configure, tokenReply, chatReply, noNetwork
 from tests.unit.testCompetitionAnalysis import caseFields
 from tests.support.competitionLanguage import CompetitionLanguage

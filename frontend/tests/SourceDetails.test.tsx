@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import ResponsePanel from '../src/ResponsePanel';
@@ -7,10 +7,10 @@ import { analysisResult } from './fixtures';
 
 const Details = { title: 'Fictional pelvic review reference', status: 'Demonstration only; no clinical authority', statements: ['A bounded review statement.'], limitations: 'Not clinically validated evidence.' };
 function mockDetails(payload: unknown = Details, mode = 'synthetic') {
-  const transport = vi.fn(async (requestPath: string) => new Response(JSON.stringify(payload), { headers: { 'X-Clinical-Mode': mode } }));
+  const transport = vi.fn(async (requestPath: string) => { expect(requestPath.startsWith('/api/v1/')).toBe(true); return new Response(JSON.stringify(payload), { headers: { 'X-Clinical-Mode': mode } }); });
   vi.stubGlobal('fetch', transport); return transport;
 }
-function openPanel() { return render(<ResponsePanel review={readReview(analysisResult(), true)} synthetic />); }
+function openPanel() { const view = render(<ResponsePanel review={readReview(analysisResult(), true)} synthetic />); fireEvent.click(screen.getByRole('button', { name: 'Sources (1)' })); return view; }
 
 describe('internal read-only demo source details', () => {
   it('opens only local source content and restores keyboard focus', async () => {
@@ -38,7 +38,7 @@ describe('internal read-only demo source details', () => {
   });
   it('aborts detail loading and removes the dialog when the case clears', async () => {
     let signal: AbortSignal | undefined;
-    vi.stubGlobal('fetch', vi.fn((requestPath: string, options: RequestInit) => { signal = options.signal as AbortSignal; return new Promise(() => {}); }));
+    vi.stubGlobal('fetch', vi.fn((requestPath: string, options: RequestInit) => { expect(requestPath.startsWith('/api/v1/demo/sources/')).toBe(true); signal = options.signal as AbortSignal; return new Promise(() => {}); }));
     const { rerender } = openPanel(); await userEvent.click(screen.getByRole('button', { name: /View source/ }));
     await waitFor(() => expect(signal).toBeDefined()); rerender(<ResponsePanel review={null} synthetic />);
     expect(signal!.aborted).toBe(true); expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

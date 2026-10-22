@@ -1,7 +1,6 @@
 """Offline IBM conformance with synthetic payloads and injected HTTP mocks only."""
 
 import asyncio
-import copy
 import errno
 import importlib
 import json

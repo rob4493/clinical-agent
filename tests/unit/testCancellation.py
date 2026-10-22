@@ -12,6 +12,7 @@ from backend.app.services.cancellation import RequestCancelled, cancellationEven
 from backend.app.services.watsonx import LanguageCancelled, WatsonxLanguage
 from tests.unit.testAnalysis import analysisKit, BriefText
 from tests.unit.testAnalysisEndpoint import makeApp, caseFields, StatelessLanguage
+# noNetwork is imported as a pytest fixture discovered by name.
 from tests.unit.testWatsonx import configure, tokenReply, chatReply, noNetwork, requestCase
 
 

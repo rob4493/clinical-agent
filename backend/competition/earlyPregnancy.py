@@ -2,7 +2,6 @@
 
 import json
 import re
-from pathlib import Path
 from types import SimpleNamespace
 
 from backend.app.models.analysis import ModelRequest

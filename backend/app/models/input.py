@@ -1,7 +1,8 @@
 """
 Input models for the clinical decision-support agent.
 
-ClinicalCaseInput is the sole entry point for clinician-submitted case information.
+ClinicalCaseInput preserves the legacy request boundary. CanonicalCase supplies
+the versioned shared representation through an explicit compatibility adapter.
 
 Design rules enforced here:
 - Unknown fields are rejected (model_config extra="forbid").
@@ -272,3 +273,17 @@ class ClinicalCaseInput(BaseModel):
             enabled=settings.piiFilterEnabled if settings is not None else True,
             extraPatterns=settings.piiFilterPatterns if settings is not None else None,
         )
+    @model_validator(mode="after")
+    def checkSharedContract(self):
+        # Native privacy/hooks stay intact; the canonical legacy definition is
+        # also authoritative at every deterministic engine input boundary.
+        from backend.app.models.schemaRules import Schema, validateNode
+        validateNode(self.model_dump(mode="json", exclude_unset=True), Schema["$defs"]["LegacyCase"])
+        if self.moduleHint != "NotSure":
+            self.toCanonical()
+        return self
+
+    def toCanonical(self):
+        from backend.app.models.caseBridge import legacyToCanonical
+        return legacyToCanonical(self.model_dump(mode="json", exclude_unset=True))
+

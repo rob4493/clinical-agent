@@ -1,0 +1,7 @@
+{
+  "schemaHash": "2c3a7c3beaad9a90f922d1f59636c12870374ccbe1b5ed71db145d5b0073e863",
+  "artifacts": {
+    "shared/clinicalData.ts": "d131255660adefe1d80c49a85babb06c7cb41cc0355f9201f3e82a92a24c94d4",
+    "backend/app/models/clinicalData.py": "c0824456d6d54b1bddd192a03f64d558aedb88ccacf7e2c84fb59371b225a04f"
+  }
+}

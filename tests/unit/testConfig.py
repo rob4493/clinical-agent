@@ -241,7 +241,6 @@ class TestSensitiveValueRedaction:
 
     def testInvalidPortErrorDoesNotContainAdminKey(self) -> None:
         """Validation error messages must not echo unrelated sensitive fields."""
-        from pydantic import ValidationError
         adminKey = "top-secret-admin-key-xyz"
         with pytest.raises(ValueError) as caught:
             Settings(adminApiKey=adminKey, milvusPort=0)

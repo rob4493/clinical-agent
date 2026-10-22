@@ -185,7 +185,8 @@ def testNetlifyConfiguration():
     assert not any("http" in route["to"] for route in config["redirects"])
     assert config["functions"] == {"directory": "netlify/functions", "node_bundler": "esbuild", "included_files": ["netlify/RuntimeNotice.txt"]}
     assert config["dev"]["framework"] == "#static"
-    unavailable = json.loads((project / "frontend/public/backend-unavailable.json").read_bytes())
-    assert unavailable == {"detail": "Analysis is unavailable. No backend is configured for this site."}
+    # The same-origin Function owns API availability; no stale static failure asset is shipped.
+    assert (project / "netlify/functions/evaluate.ts").is_file()
+    assert not (project / "frontend/public/backend-unavailable.json").exists()
     assert all(header["values"]["Cache-Control"] == "no-store" for header in config["headers"])
     assert (project / ".dockerignore").read_text().splitlines()[-1] == "**"

@@ -11,7 +11,6 @@ from fastapi.testclient import TestClient
 
 from backend.app.config import Settings
 from backend.app.main import createApp
-from backend.app.models.catalog import SourceRecord
 from backend.app.modules.catalog import CatalogError, CatalogStore, SourceUnavailableError
 from backend.app.modules.registry import ModuleRegistry, RegistryConfigError, ModuleUnavailableError
 

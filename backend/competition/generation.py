@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import ConfigDict, Field, StrictInt
+from pydantic import Field, StrictInt
 
 from backend.app.models.analysis import ResponseText
 from backend.app.models.contracts import ModuleId

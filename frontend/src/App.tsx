@@ -6,6 +6,11 @@ import ResponsePanel from './ResponsePanel';
 import { DemoCases, PregnancyCases } from './DemoCases';
 import PregnancyFields from './PregnancyFields';
 import ScopePanel from './ScopePanel';
+import UploadPanel from './UploadPanel';
+import { analysisRequest, EmptySession } from './documents/session';
+import type { UploadSession } from './documents/session';
+import { DocumentError } from './documents/types';
+import { ReviewNavigation, WorkflowBar } from './ReviewShell';
 
 const AgeRanges = ['Under 18', '18–24', '25–34', '35–44', '45–54', '55–64', '65+'];
 const configuredDeadline = import.meta.env.VITE_REQUEST_DEADLINE_MS || '20000';
@@ -34,6 +39,9 @@ export default function App() {
   const [runtimeMode, setRuntimeMode] = useState<RuntimeMode>('standard');
   const [canRequest, setCanRequest] = useState(false);
   const [pending, setPending] = useState(false);
+  const [uploads, setUploads] = useState<UploadSession>(EmptySession);
+  const [uploadGeneration, setUploadGeneration] = useState(0);
+  const updateUploads = useCallback((session: UploadSession) => { setUploads(session); setReview(null); setError(''); }, []);
   const [cancellationMessage, setCancellationMessage] = useState('');
   const requestController = useRef<AbortController | null>(null);
   const requestTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -56,6 +64,7 @@ export default function App() {
     setModuleId(''); setAgeRange(''); setCaseType('brief');
     setPregnancy('unknown'); setPid('unknown'); setNarrative(''); setDemoCaseId('');
     setEarlyPregnancy({});
+    setUploads(EmptySession); setUploadGeneration(generation => generation + 1);
   }, []);
 
   const loadAvailability = useCallback(async () => {
@@ -92,6 +101,7 @@ export default function App() {
 
   useEffect(() => {
     mounted.current = true;
+    document.title = 'Endo | Clinical Evidence Assistant';
     void loadAvailability();
     const resetPage = () => clearCase();
     window.addEventListener('pagehide', resetPage);
@@ -113,6 +123,7 @@ export default function App() {
     setDemoCaseId(caseId);
     if (!example) return;
     discardReview();
+    setUploads(EmptySession); setUploadGeneration(generation => generation + 1);
     setAgeRange(example.ageRange); setCaseType(example.caseType);
     setPregnancy(example.pregnancy); setPid(example.pid); setNarrative(example.narrative);
     setEarlyPregnancy({ ...example.earlyPregnancy });
@@ -132,7 +143,7 @@ export default function App() {
   async function submitCase(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const selected = modules.find(module => module.moduleId === moduleId);
-    if (pendingRequest.current || loading || !canRequest || !selected || !selected.supportedCaseTypes.includes(caseType)) return;
+    if (pendingRequest.current || loading || uploads.blocked || !canRequest || !selected || !selected.supportedCaseTypes.includes(caseType)) return;
     // This ref closes the duplicate-click window before React applies state updates.
     pendingRequest.current = true; setPending(true); discardReview();
     const generation = ++requestGeneration.current;
@@ -149,20 +160,21 @@ export default function App() {
     }, RequestDeadline);
     requestTimer.current = timer;
     try {
-      const result = await requestJson('/v1/analyze', controller.signal, {
+      const payload = analysisRequest({
         moduleHint: moduleId, ageRange: ageRange || null, caseType,
         pregnancyPossible: threeState(pregnancy), pidDiagnosedOrPresumed: threeState(pid),
         additionalNotes: narrative,
         ...(moduleId === 'module_02_early_pregnancy' ? { earlyPregnancy } : {}),
-      });
+      }, uploads);
+      const result = await requestJson('/v1/analyze', controller.signal, payload);
       if (!mounted.current || controller.signal.aborted || requestGeneration.current !== generation) return;
       if (result.runtimeMode !== runtimeMode) throw new Error(UnexpectedMessage);
       if (result.status === 422) setError(readError(result.payload));
       else if ([200, 404, 503].includes(result.status)) {
         setReview(readReview(result.payload, synthetic, runtimeMode));
       } else throw new Error(UnexpectedMessage);
-    } catch {
-      if (mounted.current && !controller.signal.aborted && requestGeneration.current === generation) setError(UnexpectedMessage);
+    } catch (failure) {
+      if (mounted.current && !controller.signal.aborted && requestGeneration.current === generation) setError(failure instanceof DocumentError ? failure.message : UnexpectedMessage);
     } finally {
       clearTimeout(timer);
       if (requestTimer.current === timer) requestTimer.current = null;
@@ -174,13 +186,16 @@ export default function App() {
 
   const selected = modules.find(module => module.moduleId === moduleId);
   const supported = selected?.supportedCaseTypes.includes(caseType) ?? false;
-  const canSubmit = Boolean(selected) && canRequest && !pending && !loading && supported;
+  const canSubmit = Boolean(selected) && canRequest && !pending && !loading && supported && !uploads.blocked;
   const examples = runtimeMode === 'competition' && moduleId === 'module_02_early_pregnancy' ? PregnancyCases : DemoCases;
 
   return <>
     <a className="skipLink" href="#caseForm">Skip to case entry</a>
+    <ReviewNavigation />
+    <div className="applicationShell">
+    <WorkflowBar pending={pending} hasResponse={Boolean(review)} />
     <main>
-      <div className="pageIntro"><h1>Clinical Evidence Assistant</h1><p>Evidence review for clinicians</p></div>
+      <div className="pageIntro"><p className="eyebrow">Endo · Clinical Evidence Assistant</p><h1>New evidence review</h1><p>Bring the case into focus. Review the evidence with confidence and care.</p></div>
       {synthetic && <aside className="demoBanner" aria-label="Synthetic demonstration boundary"><strong>{DemoNotice}</strong></aside>}
       {runtimeMode === 'competition' && <aside className="demoBanner" aria-label="Competition evaluation boundary"><strong>{CompetitionBanner}</strong></aside>}
       <aside className="privacyBanner" aria-label="Clinical and privacy boundaries"><strong>Clinician-facing only</strong><span>De-identified, minimum-necessary information only.</span><span>Not a diagnostic or prescribing system.</span></aside>
@@ -192,7 +207,7 @@ export default function App() {
             {loading ? 'Checking module availability…' : availabilityError || (!modules.length ? 'No approved clinical modules are available. The demo is not ready for analysis; no clinical module has been activated.' : !ready ? runtimeMode === 'competition' && canRequest ? 'Language provider unavailable. You can submit a case to review safety outcomes and the safe provider-unavailable response.' : 'Analysis services are not ready. An available module and configured analysis dependencies are required.' : synthetic || runtimeMode === 'competition' ? 'Ready for evidence review.' : 'Approved module and analysis dependencies available.')}
           </div>
           {!loading && (!ready || availabilityError) && <button type="button" className="textButton" onClick={() => { discardReview(); void loadAvailability(); }} disabled={pending}>Refresh availability</button>}
-          <form id="caseForm" onSubmit={submitCase} autoComplete="off" aria-describedby={error ? 'requestError' : undefined}>
+          <form id="caseForm" tabIndex={-1} onSubmit={submitCase} autoComplete="off" aria-describedby={error ? 'requestError' : undefined}>
             <fieldset disabled={pending}>
               <legend className="visuallyHidden">Structured case context</legend>
               {(synthetic || runtimeMode === 'competition') && <div className="demoExamples">
@@ -223,6 +238,7 @@ export default function App() {
               <p id="narrativeHelp" className="fieldHint">Selected context is sent separately. Add only relevant clinical information; omit names, exact birth dates, addresses, contact details and medical-record numbers.</p>
               <textarea ref={narrativeRef} id="narrative" value={narrative} maxLength={2000} rows={6} aria-describedby={`narrativeHelp narrativeCount${error ? ' requestError' : ''}`} autoComplete="off" spellCheck={false} placeholder="Relevant symptoms, duration, test findings or a focused question. Omit identifiers; leave unreported information unknown." onChange={event => { setNarrative(event.target.value); discardReview(); }} />
               <p id="narrativeCount" className="characterCount">{narrative.length} / 2,000 characters</p>
+              <UploadPanel key={uploadGeneration} onChange={updateUploads} disabled={pending} />
             </fieldset>
             {!supported && selected && <p role="status" className="fieldHint">This module does not support the selected case type.</p>}
             {error && <p id="requestError" tabIndex={-1} className="errorPanel" role="alert">{error}</p>}
@@ -243,8 +259,9 @@ export default function App() {
         <div className="demoCards">{examples.map((example, index) => <button type="button" key={example.id} className={`demoCard demoTone${index % 7}`} disabled={pending} aria-pressed={demoCaseId === example.id} aria-describedby="demoShelfHelp" onClick={() => chooseDemo(example.id)}><span className="demoIcon" aria-hidden="true">{['≡', '☷', '▤', '!', '⇄', '?', '○'][index % 7]}</span><span><strong>{example.label}</strong><small>{example.explanation}</small></span></button>)}</div>
         <p id="demoShelfHelp" className="fieldHint">Choosing a case fills the case fields and available demonstration module. Review before selecting Analyze; examples never submit automatically.</p>
       </section>}
-      <footer>Clinical Evidence Assistant · Minimum necessary information. Independent clinical judgment.</footer>
+      <footer><strong>Endo</strong><span>Minimum necessary information. Independent clinical judgment.</span></footer>
     </main>
+    </div>
   </>;
 }
 

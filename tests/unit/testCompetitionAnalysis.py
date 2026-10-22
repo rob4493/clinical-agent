@@ -1,6 +1,5 @@
 """Competition endpoint uses real safety/retrieval and an injected offline provider."""
 
-import json
 
 import pytest
 from fastapi.testclient import TestClient

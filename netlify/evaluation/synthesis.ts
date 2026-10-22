@@ -1,6 +1,6 @@
 import Policy from './policy.json';
 import { phraseState } from './assertions';
-import { CaseInput, pattern } from './input';
+import { CaseInput } from './input';
 import { Claim, Package } from './packages';
 import { caseText } from './retrieval';
 
@@ -60,7 +60,7 @@ export function ordinaryAtoms(caseInput:CaseInput,claims:Claim[],preliminary:boo
  }
  return atoms;
 }
-export function pregnancyAtoms(caseInput:CaseInput,claims:Claim[]):Atom[] {
+export function pregnancyAtoms(claims:Claim[]):Atom[] {
  const byId=new Map(claims.map(claim=>[claim.claimId,claim])),used=new Set<string>(),atoms:Atom[]=[];
  function add(ids:string[],text:string){if(ids.every(id=>byId.has(id)&&!used.has(id))){atoms.push({text,claimIds:ids});ids.forEach(id=>used.add(id));}}
  add(['M2NSerialLimits','M2NSymptomsOverHcg','M2NEmptyUterus'],'An empty uterus on transvaginal ultrasound does not establish ectopic pregnancy by itself. Serial serum hCG results do not locate the pregnancy; symptoms take priority over a reassuring trend, and a changed clinical picture needs review regardless of previous results. Viability must not be inferred from these results alone.');

@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import '../../shared/checkSchema.mjs';
 import { fileURLToPath } from 'node:url';
 
 // Copy only a reviewed public allowlist into the server bundle. Never scan the
@@ -25,7 +26,7 @@ function checkExisting(directory,relative='') {
 }
 if(existsSync(destination))checkExisting(destination);
 for(const name of names) {
- if(!/^(evaluation|backend|netlify|frontend\/(?:src|scripts))\//.test(name)||name.split('/').some(part=>part==='..'||part.startsWith('.'))||/[\\:]/.test(name)||!/\.(json|py|tsx?|mjs)$/.test(name)||/knowledge|candidatePolicies|sourceIntake|privateEvidence|backend\/competition\/(?:evidence|module02Evidence)\//.test(name))throw new Error('Public evaluation bundle contains an invalid path.');
+ if(!/^(shared|evaluation|backend|netlify|frontend\/(?:src|scripts))\//.test(name)||name.split('/').some(part=>part==='..'||part.startsWith('.'))||/[\\:]/.test(name)||(name!=='frontend/src/styles.css'&&!/\.(json|py|tsx?|mjs)$/.test(name))||/knowledge|candidatePolicies|sourceIntake|privateEvidence|backend\/competition\/(?:evidence|module02Evidence)\//.test(name))throw new Error('Public evaluation bundle contains an invalid path.');
  const source=resolve(root,name);
  for(let component=source;;component=dirname(component)) {if(lstatSync(component).isSymbolicLink())throw new Error('Public evaluation bundle contains a linked path.');if(component===dirname(component))break;}
  const contents=readFileSync(source);

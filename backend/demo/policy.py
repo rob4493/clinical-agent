@@ -2,7 +2,7 @@
 
 import re
 
-from backend.demo.cases import BriefNarrative, MildNarrative, DetailedNarrative, CaseParts
+from backend.demo.cases import BriefNarrative, MildNarrative, CaseParts
 
 TestParts = {
     "ultrasound": (

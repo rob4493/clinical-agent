@@ -28,7 +28,7 @@ function mockCompetition(outcome = 'AgentResponse', unavailable = false) {
 }
 
 describe('competition presentation with mocked HTTP only', () => {
-  it('renders an emergency-only response without ordinary headings or unavailable labels', () => {
+  it('renders an emergency-only response without ordinary headings or unavailable labels', async () => {
     const result = analysisResult('AgentResponse');
     result.response.supportedInterpretations = [];
     result.warnings = [{ ruleId: 'U1', text: 'Immediate emergency assessment is recommended. These findings do not confirm ectopic pregnancy.', sourceTags: ['FictionalSource'] }];
@@ -38,6 +38,7 @@ describe('competition presentation with mocked HTTP only', () => {
     expect(screen.queryByText('Evidence-supported considerations')).not.toBeInTheDocument();
     expect(screen.queryByText(/Analysis unavailable/)).not.toBeInTheDocument();
     expect(screen.getByText(DecisionNotice)).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: 'Sources (1)' }));
     expect(screen.getByRole('link', { name: /Fictional reference/ })).toBeVisible();
   });
   it('shows one persistent authoritative banner and renders a safe provider-unavailable outcome', async () => {
@@ -62,9 +63,10 @@ describe('competition presentation with mocked HTTP only', () => {
     expect(screen.getByLabelText(/Clinical module/)).toHaveValue('FictionalModule');
     expect(requests.mock.calls.some(([url]) => url.endsWith('/v1/analyze'))).toBe(false);
     await userEvent.click(screen.getByRole('button', { name: 'Analyze' }));
-    await screen.findByRole('heading', { name: 'Evidence-supported considerations' });
+    await screen.findByRole('heading', { name: 'Summary' });
     expect(document.querySelector('.directAnswer')).toBeInTheDocument();
     expect(document.querySelector('.considerations')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Sources (1)' }));
     expect(screen.getByRole('button', { name: '[1] View source details' })).toHaveTextContent('View source details');
     await userEvent.click(screen.getByRole('button', { name: /View source/ }));
     expect(await screen.findByText('Synthetic browser capture')).toBeVisible();
@@ -72,7 +74,7 @@ describe('competition presentation with mocked HTTP only', () => {
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
-  it('renders one natural multi-claim paragraph without numbered cards or repeated notices', () => {
+  it('renders one natural multi-claim paragraph without numbered cards or repeated notices', async () => {
     const result = analysisResult();
     const text = 'Several evidence-supported considerations overlap; the reported information does not identify a cause.';
     result.response.decisionSupportNotice = CompetitionNotice;
@@ -82,6 +84,7 @@ describe('competition presentation with mocked HTTP only', () => {
     expect(document.querySelectorAll('.directAnswer')).toHaveLength(1);
     expect(document.querySelector('.considerations')).not.toBeInTheDocument();
     expect(screen.getAllByText(CompetitionNotice)).toHaveLength(1);
+    await userEvent.click(screen.getByRole('button', { name: 'Sources (1)' }));
     expect(screen.getByRole('link', { name: /Fictional reference/ })).toHaveAttribute('href', 'https://fictional.invalid/Evidence%2FAlpha');
     expect(document.querySelector('.sourceTitle')).toHaveAttribute('title', 'Fictional reference');
   });

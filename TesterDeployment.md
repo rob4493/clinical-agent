@@ -24,7 +24,11 @@ Netlify CLI 27.12.1 is separately approved, ignored tooling under frontend/.test
 
 This CLI also downloads an unused Deno Edge environment during full-site dev --offline startup. That bootstrap attempt was blocked by the test network guard. Full-site offline testing explicitly uses the existing internal --internal-disable-edge-functions switch; it is an internal test limitation, not a production setting or dependency patch. No Edge Function is configured.
 
-After building, from the repository root:
+A clean checkout does not include this optional tooling. To install exactly the reviewed CLI into ignored local tooling (not the application dependency files), an operator may run:
+
+    npm install --prefix frontend/.testNetlifyTools --no-save --ignore-scripts --no-audit --no-fund netlify-cli@27.12.1
+
+Keep its version pinned; do not authenticate or deploy merely to test locally. After building, from the repository root:
 
     node frontend/.testNetlifyTools/node_modules/netlify-cli/bin/run.js dev --offline --internal-disable-edge-functions --port 8892
 
@@ -45,3 +49,18 @@ Official documentation reviewed 2026-10-15:
 - https://docs.netlify.com/api-and-cli-guides/cli-guides/local-development/
 - https://docs.netlify.com/api-and-cli-guides/cli-guides/manage-functions/
 - https://docs.netlify.com/build/configure-builds/file-based-configuration/
+
+## Browser validation
+
+Provide an already installed Playwright module path in `DEMO_PLAYWRIGHT_MODULE` and a loopback-only origin in `EVALUATION_ORIGIN`. Browser tooling is not an application dependency and must not be downloaded by a test. The current harnesses are:
+
+- `evaluationBrowser.cjs`: both modules, all presets, manual questions, canonical requests and cancellation.
+- `competitionBrowser.cjs`: additional Module 1 test-precision and structural-finding scenarios.
+- `endoBrowser.cjs`: responsive navigation, uploads, urgent ordering, computed contrast, keyboard, reflow and reduced motion.
+- `presentationBrowser.cjs`: compact summaries, citation navigation and disclosures at three widths.
+- `uploadBrowser.cjs`: bounded PDF/DOCX/TXT review and negative-file cases.
+- `demoBrowser.cjs`: synthetic/disabled FastAPI modes and concurrent request isolation; requires the two local graphs described in the harness.
+
+For the first five, start the local Netlify emulator above and run each with `node frontend/tests/<name>`. Reports and screenshots remain ignored. `frontend/tests/localGuard.cjs` can be preloaded with `NODE_OPTIONS=--require=<absolute path>` for localhost-only Node connection counting. Set `DEMO_GUARD_REPORT` to a report filename, not an absolute path. This guard is test tooling, never a production monkey-patch.
+
+Historical screenshot/design harnesses tied to retired headings or ports are superseded by these current checks. Physical Safari/iPad and assistive-technology certification remain separate; automated checks do not establish compliance.

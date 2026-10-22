@@ -17,7 +17,6 @@ from backend.app.models.catalog import SourceRecord
 from backend.app.models.review import SourceReview
 from backend.app.modules.catalog import CatalogStore
 from backend.app.modules.reviews import ApprovalGate, ReviewStore, ReviewConfigError, RequiredCriteria, metadataDigest
-from backend.app.modules.registry import ModuleRegistry, RegistryConfigError
 
 
 def makeGate(tmp_path, sourceUrl=None, requiredSourceIds=None):

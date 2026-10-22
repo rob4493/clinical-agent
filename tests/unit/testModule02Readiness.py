@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 from backend.app.models.input import ClinicalCaseInput
 from backend.app.services.cancellation import RequestCancelled, cancellationScope
-from backend.competition.earlyPregnancy import EvidenceRoot, readPackage
+from backend.competition.earlyPregnancy import readPackage
 from tests.unit.testModule02Competition import makeApp, makeCase
 from tests.support.competitionLanguage import CompetitionLanguage
 

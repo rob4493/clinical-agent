@@ -1,6 +1,5 @@
 """Deterministic fictional vectors and adversarial provider boundaries only."""
 
-import json
 from uuid import UUID
 
 import pytest
@@ -10,9 +9,9 @@ from backend.app.config import Settings
 from backend.app.models.retrieval import RetrievalResult
 from backend.app.modules.registry import ModuleRegistry
 from backend.app.services.evidence import EvidenceLoader, EvidenceUnavailableError
-from backend.app.services.retrieval import RetrievalError, RetrievalService, SearchFilter, VectorHit, checkVector
+from backend.app.services.retrieval import RetrievalError, RetrievalService, SearchFilter, VectorHit
 from tests.support.evidenceFixture import SyntheticPackage, buildModule, fileHash, makeChunk, refreshManifest, saveJson
-from tests.support.syntheticRetrieval import MemoryVectors, SyntheticEmbedding
+from backend.demo.synthetic import MemoryVectors, SyntheticEmbedding
 
 
 def makeService(root, dimension=3, embeddings=None, vectors=None):

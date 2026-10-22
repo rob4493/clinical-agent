@@ -10,6 +10,8 @@ from backend.app.services.cancellation import RequestCancelled, cancellationScop
 
 from backend.app.models.analysis import AnalysisResult
 from backend.app.models.input import ClinicalCaseInput
+from backend.app.models.clinicalData import CanonicalCase
+from backend.app.models.caseBridge import canonicalToLegacy
 from backend.app.models.output import EvidenceInsufficientResponse, ModuleUnavailable, SelectModuleRequired, DecisionSupportNotice, CompetitionNotice, SyntheticNotice
 from backend.app.modules.registry import ModuleRegistry, ModuleSelectionError, ModuleUnavailableError
 from backend.app.services.analysis import AnalysisService
@@ -57,11 +59,16 @@ def getAnalysis(request: Request) -> AnalysisService | None:
         "moduleHint": "SyntheticAlpha", "caseType": "brief",
         "additionalNotes": "Fictional bounded observation for synthetic testing."}}
 }}}}})
-async def analyzeCase(caseInput: ClinicalCaseInput, request: Request, response: Response):
+async def analyzeCase(caseInput: ClinicalCaseInput | CanonicalCase, request: Request, response: Response):
     """Watch the consumed ASGI request while synchronous providers run cooperatively."""
     signal = Event()
     worker = None
     try:
+        if isinstance(caseInput, CanonicalCase):
+            try:
+                caseInput = ClinicalCaseInput.model_validate(canonicalToLegacy(caseInput), context=request.app.state.settings)
+            except Exception:
+                raise RequestValidationError([]) from None
         with cancellationScope(signal):
             if await request.is_disconnected():
                 signal.set()

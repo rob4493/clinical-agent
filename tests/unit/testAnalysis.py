@@ -23,7 +23,7 @@ from backend.app.services.retrieval import RetrievalService
 from backend.app.services.safety import SafetyInputError
 from tests.support.evidenceFixture import buildModule, fileHash, makeChunk, refreshManifest, saveJson
 from tests.support.fakeLanguage import FakeLanguage
-from tests.support.syntheticRetrieval import MemoryVectors, SyntheticEmbedding
+from backend.demo.synthetic import MemoryVectors, SyntheticEmbedding
 
 BriefText = (
     "The fictional reference describes a bounded observation for clinician review. Its scope is limited to "

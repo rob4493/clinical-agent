@@ -1,0 +1,1554 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:clarity:clinical-data:1.0.0",
+  "title": "CanonicalCase",
+  "description": "Project-authored transient case contract. Validation supplies no clinical inference or evidence approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "moduleId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^(?!NotSure$)[A-Za-z][A-Za-z0-9_-]*$"
+    },
+    "caseType": {
+      "$ref": "#/$defs/CaseType"
+    },
+    "ageRange": {
+      "$ref": "#/$defs/AgeRange"
+    },
+    "pregnancyStatus": {
+      "$ref": "#/$defs/ClinicalFlag"
+    },
+    "pidStatus": {
+      "$ref": "#/$defs/ClinicalFlag"
+    },
+    "primaryQuestion": {
+      "$ref": "#/$defs/ClinicalText"
+    },
+    "originalNarrative": {
+      "$ref": "#/$defs/ClinicalText"
+    },
+    "symptoms": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Symptom"
+      },
+      "minItems": 0,
+      "maxItems": 32,
+      "x-uniqueId": "id"
+    },
+    "urgentIndicators": {
+      "$ref": "#/$defs/UrgentIndicators"
+    },
+    "investigations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Investigation"
+      },
+      "minItems": 0,
+      "maxItems": 32,
+      "x-uniqueId": "id"
+    },
+    "previousProcedures": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Procedure"
+      },
+      "minItems": 0,
+      "maxItems": 16,
+      "x-uniqueId": "id"
+    },
+    "previousTreatments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Treatment"
+      },
+      "minItems": 0,
+      "maxItems": 16,
+      "x-uniqueId": "id"
+    },
+    "clinicianInterpretations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Interpretation"
+      },
+      "minItems": 0,
+      "maxItems": 16,
+      "x-uniqueId": "id"
+    },
+    "conflictingInterpretations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/InterpretationConflict"
+      },
+      "minItems": 0,
+      "maxItems": 16,
+      "x-uniqueId": "id"
+    },
+    "importantMissingInformation": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/MissingInformation"
+      },
+      "minItems": 0,
+      "maxItems": 16,
+      "x-uniqueId": "id"
+    },
+    "sourceDocuments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/SourceDocument"
+      },
+      "minItems": 0,
+      "maxItems": 16,
+      "x-uniqueId": "id"
+    },
+    "userIntent": {
+      "$ref": "#/$defs/UserIntent"
+    },
+    "earlyPregnancy": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PregnancyContext"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "reportedContext": {
+      "$ref": "#/$defs/ReportedContext"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "moduleId",
+    "caseType",
+    "pregnancyStatus",
+    "pidStatus",
+    "originalNarrative"
+  ],
+  "x-caseIntegrity": true,
+  "$defs": {
+    "CaseType": {
+      "description": "Brief cases receive a condensed response; detailed cases receive a full one.",
+      "enum": [
+        "brief",
+        "detailed"
+      ],
+      "title": "CaseType",
+      "type": "string"
+    },
+    "PregnancyContext": {
+      "additionalProperties": false,
+      "description": "Bounded clinician-reported facts; every omitted field remains Unknown.",
+      "properties": {
+        "gestationalWeeks": {
+          "anyOf": [
+            {
+              "maximum": 45.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gestationalweeks"
+        },
+        "careSetting": {
+          "anyOf": [
+            {
+              "enum": [
+                "emergencyDepartment",
+                "earlyPregnancyService",
+                "other"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Caresetting"
+        },
+        "pregnancyTestType": {
+          "anyOf": [
+            {
+              "enum": [
+                "urine",
+                "serum"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pregnancytesttype"
+        },
+        "pregnancyTestResult": {
+          "anyOf": [
+            {
+              "enum": [
+                "positive",
+                "negative",
+                "indeterminate"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pregnancytestresult"
+        },
+        "serumHcg": {
+          "anyOf": [
+            {
+              "maximum": 10000000.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Serumhcg"
+        },
+        "ultrasoundRoute": {
+          "anyOf": [
+            {
+              "enum": [
+                "transvaginal",
+                "transabdominal"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ultrasoundroute"
+        },
+        "ultrasoundFinding": {
+          "anyOf": [
+            {
+              "enum": [
+                "noPregnancyVisualized",
+                "indeterminate",
+                "intrauterineReported",
+                "other"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ultrasoundfinding"
+        },
+        "previousIntrauterinePregnancyConfirmed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previousintrauterinepregnancyconfirmed"
+        },
+        "assistedReproduction": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Assistedreproduction"
+        },
+        "abdominalTrauma": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Abdominaltrauma"
+        },
+        "clinicallyStable": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Clinicallystable"
+        },
+        "heavyBleeding": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heavybleeding"
+        },
+        "hemodynamicInstability": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hemodynamicinstability"
+        },
+        "significantConcernAboutPainOrBleeding": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Significantconcernaboutpainorbleeding"
+        },
+        "worseningPelvicPain": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Worseningpelvicpain"
+        }
+      },
+      "title": "PregnancyContext",
+      "type": "object"
+    },
+    "UrgentFindings": {
+      "additionalProperties": false,
+      "description": "Explicit submitted findings only; omitted criteria remain Unknown.",
+      "properties": {
+        "suddenSevereAbdominalOrPelvicPain": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Suddensevereabdominalorpelvicpain"
+        },
+        "shoulderPain": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shoulderpain"
+        },
+        "weakness": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Weakness"
+        },
+        "dizziness": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dizziness"
+        },
+        "fainting": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fainting"
+        },
+        "suddenAcutePelvicPain": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Suddenacutepelvicpain"
+        },
+        "severeAcutePelvicPain": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Severeacutepelvicpain"
+        },
+        "surgicalEmergencyCannotBeExcluded": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Surgicalemergencycannotbeexcluded"
+        },
+        "tuboOvarianAbscess": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tuboovarianabscess"
+        },
+        "severeIllness": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Severeillness"
+        },
+        "nauseaAndVomiting": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Nauseaandvomiting"
+        },
+        "oralTemperatureCelsius": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Oraltemperaturecelsius"
+        },
+        "oralTemperatureFahrenheit": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Oraltemperaturefahrenheit"
+        },
+        "cannotFollowOrTolerateOutpatientOralTherapy": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cannotfollowortolerateoutpatientoraltherapy"
+        },
+        "noClinicalResponseToOralTherapy": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Noclinicalresponsetooraltherapy"
+        }
+      },
+      "title": "UrgentFindings",
+      "type": "object"
+    },
+    "LegacyCase": {
+      "additionalProperties": false,
+      "description": "De-identified clinical case submitted by a clinician.\n\nPrivacy constraints enforced by the schema:\n- No field for patient name, MRN, address, date of birth, or contact details.\n- All free-text fields have explicit maximum lengths.\n- Unknown fields are rejected (extra=\"forbid\").\n\nThree-state semantics for boolean fields:\n- True  = clinician explicitly asserts Yes.\n- False = clinician explicitly asserts No.\n- None  = not provided; treated as Unknown throughout the pipeline.\n          Never converted to False or Normal.\n\nStrict type enforcement:\n- Only JSON true, false, and null are accepted for boolean fields.\n- Strings (\"true\", \"yes\", \"1\") are rejected.\n- Integers (0, 1) are rejected.",
+      "properties": {
+        "moduleHint": {
+          "description": "Clinician-selected clinical module. Must be set before any analysis is performed. Syntax only is checked here; the registry must resolve availability and approval. NotSure requests module selection.",
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+          "title": "Modulehint",
+          "type": "string"
+        },
+        "earlyPregnancy": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PregnancyContext"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional reported Module 2 facts; omitted fields remain Unknown."
+        },
+        "caseType": {
+          "$ref": "#/$defs/CaseType",
+          "default": "detailed",
+          "description": "Brief returns a condensed response; detailed returns a full one."
+        },
+        "ageRange": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Age range of the patient (e.g. '25-34'). Exact age is accepted but a range is preferred for data minimisation.",
+          "title": "Agerange"
+        },
+        "painLocation": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Location of reported pain (e.g. 'lower left pelvis, radiating to back').",
+          "title": "Painlocation"
+        },
+        "painQuality": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Quality of pain (e.g. 'cramping', 'sharp', 'constant dull ache').",
+          "title": "Painquality"
+        },
+        "painSeverity": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Severity description or numeric rating as free text. Conflicting values are preserved and flagged; they are never averaged.",
+          "title": "Painseverity"
+        },
+        "symptomTiming": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timing of symptoms in relation to the menstrual cycle or other events.",
+          "title": "Symptomtiming"
+        },
+        "bowelUrinarySymptoms": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Bowel or urinary symptoms (e.g. 'painful bowel movements', 'haematuria').",
+          "title": "Bowelurinarysymptoms"
+        },
+        "sexualPain": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pain during or after sexual intercourse.",
+          "title": "Sexualpain"
+        },
+        "menstrualHistory": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Menstrual history including cycle regularity, heaviness, and pain.",
+          "title": "Menstrualhistory"
+        },
+        "urgentFindings": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UrgentFindings"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional explicit urgent findings; never inferred from missing information."
+        },
+        "pregnancyPossible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Three-state: True = pregnancy is possible or known; False = clinician states pregnancy is not possible; None = not provided / Unknown. Only JSON true, false, and null accepted. Strings and integers are rejected. Never inferred from other fields. Drives urgent rule U1 evaluation.",
+          "title": "Pregnancypossible"
+        },
+        "fertilityStatus": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Current fertility goals, history, or treatment (free text).",
+          "title": "Fertilitystatus"
+        },
+        "pidDiagnosedOrPresumed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Three-state PID diagnostic status supplied by the clinician: True = PID has been diagnosed or presumptively diagnosed by a clinician; False = clinician explicitly states PID has not been diagnosed; None = not provided / Unknown. Only JSON true, false, and null accepted. Strings and integers are rejected. U3 CDC PID disposition criteria are evaluated ONLY when this is True. Never inferred from symptoms, free text, or retrieved evidence. If this field conflicts with additionalNotes content, the pipeline returns DataConflict or ClarificationRequired before any clinical analysis.",
+          "title": "Piddiagnosedorpresumed"
+        },
+        "priorTreatments": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Previous treatments, responses, and adverse effects.",
+          "title": "Priortreatments"
+        },
+        "familyHistory": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Relevant family history. First-degree relative with endometriosis is specifically noted in NICE-NG73 as increasing likelihood.",
+          "title": "Familyhistory"
+        },
+        "additionalNotes": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Additional clinical context (free text). Processed by the PII safeguard filter before reaching any service. May provide contextual detail for urgent rule evaluation but NEVER overrides the structured pidDiagnosedOrPresumed field. Do not include patient names, MRNs, addresses, or contact details.",
+          "title": "Additionalnotes"
+        }
+      },
+      "required": [
+        "moduleHint"
+      ],
+      "title": "ClinicalCaseInput",
+      "type": "object"
+    },
+    "FindingState": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "notReported",
+        "absent",
+        "present",
+        "notApplicable"
+      ]
+    },
+    "Verification": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "notReported",
+        "unverified",
+        "needsReview",
+        "clinicianVerified",
+        "rejected"
+      ]
+    },
+    "ItemId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z][A-Za-z0-9-]*$"
+    },
+    "ClinicalText": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/FindingState"
+        },
+        "value": {
+          "type": "string",
+          "maxLength": 2000
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "x-stateValue": true
+    },
+    "AgeRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/FindingState"
+        },
+        "value": {
+          "type": "string",
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "x-stateValue": true
+    },
+    "ClinicalFlag": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/FindingState"
+        }
+      },
+      "required": [
+        "state"
+      ]
+    },
+    "ClinicalMeasure": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/FindingState"
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "x-stateValue": true
+    },
+    "ClinicalDate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "exact",
+            "approximate",
+            "range",
+            "unknown",
+            "notReported",
+            "notApplicable"
+          ],
+          "type": "string"
+        },
+        "precision": {
+          "type": "string",
+          "enum": [
+            "day",
+            "month",
+            "year"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "maxLength": 10
+        },
+        "start": {
+          "type": "string",
+          "maxLength": 10
+        },
+        "end": {
+          "type": "string",
+          "maxLength": 10
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "x-clinicalDate": true
+    },
+    "SourceSpan": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/ItemId"
+        },
+        "documentId": {
+          "$ref": "#/$defs/ItemId"
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000000
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000000
+        }
+      },
+      "required": [
+        "id",
+        "documentId"
+      ],
+      "x-sourceSpan": true
+    },
+    "Symptom": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/ItemId"
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 120,
+          "minLength": 1
+        },
+        "state": {
+          "$ref": "#/$defs/FindingState"
+        },
+        "onset": {
+          "$ref": "#/$defs/ClinicalDate"
+        },
+        "duration": {
+          "$ref": "#/$defs/ClinicalText"
+        },
+        "severity": {
+          "$ref": "#/$defs/ClinicalText"
+        },
+        "location": {
+          "$ref": "#/$defs/ClinicalText"
+        },
+        "temporalPattern": {
+          "$ref": "#/$defs/ClinicalText"
+        },
+        "interpretationSource": {
+          "type": "string",
+          "enum": [
+            "clinicianReported",
+            "patientReported",
+            "documentExtracted",
+            "externalInterpretation",
+            "unknown",
+            "notReported"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "verification": {
+          "$ref": "#/$defs/Verification"
+        },
+        "sourceSpans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceSpan"
+          },
+          "minItems": 0,
+          "maxItems": 8,
+          "x-uniqueId": "id"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "state"
+      ]
+    },
+    "Investigation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/ItemId"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 120,
+          "minLength": 1
+        },
+        "date": {
+          "$ref": "#/$defs/ClinicalDate"
+        },
+        "reportedFinding": {
+          "$ref": "#/$defs/ClinicalText"
+        },
+        "interpretationSource": {
+          "type": "string",
+          "enum": [
+            "clinicianReported",
+            "patientReported",
+            "documentExtracted",
+            "externalInterpretation",
+            "unknown",
+            "notReported"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "verification": {
+          "$ref": "#/$defs/Verification"
+        },
+        "sourceSpans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceSpan"
+          },
+          "minItems": 0,
+          "maxItems": 8,
+          "x-uniqueId": "id"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "reportedFinding"
+      ]
+    },
+    "Procedure": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/ItemId"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 120,
+          "minLength": 1
+        },
+        "date": {
+          "$ref": "#/$defs/ClinicalDate"
+        },
+        "reportedFinding": {
+          "$ref": "#/$defs/ClinicalText"
+        },
+        "interpretationSource": {
+          "type": "string",
+          "enum": [
+            "clinicianReported",
+            "patientReported",
+            "documentExtracted",
+            "externalInterpretation",
+            "unknown",
+            "notReported"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "verification": {
+          "$ref": "#/$defs/Verification"
+        },
+        "sourceSpans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceSpan"
+          },
+          "minItems": 0,
+          "maxItems": 8,
+          "x-uniqueId": "id"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "Treatment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/ItemId"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 120,
+          "minLength": 1
+        },
+        "date": {
+          "$ref": "#/$defs/ClinicalDate"
+        },
+        "reportedResponse": {
+          "$ref": "#/$defs/ClinicalText"
+        },
+        "interpretationSource": {
+          "type": "string",
+          "enum": [
+            "clinicianReported",
+            "patientReported",
+            "documentExtracted",
+            "externalInterpretation",
+            "unknown",
+            "notReported"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "verification": {
+          "$ref": "#/$defs/Verification"
+        },
+        "sourceSpans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceSpan"
+          },
+          "minItems": 0,
+          "maxItems": 8,
+          "x-uniqueId": "id"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "Interpretation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/ItemId"
+        },
+        "text": {
+          "$ref": "#/$defs/ClinicalText"
+        },
+        "date": {
+          "$ref": "#/$defs/ClinicalDate"
+        },
+        "interpretationSource": {
+          "type": "string",
+          "enum": [
+            "clinicianReported",
+            "patientReported",
+            "documentExtracted",
+            "externalInterpretation",
+            "unknown",
+            "notReported"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "verification": {
+          "$ref": "#/$defs/Verification"
+        },
+        "sourceSpans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceSpan"
+          },
+          "minItems": 0,
+          "maxItems": 8,
+          "x-uniqueId": "id"
+        }
+      },
+      "required": [
+        "id",
+        "text"
+      ]
+    },
+    "InterpretationConflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/ItemId"
+        },
+        "interpretationIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ItemId"
+          },
+          "minItems": 2,
+          "maxItems": 8,
+          "uniqueItems": true
+        },
+        "description": {
+          "$ref": "#/$defs/ClinicalText"
+        },
+        "verification": {
+          "$ref": "#/$defs/Verification"
+        }
+      },
+      "required": [
+        "id",
+        "interpretationIds",
+        "description"
+      ]
+    },
+    "MissingInformation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/ItemId"
+        },
+        "topic": {
+          "type": "string",
+          "maxLength": 120,
+          "minLength": 1
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "unknown",
+            "notReported",
+            "notApplicable"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "topic",
+        "state"
+      ]
+    },
+    "SourceDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/ItemId"
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "mediaType": {
+          "type": "string",
+          "enum": [
+            "application/pdf",
+            "text/plain",
+            "image/png",
+            "image/jpeg"
+          ]
+        },
+        "verification": {
+          "$ref": "#/$defs/Verification"
+        }
+      },
+      "required": [
+        "id",
+        "verification"
+      ]
+    },
+    "UserIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "unknown",
+            "notReported",
+            "reported"
+          ]
+        },
+        "requests": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "evidenceReview",
+              "testInterpretation",
+              "prescribingOrDosing",
+              "medicationSelection",
+              "dosing",
+              "treatmentDuration",
+              "prescriptionPlan",
+              "treatmentChange",
+              "other"
+            ]
+          },
+          "maxItems": 9,
+          "uniqueItems": true
+        },
+        "origin": {
+          "type": "string",
+          "enum": [
+            "explicit",
+            "legacyBoundaryDetection"
+          ]
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "x-intent": true
+    },
+    "UrgentIndicators": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "suddenSevereAbdominalOrPelvicPain": {
+          "$ref": "#/$defs/ClinicalFlag"
+        },
+        "shoulderPain": {
+          "$ref": "#/$defs/ClinicalFlag"
+        },
+        "weakness": {
+          "$ref": "#/$defs/ClinicalFlag"
+        },
+        "dizziness": {
+          "$ref": "#/$defs/ClinicalFlag"
+        },
+        "fainting": {
+          "$ref": "#/$defs/ClinicalFlag"
+        },
+        "suddenAcutePelvicPain": {
+          "$ref": "#/$defs/ClinicalFlag"
+        },
+        "severeAcutePelvicPain": {
+          "$ref": "#/$defs/ClinicalFlag"
+        },
+        "surgicalEmergencyCannotBeExcluded": {
+          "$ref": "#/$defs/ClinicalFlag"
+        },
+        "tuboOvarianAbscess": {
+          "$ref": "#/$defs/ClinicalFlag"
+        },
+        "severeIllness": {
+          "$ref": "#/$defs/ClinicalFlag"
+        },
+        "nauseaAndVomiting": {
+          "$ref": "#/$defs/ClinicalFlag"
+        },
+        "oralTemperatureCelsius": {
+          "$ref": "#/$defs/ClinicalMeasure"
+        },
+        "oralTemperatureFahrenheit": {
+          "$ref": "#/$defs/ClinicalMeasure"
+        },
+        "cannotFollowOrTolerateOutpatientOralTherapy": {
+          "$ref": "#/$defs/ClinicalFlag"
+        },
+        "noClinicalResponseToOralTherapy": {
+          "$ref": "#/$defs/ClinicalFlag"
+        }
+      },
+      "required": []
+    },
+    "ReportedContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "painLocation": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Location of reported pain (e.g. 'lower left pelvis, radiating to back').",
+          "title": "Painlocation"
+        },
+        "painQuality": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Quality of pain (e.g. 'cramping', 'sharp', 'constant dull ache').",
+          "title": "Painquality"
+        },
+        "painSeverity": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Severity description or numeric rating as free text. Conflicting values are preserved and flagged; they are never averaged.",
+          "title": "Painseverity"
+        },
+        "symptomTiming": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timing of symptoms in relation to the menstrual cycle or other events.",
+          "title": "Symptomtiming"
+        },
+        "bowelUrinarySymptoms": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Bowel or urinary symptoms (e.g. 'painful bowel movements', 'haematuria').",
+          "title": "Bowelurinarysymptoms"
+        },
+        "sexualPain": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pain during or after sexual intercourse.",
+          "title": "Sexualpain"
+        },
+        "menstrualHistory": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Menstrual history including cycle regularity, heaviness, and pain.",
+          "title": "Menstrualhistory"
+        },
+        "fertilityStatus": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Current fertility goals, history, or treatment (free text).",
+          "title": "Fertilitystatus"
+        },
+        "priorTreatments": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Previous treatments, responses, and adverse effects.",
+          "title": "Priortreatments"
+        },
+        "familyHistory": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Relevant family history. First-degree relative with endometriosis is specifically noted in NICE-NG73 as increasing likelihood.",
+          "title": "Familyhistory"
+        }
+      },
+      "required": []
+    }
+  }
+}

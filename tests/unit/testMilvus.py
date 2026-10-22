@@ -18,7 +18,7 @@ from backend.app.services.evidence import EvidenceLoader, readArtifact
 from backend.app.services.retrieval import RetrievalService, SearchFilter
 from tests.support.evidenceFixture import SyntheticPackage, buildModule, fileHash, makeChunk, refreshManifest, saveJson
 from tests.support.fakeMilvus import FakeMilvus
-from tests.support.syntheticRetrieval import SyntheticEmbedding
+from backend.demo.synthetic import SyntheticEmbedding
 
 
 def createStore(root, count=3, moduleId="SyntheticAlpha", metric="IP", client=None):

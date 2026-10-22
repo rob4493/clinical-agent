@@ -13,7 +13,6 @@ Checks:
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 RepoRoot = Path(__file__).resolve().parent.parent.parent

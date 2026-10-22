@@ -11,7 +11,7 @@ from pydantic import ValidationError
 
 from backend.app.config import Settings
 from backend.app.main import createApp
-from backend.app.models.evidence import EvidenceManifest, EvidencePackage
+from backend.app.models.evidence import EvidencePackage
 from backend.app.models.module import ClinicalModuleConfig
 from backend.app.models.retrieval import KnowledgeChunk, canonicalHash
 from backend.app.modules.registry import ModuleRegistry

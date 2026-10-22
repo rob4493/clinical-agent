@@ -1,4 +1,8 @@
 import Policy from './policy.json';
+import Schema from '../../shared/clinicalData.schema.json';
+import { canonicalToLegacy, legacyToCanonical } from '../../shared/caseBridge';
+import { ClinicalDataError } from '../../shared/schemaRules';
+import type { LegacyCase } from '../../shared/clinicalData';
 
 export type RecordFields = Record<string,unknown>;
 export interface CaseInput extends RecordFields { moduleHint:string; caseType:'brief'|'detailed'; additionalNotes:string|null; ageRange:string|null; pregnancyPossible:boolean|null; pidDiagnosedOrPresumed:boolean|null; earlyPregnancy:RecordFields|null; urgentFindings:RecordFields|null }
@@ -35,7 +39,11 @@ export function context(caseInput:CaseInput):RecordFields { return caseInput.ear
 export function weeks(caseInput:CaseInput):number|null { const candidate=context(caseInput).gestationalWeeks;return typeof candidate==='number'?candidate:null; }
 export function pattern(expression:string,flags='i'):RegExp { return new RegExp(expression,flags); }
 export function validateCase(payload:unknown):CaseInput {
- const root=Policy.inputSchema as unknown as RecordFields;
+ try {return validateRequest(payload);} catch(failure) {if(failure instanceof ClinicalDataError)throw new InputError();throw failure;}
+}
+function validateRequest(payload:unknown):CaseInput {
+ if(payload&&typeof payload==='object'&&!Array.isArray(payload)&&Object.hasOwn(payload,'schemaVersion'))payload=canonicalToLegacy(payload);
+ const root={...Schema.$defs.LegacyCase,$defs:Schema.$defs} as unknown as RecordFields;
  function validate(content:unknown,schema:RecordFields):unknown {
   if(schema.$ref) return validate(content,(root.$defs as RecordFields)[String(schema.$ref).split('/').pop()!] as RecordFields);
   if(Array.isArray(schema.anyOf)) {
@@ -68,6 +76,7 @@ export function validateCase(payload:unknown):CaseInput {
   return content;
  }
  const result=validate(payload,root) as CaseInput;
+ if(result.moduleHint!=='NotSure')legacyToCanonical(result as unknown as LegacyCase);
  if(result.earlyPregnancy!==null && result.moduleHint!=='module_02_early_pregnancy') throw new InputError();
  for(const [name,content] of Object.entries(result)) {
   if(typeof content!=='string' || ['moduleHint','caseType'].includes(name)) continue;

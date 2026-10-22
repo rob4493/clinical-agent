@@ -27,7 +27,8 @@ describe('synthetic presentation without clinical approval claims', () => {
     expect(panel.style.minHeight).toBe('');
     expect(panel).not.toHaveTextContent(/no urgent warning|no urgent issues/i);
     if (outcome === 'AgentResponse') {
-      expect(screen.getByRole('heading', { name: 'Clinical considerations' })).toBeVisible();
+      expect(screen.getByRole('heading', { name: 'Summary' })).toBeVisible();
+      await userEvent.click(screen.getByRole('button', { name: 'Sources (1)' }));
       const source = screen.getByRole('button', { name: '[1] View source details' });
       expect(panel).not.toHaveTextContent(/fictional example|fictional demonstration source/i);
       expect(source).not.toHaveAttribute('href');
@@ -47,10 +48,10 @@ describe('synthetic presentation without clinical approval claims', () => {
     const { rerender } = render(<ResponsePanel review={readReview(payload, true)} synthetic />);
     const panel = screen.getByRole('region', { name: 'Clinical evidence review' });
     expect(panel.firstElementChild).toHaveClass('urgentPanel');
-    expect(screen.getByRole('heading', { name: 'One useful follow-up' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Questions to clarify' })).toBeVisible();
     expect(screen.getByText('Is the structured context correct?')).toBeVisible();
     rerender(<ResponsePanel review={readReview(analysisResult(), true)} synthetic />);
-    expect(screen.queryByRole('heading', { name: 'One useful follow-up' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Questions to clarify' })).not.toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
   it('does not reserve stale panel height or add decorative icons during loading', () => {

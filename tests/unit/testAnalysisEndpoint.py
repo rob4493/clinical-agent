@@ -272,7 +272,7 @@ def testOpenApiPublicEnvelopeAndAllOutcomes(analysisKit):
     with TestClient(makeApp(analysisKit)) as client:
         schema = client.get("/openapi.json").json()
     operation = schema["paths"]["/v1/analyze"]["post"]
-    assert operation["requestBody"]["content"]["application/json"]["schema"]["$ref"].endswith("/ClinicalCaseInput")
+    assert {branch["$ref"].split("/")[-1] for branch in operation["requestBody"]["content"]["application/json"]["schema"]["anyOf"]} == {"ClinicalCaseInput", "CanonicalCase"}
     assert set(operation["responses"]) == {"200", "404", "422", "503"}
     example = operation["requestBody"]["content"]["application/json"]["examples"]["fictional"]["value"]
     assert example["moduleHint"] == "SyntheticAlpha"

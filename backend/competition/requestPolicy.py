@@ -1,23 +1,9 @@
 """Request-local scope boundaries; never authorize clinical claims or infer facts."""
 
 import re
+from backend.app.models.requestIntent import prescribingIntent
 
 PrescribingNotice = "Medication selection, dosing and patient-specific prescribing are outside this system’s scope."
-PrescribingPattern = re.compile(
-    r"\b(?:prescrib\w*|prescription|dos(?:e|es|ing|age)|how (?:much|many)[^.!?]{0,45}(?:take|give|tablet|pill)|"
-    r"(?:select|choose|best|which|recommend)[^.!?]{0,45}(?:medication|drug|treatment)|"
-    r"(?:start|stop|replace|switch|change|increase|decrease)[^.!?]{0,35}(?:medication|drug|treatment|therapy)|"
-    r"(?:treatment|medication|therapy)[^.!?]{0,25}duration|how long[^.!?]{0,40}(?:take|treat|therapy))\b", re.IGNORECASE)
-GeneralQuestion = re.compile(r"\b(?:guideline|policy|publication|source)\b.*\b(?:discuss|cover|say|address)|\b(?:discuss|cover|say|address)\b.*\b(?:guideline|policy|publication|source)\b", re.IGNORECASE)
-PersonalRequest = re.compile(r"\b(?:patient|this case|for me|for her|for him|select|choose|write|give|start|stop|replace|switch|increase|decrease|exact|best)\b", re.IGNORECASE)
-
-
-def prescribingIntent(notes):
-    text = re.sub(r"\b(?:do not|don't)\s+(?:(?:provide|give)\s+)?(?:select\s+treatment|prescribe|recommend\s+medication|provide\s+dosing|dosing)\b", "", notes or "", flags=re.IGNORECASE)
-    return any(PrescribingPattern.search(sentence) and not (GeneralQuestion.search(sentence) and not PersonalRequest.search(sentence))
-        for sentence in re.split(r"(?<=[.!?;])\s+", text))
-
-
 def evidenceNotes(notes):
     """Remove requested prescribing tasks, not clinical findings, from topic matching."""
     return " ".join(sentence.strip() for sentence in re.split(r"(?<=[.!?;])\s+", notes or "") if not prescribingIntent(sentence))

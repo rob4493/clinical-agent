@@ -1,0 +1,176 @@
+{
+  "schemaVersion": 2,
+  "purpose": "Project-authored display wording only; original claims and server validation remain authoritative. Exact whole-text and source coverage required.",
+  "entries": [
+    {
+      "moduleId": "module_01_endo",
+      "claimIds": [
+        "N18"
+      ],
+      "sourceIds": [
+        "NICE-NG73"
+      ],
+      "original": "A normal transvaginal ultrasound does not exclude endometriosis.",
+      "terms": [
+        {
+          "term": "Transvaginal ultrasound",
+          "explanation": "An internal pelvic ultrasound."
+        }
+      ],
+      "summary": "A normal internal pelvic ultrasound cannot rule out endometriosis.",
+      "nextConsideration": null,
+      "keyPoints": [
+        "A normal internal pelvic ultrasound cannot rule out endometriosis."
+      ]
+    },
+    {
+      "moduleId": "module_01_endo",
+      "claimIds": [
+        "N18"
+      ],
+      "sourceIds": [
+        "NICE-NG73"
+      ],
+      "original": "Endometriosis cannot be ruled out by a normal transvaginal ultrasound.",
+      "terms": [
+        {
+          "term": "Transvaginal ultrasound",
+          "explanation": "An internal pelvic ultrasound."
+        }
+      ],
+      "summary": "A normal internal pelvic ultrasound cannot rule out endometriosis.",
+      "nextConsideration": null,
+      "keyPoints": [
+        "A normal internal pelvic ultrasound cannot rule out endometriosis."
+      ]
+    },
+    {
+      "moduleId": "module_01_endo",
+      "claimIds": [
+        "N20"
+      ],
+      "sourceIds": [
+        "NICE-NG73"
+      ],
+      "original": "A normal MRI does not establish that endometriosis is absent.",
+      "terms": [],
+      "summary": "A normal MRI cannot rule out endometriosis.",
+      "nextConsideration": null,
+      "keyPoints": [
+        "A normal MRI cannot rule out endometriosis."
+      ]
+    },
+    {
+      "moduleId": "module_01_endo",
+      "claimIds": [
+        "N20"
+      ],
+      "sourceIds": [
+        "NICE-NG73"
+      ],
+      "original": "Endometriosis cannot be considered absent solely because MRI is normal.",
+      "terms": [],
+      "summary": "A normal MRI alone cannot rule out endometriosis.",
+      "nextConsideration": null,
+      "keyPoints": [
+        "A normal MRI alone cannot rule out endometriosis."
+      ]
+    },
+    {
+      "moduleId": "module_01_endo",
+      "claimIds": [
+        "N22"
+      ],
+      "sourceIds": [
+        "NICE-NG73"
+      ],
+      "original": "Serum CA-125 should not be used to diagnose endometriosis.",
+      "terms": [],
+      "summary": "CA-125 should not be used to diagnose endometriosis.",
+      "nextConsideration": null,
+      "keyPoints": [
+        "CA-125 should not be used to diagnose endometriosis."
+      ]
+    },
+    {
+      "moduleId": "module_01_endo",
+      "claimIds": [
+        "N01",
+        "C05"
+      ],
+      "sourceIds": [
+        "ACOG-CPP",
+        "NICE-NG73"
+      ],
+      "original": "Cycle-related pelvic pain and pain during sex keep endometriosis among the considerations, but do not confirm a diagnosis.",
+      "terms": [],
+      "summary": "Pelvic pain related to periods or pain during sex can fit endometriosis, but does not confirm it.",
+      "nextConsideration": null,
+      "keyPoints": [
+        "Pelvic pain related to periods or pain during sex can fit endometriosis, but does not confirm it."
+      ]
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2NSymptoms",
+        "M2NPainAssessment"
+      ],
+      "sourceIds": [
+        "NICE-NG126-2026"
+      ],
+      "original": "Pain or bleeding in early pregnancy may warrant early-pregnancy assessment, but these symptoms alone do not identify the cause or confirm ectopic pregnancy. The urgency of referral depends on the overall clinical presentation.",
+      "terms": [],
+      "summary": "Pain or bleeding in early pregnancy may need assessment, but symptoms alone cannot identify the cause or confirm ectopic pregnancy.",
+      "nextConsideration": "The overall clinical picture determines how urgently assessment may be needed.",
+      "keyPoints": [
+        "Early-pregnancy pain or bleeding may need assessment; symptoms alone cannot identify the cause or confirm ectopic pregnancy.",
+        "The overall clinical picture determines how urgently assessment may be needed."
+      ]
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2AIndeterminateHcg",
+        "M2ASerialScope"
+      ],
+      "sourceIds": [
+        "ACEP-EARLYPREG-2017"
+      ],
+      "original": "A single serum hCG result does not exclude ectopic pregnancy after an indeterminate transvaginal ultrasound; the available evidence does not support generating an individualized serial-testing schedule.",
+      "terms": [
+        {
+          "term": "Transvaginal ultrasound",
+          "explanation": "An internal pelvic ultrasound."
+        }
+      ],
+      "summary": "One blood pregnancy-hormone result cannot rule out ectopic pregnancy after an inconclusive internal pelvic ultrasound. This evidence cannot provide an individual repeat-testing schedule.",
+      "nextConsideration": null,
+      "keyPoints": [
+        "One blood pregnancy-hormone result cannot rule out ectopic pregnancy after an inconclusive internal pelvic ultrasound.",
+        "This evidence cannot provide an individual repeat-testing schedule."
+      ]
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2AIndeterminateHcg"
+      ],
+      "sourceIds": [
+        "ACEP-EARLYPREG-2017"
+      ],
+      "original": "A single serum hCG result does not exclude ectopic pregnancy after an indeterminate transvaginal ultrasound.",
+      "terms": [
+        {
+          "term": "Transvaginal ultrasound",
+          "explanation": "An internal pelvic ultrasound."
+        }
+      ],
+      "summary": "One blood pregnancy-hormone result cannot rule out ectopic pregnancy after an inconclusive internal pelvic ultrasound.",
+      "nextConsideration": null,
+      "keyPoints": [
+        "One blood pregnancy-hormone result cannot rule out ectopic pregnancy after an inconclusive internal pelvic ultrasound."
+      ]
+    }
+  ]
+}

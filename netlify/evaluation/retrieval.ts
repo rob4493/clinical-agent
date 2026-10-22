@@ -2,7 +2,7 @@ import Policy from './policy.json';
 import { indeterminateContext } from './requestPolicy';
 import { currentClauses, phraseState, reportedStates } from './assertions';
 import { CaseInput, context, pattern, weeks } from './input';
-import { Claim, Package, Module2 } from './packages';
+import { Claim, Package } from './packages';
 
 export function caseText(caseInput:CaseInput):string { return Object.entries(caseInput).filter(([name,field])=>field!==null&&!['moduleHint','caseType','ageRange','pregnancyPossible','pidDiagnosedOrPresumed','urgentFindings','earlyPregnancy'].includes(name)).map(([,field])=>String(field)).join(' ').toLowerCase(); }
 function topics(text:string):Set<string> { return new Set(Object.entries(Policy.topicPatterns).filter(([,expression])=>pattern(expression).test(text)).map(([topic])=>topic)); }

@@ -1,7 +1,7 @@
 """
-Text utilities for the clinical decision-support agent — Sub-Task 3.
+Tested text-boundary utilities for retained internal integrations.
 
-Provides three utilities used by the LLM service and response assembly:
+These helpers are not a runtime fallback for clinical generation or shortening:
 
 1. wrapWithDelimiters — wraps a text block between explicit start/end markers
    to make LLM prompt boundaries unambiguous and reduce injection surface.
@@ -10,7 +10,7 @@ Provides three utilities used by the LLM service and response assembly:
    ellipsis to signal truncation.  Used for display, never for clinical content.
 
 3. parseJsonSchema — safely parses a raw LLM output string as JSON, returning
-   a validated Python dict.  Returns None on any parse or schema error rather
+   a parsed Python dict, without validating a clinical schema. Returns None on parsing failure rather
    than raising, so callers can apply safe-fallback logic.
 """
 

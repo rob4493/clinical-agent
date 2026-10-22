@@ -36,8 +36,8 @@ async function runSmoke() {
       assert.equal(await page.locator('#module').inputValue(), '');
       assert.equal(await page.getByRole('button', { name: 'Analyze' }).isDisabled(), true);
       const scenarios = [
-        { name: 'ordinary', notes: 'fictional demonstration context', pregnancy: 'unknown', heading: 'Clinical considerations', urgent: false },
-        { name: 'urgent', notes: 'sudden acute pelvic pain', pregnancy: 'unknown', heading: 'Clinical considerations', urgent: true },
+        { name: 'ordinary', notes: 'Recurrent pelvic discomfort. Timing, examination and test findings are not provided. Please review the reported pattern and uncertainty.', pregnancy: 'unknown', heading: 'Summary', urgent: false },
+        { name: 'urgent', notes: 'sudden acute pelvic pain', pregnancy: 'unknown', heading: 'Summary', urgent: true },
         { name: 'conflict', notes: 'pregnancy confirmed', pregnancy: 'no', heading: 'Resolve conflicting information', urgent: false },
         { name: 'clarification', notes: 'pregnancy confirmed', pregnancy: 'unknown', heading: 'Clarification required', urgent: false },
         { name: 'insufficient', notes: 'demo evidence unavailable', pregnancy: 'unknown', heading: 'Evidence insufficient or unavailable', urgent: false },
@@ -57,9 +57,12 @@ async function runSmoke() {
         assert.equal(await page.locator('.responseCard').evaluate(panel => panel.lastElementChild.className), 'decisionNotice');
         if (scenario.urgent) {
           assert.equal(await page.locator('.responseCard').evaluate(panel => panel.firstElementChild.className), 'urgentPanel');
-          const link = page.locator('.sourceButton');
-          assert.equal(await link.getAttribute('href'), 'https://fictional.invalid/demo/reference');
-          assert.equal(await link.getAttribute('rel'), 'noopener noreferrer');
+          const sources = page.getByRole('button', { name: /^Sources \(/ });
+          await sources.click();
+          const link = page.locator('button.sourceButton');
+          assert.equal(await link.getAttribute('href'), null);
+          await link.click(); await page.getByRole('dialog').waitFor();
+          await page.keyboard.press('Escape');
           const bounds = await link.boundingBox();
           assert.ok(bounds.height >= 44 && bounds.x >= 0 && bounds.x + bounds.width <= viewport.width);
           assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
@@ -91,17 +94,26 @@ async function runSmoke() {
       await context.close();
     }
     const responses = await Promise.all(Array.from({ length: 12 }, async (ignored, index) => {
-      const response = await fetch('http://127.0.0.1:8000/v1/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ moduleHint: 'SyntheticDemo', caseType: 'brief', pregnancyPossible: Boolean(index % 2), additionalNotes: 'fictional concurrent browser marker ' + index }) });
+      const response = await fetch('http://127.0.0.1:8000/v1/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ moduleHint: 'SyntheticDemo', caseType: 'brief', pregnancyPossible: Boolean(index % 2), additionalNotes: 'Recurrent pelvic discomfort. Timing, examination and test findings are not provided. Please review the reported pattern and uncertainty.' }) });
       assert.equal(response.status, 200);
       assert.equal(response.headers.get('X-Clinical-Mode'), 'synthetic');
       const payload = await response.json();
       assert.equal(payload.response.responseType, 'AgentResponse');
       assert.equal(payload.response.reportedFacts.pregnancyPossible, index % 2 ? 'Yes' : 'No');
-      assert.ok(!JSON.stringify(payload).includes('fictional concurrent browser marker'));
+      assert.ok(!JSON.stringify(payload).includes('Recurrent pelvic discomfort. Timing, examination and test findings are not provided. Please review the reported pattern and uncertainty.'));
       return payload.renderedText;
     }));
     assert.equal(new Set(responses).size, 1);
-    report.concurrentRequests = responses.length;
+    // Arbitrary markers are intentionally unsupported; verify fail-closed replies never echo them or cross case state.
+    const markers = Array.from(Array(12).keys(), index => 'fictional concurrent browser marker ' + index);
+    await Promise.all(markers.map(async (marker, index) => {
+      const response = await fetch('http://127.0.0.1:8000/v1/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ moduleHint: 'SyntheticDemo', caseType: 'brief', pregnancyPossible: Boolean(index % 2), additionalNotes: marker }) });
+      assert.equal(response.status, 200); const payload = await response.json();
+      assert.equal(payload.response.responseType, 'EvidenceInsufficient');
+      assert.ok(markers.every(candidate => !JSON.stringify(payload).includes(candidate)));
+      assert.ok(payload.renderedText.includes('pregnancy ' + (index % 2 ? 'Yes' : 'No')));
+    }));
+    report.concurrentRequests = responses.length + markers.length;
     assert.equal(report.externalBrowserRequests, 0);
     assert.equal(report.browserErrors, 0);
     fs.writeFileSync(path.join(__dirname, '../screenshots/demoBrowserResults.json'), JSON.stringify(report, null, 2) + '\n');

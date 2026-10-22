@@ -1,6 +1,6 @@
 import Policy from './policy.json';
 import { currentClauses, phraseState, phraseStates, reportedStates } from './assertions';
-import { CaseInput, context, RecordFields, pattern, textField, weeks } from './input';
+import { CaseInput, context, pattern, textField, weeks } from './input';
 import { Module1, Module2 } from './packages';
 
 export interface Warning { ruleId:string; text:string; sourceTags:string[] }

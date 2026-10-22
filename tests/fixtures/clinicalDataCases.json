@@ -1,0 +1,2572 @@
+{
+  "cases": [
+    {
+      "id": "module1",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": true
+    },
+    {
+      "id": "module2",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_02_early_pregnancy",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "present"
+        },
+        "pidStatus": {
+          "state": "unknown"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Mild pelvic discomfort and light spotting. One single serum hCG result is available. Can this exclude ectopic pregnancy?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "earlyPregnancy": {
+          "gestationalWeeks": 6.0,
+          "careSetting": "emergencyDepartment",
+          "pregnancyTestType": "serum",
+          "pregnancyTestResult": "positive",
+          "ultrasoundRoute": "transvaginal",
+          "ultrasoundFinding": "noPregnancyVisualized",
+          "previousIntrauterinePregnancyConfirmed": false,
+          "assistedReproduction": false,
+          "abdominalTrauma": false,
+          "clinicallyStable": true
+        }
+      },
+      "valid": true
+    },
+    {
+      "id": "pregnancy-unknown",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": true
+    },
+    {
+      "id": "pregnancy-notReported",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "notReported"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": true
+    },
+    {
+      "id": "pregnancy-absent",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "absent"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": true
+    },
+    {
+      "id": "pregnancy-present",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "present"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": true
+    },
+    {
+      "id": "pregnancy-notApplicable",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "notApplicable"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": true
+    },
+    {
+      "id": "version",
+      "case": {
+        "schemaVersion": "2.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "case-type",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "complete",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "module-format",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "../module",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "module-unselected",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "NotSure",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "module-empty",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "unknown-property",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "unexpected": "Synthetic marker"
+      },
+      "valid": false
+    },
+    {
+      "id": "module-missing",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "long-ageRange",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "long-originalNarrative",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "malformed-status-16",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": false,
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "malformed-status-17",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": null,
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "malformed-status-18",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": "false",
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "malformed-status-19",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "absent",
+          "value": false
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "early-20",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_02_early_pregnancy",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "present"
+        },
+        "pidStatus": {
+          "state": "unknown"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Mild pelvic discomfort and light spotting. One single serum hCG result is available. Can this exclude ectopic pregnancy?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "earlyPregnancy": {
+          "gestationalWeeks": 6.0,
+          "careSetting": "ward",
+          "pregnancyTestType": "serum",
+          "pregnancyTestResult": "positive",
+          "ultrasoundRoute": "transvaginal",
+          "ultrasoundFinding": "noPregnancyVisualized",
+          "previousIntrauterinePregnancyConfirmed": false,
+          "assistedReproduction": false,
+          "abdominalTrauma": false,
+          "clinicallyStable": true
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "early-21",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_02_early_pregnancy",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "present"
+        },
+        "pidStatus": {
+          "state": "unknown"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Mild pelvic discomfort and light spotting. One single serum hCG result is available. Can this exclude ectopic pregnancy?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "earlyPregnancy": {
+          "gestationalWeeks": 6.0,
+          "careSetting": "emergencyDepartment",
+          "pregnancyTestType": "serum",
+          "pregnancyTestResult": "positive",
+          "ultrasoundRoute": "MRI",
+          "ultrasoundFinding": "noPregnancyVisualized",
+          "previousIntrauterinePregnancyConfirmed": false,
+          "assistedReproduction": false,
+          "abdominalTrauma": false,
+          "clinicallyStable": true
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "early-22",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_02_early_pregnancy",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "present"
+        },
+        "pidStatus": {
+          "state": "unknown"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Mild pelvic discomfort and light spotting. One single serum hCG result is available. Can this exclude ectopic pregnancy?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "earlyPregnancy": {
+          "gestationalWeeks": 6.0,
+          "careSetting": "emergencyDepartment",
+          "pregnancyTestType": "serum",
+          "pregnancyTestResult": "positive",
+          "ultrasoundRoute": "transvaginal",
+          "ultrasoundFinding": "normal",
+          "previousIntrauterinePregnancyConfirmed": false,
+          "assistedReproduction": false,
+          "abdominalTrauma": false,
+          "clinicallyStable": true
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "early-23",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_02_early_pregnancy",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "present"
+        },
+        "pidStatus": {
+          "state": "unknown"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Mild pelvic discomfort and light spotting. One single serum hCG result is available. Can this exclude ectopic pregnancy?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "earlyPregnancy": {
+          "gestationalWeeks": 6.0,
+          "careSetting": "emergencyDepartment",
+          "pregnancyTestType": "serum",
+          "pregnancyTestResult": "unknown",
+          "ultrasoundRoute": "transvaginal",
+          "ultrasoundFinding": "noPregnancyVisualized",
+          "previousIntrauterinePregnancyConfirmed": false,
+          "assistedReproduction": false,
+          "abdominalTrauma": false,
+          "clinicallyStable": true
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "early-24",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_02_early_pregnancy",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "present"
+        },
+        "pidStatus": {
+          "state": "unknown"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Mild pelvic discomfort and light spotting. One single serum hCG result is available. Can this exclude ectopic pregnancy?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "earlyPregnancy": {
+          "gestationalWeeks": 6.0,
+          "careSetting": "emergencyDepartment",
+          "pregnancyTestType": "saliva",
+          "pregnancyTestResult": "positive",
+          "ultrasoundRoute": "transvaginal",
+          "ultrasoundFinding": "noPregnancyVisualized",
+          "previousIntrauterinePregnancyConfirmed": false,
+          "assistedReproduction": false,
+          "abdominalTrauma": false,
+          "clinicallyStable": true
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "early-25",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_02_early_pregnancy",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "present"
+        },
+        "pidStatus": {
+          "state": "unknown"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Mild pelvic discomfort and light spotting. One single serum hCG result is available. Can this exclude ectopic pregnancy?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "earlyPregnancy": {
+          "gestationalWeeks": 6.0,
+          "careSetting": "emergencyDepartment",
+          "pregnancyTestType": "serum",
+          "pregnancyTestResult": "positive",
+          "ultrasoundRoute": "transvaginal",
+          "ultrasoundFinding": "noPregnancyVisualized",
+          "previousIntrauterinePregnancyConfirmed": false,
+          "assistedReproduction": false,
+          "abdominalTrauma": false,
+          "clinicallyStable": "false"
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "early-26",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_02_early_pregnancy",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "present"
+        },
+        "pidStatus": {
+          "state": "unknown"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Mild pelvic discomfort and light spotting. One single serum hCG result is available. Can this exclude ectopic pregnancy?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "earlyPregnancy": {
+          "gestationalWeeks": 46,
+          "careSetting": "emergencyDepartment",
+          "pregnancyTestType": "serum",
+          "pregnancyTestResult": "positive",
+          "ultrasoundRoute": "transvaginal",
+          "ultrasoundFinding": "noPregnancyVisualized",
+          "previousIntrauterinePregnancyConfirmed": false,
+          "assistedReproduction": false,
+          "abdominalTrauma": false,
+          "clinicallyStable": true
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "confidence-27",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "symptoms": [
+          {
+            "id": "SymptomA",
+            "label": "Synthetic reported symptom",
+            "state": "unknown",
+            "confidence": -0.01
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "id": "confidence-28",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "symptoms": [
+          {
+            "id": "SymptomA",
+            "label": "Synthetic reported symptom",
+            "state": "unknown",
+            "confidence": 1.01
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "id": "confidence-29",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "symptoms": [
+          {
+            "id": "SymptomA",
+            "label": "Synthetic reported symptom",
+            "state": "unknown",
+            "confidence": true
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "id": "confidence-30",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "symptoms": [
+          {
+            "id": "SymptomA",
+            "label": "Synthetic reported symptom",
+            "state": "unknown",
+            "confidence": "0.8"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "id": "confidence-31",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "symptoms": [
+          {
+            "id": "SymptomA",
+            "label": "Synthetic reported symptom",
+            "state": "unknown",
+            "confidence": 0
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "id": "confidence-32",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "symptoms": [
+          {
+            "id": "SymptomA",
+            "label": "Synthetic reported symptom",
+            "state": "unknown",
+            "confidence": 1
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "id": "verification-33",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "symptoms": [
+          {
+            "id": "SymptomA",
+            "label": "Synthetic reported symptom",
+            "state": "notReported",
+            "verification": "approved"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "id": "verification-34",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "symptoms": [
+          {
+            "id": "SymptomA",
+            "label": "Synthetic reported symptom",
+            "state": "notReported",
+            "verification": "verified"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "id": "verification-35",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "symptoms": [
+          {
+            "id": "SymptomA",
+            "label": "Synthetic reported symptom",
+            "state": "notReported",
+            "verification": false
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "id": "verification-36",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "symptoms": [
+          {
+            "id": "SymptomA",
+            "label": "Synthetic reported symptom",
+            "state": "notReported",
+            "verification": "clinicianVerified"
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "id": "verification-37",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "symptoms": [
+          {
+            "id": "SymptomA",
+            "label": "Synthetic reported symptom",
+            "state": "notReported",
+            "verification": "unverified"
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "id": "date-0",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "investigations": [
+          {
+            "id": "TestA",
+            "name": "Synthetic test",
+            "date": {
+              "kind": "exact",
+              "precision": "day",
+              "value": "2024-02-29"
+            },
+            "reportedFinding": {
+              "state": "unknown"
+            }
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "id": "date-1",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "investigations": [
+          {
+            "id": "TestA",
+            "name": "Synthetic test",
+            "date": {
+              "kind": "exact",
+              "precision": "month",
+              "value": "2026-10"
+            },
+            "reportedFinding": {
+              "state": "unknown"
+            }
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "id": "date-2",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "investigations": [
+          {
+            "id": "TestA",
+            "name": "Synthetic test",
+            "date": {
+              "kind": "approximate",
+              "precision": "year",
+              "value": "2025"
+            },
+            "reportedFinding": {
+              "state": "unknown"
+            }
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "id": "date-3",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "investigations": [
+          {
+            "id": "TestA",
+            "name": "Synthetic test",
+            "date": {
+              "kind": "range",
+              "start": "2026-01-01",
+              "end": "2026-02-01"
+            },
+            "reportedFinding": {
+              "state": "unknown"
+            }
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "id": "date-4",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "investigations": [
+          {
+            "id": "TestA",
+            "name": "Synthetic test",
+            "date": {
+              "kind": "notReported"
+            },
+            "reportedFinding": {
+              "state": "unknown"
+            }
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "id": "date-5",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "investigations": [
+          {
+            "id": "TestA",
+            "name": "Synthetic test",
+            "date": {
+              "kind": "exact",
+              "precision": "day",
+              "value": "2025-02-29"
+            },
+            "reportedFinding": {
+              "state": "unknown"
+            }
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "id": "date-6",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "investigations": [
+          {
+            "id": "TestA",
+            "name": "Synthetic test",
+            "date": {
+              "kind": "exact",
+              "precision": "month",
+              "value": "2026-13"
+            },
+            "reportedFinding": {
+              "state": "unknown"
+            }
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "id": "date-7",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "investigations": [
+          {
+            "id": "TestA",
+            "name": "Synthetic test",
+            "date": {
+              "kind": "exact",
+              "precision": "year",
+              "value": "0000"
+            },
+            "reportedFinding": {
+              "state": "unknown"
+            }
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "id": "date-8",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "investigations": [
+          {
+            "id": "TestA",
+            "name": "Synthetic test",
+            "date": {
+              "kind": "range",
+              "start": "2026-02-01",
+              "end": "2026-01-01"
+            },
+            "reportedFinding": {
+              "state": "unknown"
+            }
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "id": "date-9",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "investigations": [
+          {
+            "id": "TestA",
+            "name": "Synthetic test",
+            "date": {
+              "kind": "approximate",
+              "precision": "day",
+              "value": "yesterday"
+            },
+            "reportedFinding": {
+              "state": "unknown"
+            }
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "id": "date-10",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "investigations": [
+          {
+            "id": "TestA",
+            "name": "Synthetic test",
+            "date": {
+              "kind": "unknown",
+              "value": "2026"
+            },
+            "reportedFinding": {
+              "state": "unknown"
+            }
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "id": "duplicate-ids",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "symptoms": [
+          {
+            "id": "Repeated",
+            "label": "Synthetic symptom",
+            "state": "present"
+          },
+          {
+            "id": "Repeated",
+            "label": "Synthetic symptom",
+            "state": "present"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "id": "array-limit",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "symptoms": [
+          {
+            "id": "Symptom0",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom1",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom2",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom3",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom4",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom5",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom6",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom7",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom8",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom9",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom10",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom11",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom12",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom13",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom14",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom15",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom16",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom17",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom18",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom19",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom20",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom21",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom22",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom23",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom24",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom25",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom26",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom27",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom28",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom29",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom30",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom31",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          },
+          {
+            "id": "Symptom32",
+            "label": "Synthetic symptom",
+            "state": "unknown"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "id": "unknown-with-value",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "unknown",
+          "value": "Synthetic text"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "present-without-value",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        }
+      },
+      "valid": false
+    },
+    {
+      "id": "rich-future-record",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "sourceDocuments": [
+          {
+            "id": "DocumentA",
+            "verification": "unverified",
+            "mediaType": "application/pdf",
+            "label": "Synthetic reference"
+          }
+        ],
+        "symptoms": [
+          {
+            "id": "SymptomA",
+            "label": "Reported discomfort",
+            "state": "unknown",
+            "duration": {
+              "state": "notReported"
+            },
+            "severity": {
+              "state": "unknown"
+            },
+            "location": {
+              "state": "notReported"
+            },
+            "temporalPattern": {
+              "state": "unknown"
+            },
+            "onset": {
+              "kind": "approximate",
+              "precision": "month",
+              "value": "2026-09"
+            },
+            "confidence": 0.8,
+            "verification": "needsReview",
+            "sourceSpans": [
+              {
+                "id": "SpanA",
+                "documentId": "DocumentA",
+                "page": 1,
+                "start": 0,
+                "end": 20
+              }
+            ]
+          }
+        ],
+        "previousProcedures": [
+          {
+            "id": "ProcedureA",
+            "name": "Reported synthetic procedure",
+            "reportedFinding": {
+              "state": "unknown"
+            }
+          }
+        ],
+        "previousTreatments": [
+          {
+            "id": "TreatmentA",
+            "name": "Reported synthetic treatment",
+            "reportedResponse": {
+              "state": "notReported"
+            }
+          }
+        ],
+        "clinicianInterpretations": [
+          {
+            "id": "InterpretationA",
+            "text": {
+              "state": "present",
+              "value": "Synthetic interpretation A"
+            },
+            "interpretationSource": "clinicianReported"
+          },
+          {
+            "id": "InterpretationB",
+            "text": {
+              "state": "present",
+              "value": "Synthetic interpretation B"
+            },
+            "verification": "unverified"
+          }
+        ],
+        "conflictingInterpretations": [
+          {
+            "id": "ConflictA",
+            "interpretationIds": [
+              "InterpretationA",
+              "InterpretationB"
+            ],
+            "description": {
+              "state": "present",
+              "value": "Reported interpretations differ"
+            }
+          }
+        ],
+        "importantMissingInformation": [
+          {
+            "id": "MissingA",
+            "topic": "Reported timing",
+            "state": "notReported"
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "id": "orphan-document",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "sourceDocuments": [
+          {
+            "id": "DocumentA",
+            "verification": "unverified",
+            "mediaType": "application/pdf",
+            "label": "Synthetic reference"
+          }
+        ],
+        "symptoms": [
+          {
+            "id": "SymptomA",
+            "label": "Reported discomfort",
+            "state": "unknown",
+            "duration": {
+              "state": "notReported"
+            },
+            "severity": {
+              "state": "unknown"
+            },
+            "location": {
+              "state": "notReported"
+            },
+            "temporalPattern": {
+              "state": "unknown"
+            },
+            "onset": {
+              "kind": "approximate",
+              "precision": "month",
+              "value": "2026-09"
+            },
+            "confidence": 0.8,
+            "verification": "needsReview",
+            "sourceSpans": [
+              {
+                "id": "SpanA",
+                "documentId": "MissingDocument",
+                "page": 1,
+                "start": 0,
+                "end": 20
+              }
+            ]
+          }
+        ],
+        "previousProcedures": [
+          {
+            "id": "ProcedureA",
+            "name": "Reported synthetic procedure",
+            "reportedFinding": {
+              "state": "unknown"
+            }
+          }
+        ],
+        "previousTreatments": [
+          {
+            "id": "TreatmentA",
+            "name": "Reported synthetic treatment",
+            "reportedResponse": {
+              "state": "notReported"
+            }
+          }
+        ],
+        "clinicianInterpretations": [
+          {
+            "id": "InterpretationA",
+            "text": {
+              "state": "present",
+              "value": "Synthetic interpretation A"
+            },
+            "interpretationSource": "clinicianReported"
+          },
+          {
+            "id": "InterpretationB",
+            "text": {
+              "state": "present",
+              "value": "Synthetic interpretation B"
+            },
+            "verification": "unverified"
+          }
+        ],
+        "conflictingInterpretations": [
+          {
+            "id": "ConflictA",
+            "interpretationIds": [
+              "InterpretationA",
+              "InterpretationB"
+            ],
+            "description": {
+              "state": "present",
+              "value": "Reported interpretations differ"
+            }
+          }
+        ],
+        "importantMissingInformation": [
+          {
+            "id": "MissingA",
+            "topic": "Reported timing",
+            "state": "notReported"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "id": "orphan-interpretation",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "sourceDocuments": [
+          {
+            "id": "DocumentA",
+            "verification": "unverified",
+            "mediaType": "application/pdf",
+            "label": "Synthetic reference"
+          }
+        ],
+        "symptoms": [
+          {
+            "id": "SymptomA",
+            "label": "Reported discomfort",
+            "state": "unknown",
+            "duration": {
+              "state": "notReported"
+            },
+            "severity": {
+              "state": "unknown"
+            },
+            "location": {
+              "state": "notReported"
+            },
+            "temporalPattern": {
+              "state": "unknown"
+            },
+            "onset": {
+              "kind": "approximate",
+              "precision": "month",
+              "value": "2026-09"
+            },
+            "confidence": 0.8,
+            "verification": "needsReview",
+            "sourceSpans": [
+              {
+                "id": "SpanA",
+                "documentId": "DocumentA",
+                "page": 1,
+                "start": 0,
+                "end": 20
+              }
+            ]
+          }
+        ],
+        "previousProcedures": [
+          {
+            "id": "ProcedureA",
+            "name": "Reported synthetic procedure",
+            "reportedFinding": {
+              "state": "unknown"
+            }
+          }
+        ],
+        "previousTreatments": [
+          {
+            "id": "TreatmentA",
+            "name": "Reported synthetic treatment",
+            "reportedResponse": {
+              "state": "notReported"
+            }
+          }
+        ],
+        "clinicianInterpretations": [
+          {
+            "id": "InterpretationA",
+            "text": {
+              "state": "present",
+              "value": "Synthetic interpretation A"
+            },
+            "interpretationSource": "clinicianReported"
+          },
+          {
+            "id": "InterpretationB",
+            "text": {
+              "state": "present",
+              "value": "Synthetic interpretation B"
+            },
+            "verification": "unverified"
+          }
+        ],
+        "conflictingInterpretations": [
+          {
+            "id": "ConflictA",
+            "interpretationIds": [
+              "InterpretationA",
+              "MissingInterpretation"
+            ],
+            "description": {
+              "state": "present",
+              "value": "Reported interpretations differ"
+            }
+          }
+        ],
+        "importantMissingInformation": [
+          {
+            "id": "MissingA",
+            "topic": "Reported timing",
+            "state": "notReported"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "id": "span-order",
+      "case": {
+        "schemaVersion": "1.0.0",
+        "moduleId": "module_01_endo",
+        "caseType": "brief",
+        "ageRange": {
+          "state": "present",
+          "value": "25-34"
+        },
+        "pregnancyStatus": {
+          "state": "unknown"
+        },
+        "pidStatus": {
+          "state": "absent"
+        },
+        "originalNarrative": {
+          "state": "present",
+          "value": "Normal transvaginal ultrasound. Does this exclude endometriosis?"
+        },
+        "userIntent": {
+          "state": "notReported"
+        },
+        "reportedContext": {
+          "painLocation": null
+        },
+        "sourceDocuments": [
+          {
+            "id": "DocumentA",
+            "verification": "unverified",
+            "mediaType": "application/pdf",
+            "label": "Synthetic reference"
+          }
+        ],
+        "symptoms": [
+          {
+            "id": "SymptomA",
+            "label": "Reported discomfort",
+            "state": "unknown",
+            "duration": {
+              "state": "notReported"
+            },
+            "severity": {
+              "state": "unknown"
+            },
+            "location": {
+              "state": "notReported"
+            },
+            "temporalPattern": {
+              "state": "unknown"
+            },
+            "onset": {
+              "kind": "approximate",
+              "precision": "month",
+              "value": "2026-09"
+            },
+            "confidence": 0.8,
+            "verification": "needsReview",
+            "sourceSpans": [
+              {
+                "id": "SpanA",
+                "documentId": "DocumentA",
+                "page": 1,
+                "start": 0,
+                "end": 0
+              }
+            ]
+          }
+        ],
+        "previousProcedures": [
+          {
+            "id": "ProcedureA",
+            "name": "Reported synthetic procedure",
+            "reportedFinding": {
+              "state": "unknown"
+            }
+          }
+        ],
+        "previousTreatments": [
+          {
+            "id": "TreatmentA",
+            "name": "Reported synthetic treatment",
+            "reportedResponse": {
+              "state": "notReported"
+            }
+          }
+        ],
+        "clinicianInterpretations": [
+          {
+            "id": "InterpretationA",
+            "text": {
+              "state": "present",
+              "value": "Synthetic interpretation A"
+            },
+            "interpretationSource": "clinicianReported"
+          },
+          {
+            "id": "InterpretationB",
+            "text": {
+              "state": "present",
+              "value": "Synthetic interpretation B"
+            },
+            "verification": "unverified"
+          }
+        ],
+        "conflictingInterpretations": [
+          {
+            "id": "ConflictA",
+            "interpretationIds": [
+              "InterpretationA",
+              "InterpretationB"
+            ],
+            "description": {
+              "state": "present",
+              "value": "Reported interpretations differ"
+            }
+          }
+        ],
+        "importantMissingInformation": [
+          {
+            "id": "MissingA",
+            "topic": "Reported timing",
+            "state": "notReported"
+          }
+        ]
+      },
+      "valid": false
+    }
+  ],
+  "legacy": [
+    {
+      "moduleHint": "module_01_endo",
+      "ageRange": "25-34",
+      "caseType": "brief",
+      "pregnancyPossible": null,
+      "pidDiagnosedOrPresumed": false,
+      "additionalNotes": "Normal transvaginal ultrasound. Does this exclude endometriosis?",
+      "painLocation": null
+    },
+    {
+      "moduleHint": "module_02_early_pregnancy",
+      "ageRange": "25-34",
+      "caseType": "brief",
+      "pregnancyPossible": true,
+      "pidDiagnosedOrPresumed": null,
+      "additionalNotes": "Mild pelvic discomfort and light spotting. One single serum hCG result is available. Can this exclude ectopic pregnancy?",
+      "earlyPregnancy": {
+        "gestationalWeeks": 6,
+        "careSetting": "emergencyDepartment",
+        "pregnancyTestType": "serum",
+        "pregnancyTestResult": "positive",
+        "ultrasoundRoute": "transvaginal",
+        "ultrasoundFinding": "noPregnancyVisualized",
+        "clinicallyStable": true,
+        "previousIntrauterinePregnancyConfirmed": false,
+        "assistedReproduction": false,
+        "abdominalTrauma": false
+      }
+    }
+  ],
+  "claimPackageHashes": {
+    "evaluation/modules/module1/claims.json": "b1b28cb6522e9a18654e978ea5b669f2f107b2b858f920d907634a99577ff187",
+    "evaluation/modules/module2/claims.json": "a42079d0122c9cdb98a125e6783456c40be632eda93f5ae4e911359d1f6579c7"
+  }
+}

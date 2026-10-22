@@ -6,20 +6,11 @@ export const CompetitionNotice = 'Decision-support notice: Evidence support only
 export const CompetitionBanner = 'Reviewed with healthcare professionals for evaluation and feedback. Not validated or approved for patient care.';
 export const PrescribingNotice = 'Medication selection, dosing and patient-specific prescribing are outside this system’s scope.';
 export type RuntimeMode = 'standard' | 'synthetic' | 'competition' | 'production';
+import { canonicalToLegacy, legacyToCanonical } from '../../shared/caseBridge';
+import type { CanonicalCase, LegacyCase, PregnancyContext } from '../../shared/clinicalData';
+export type { PregnancyContext } from '../../shared/clinicalData';
 
 export interface ClinicalModule { moduleId: string; displayName: string; supportedCaseTypes: string[] }
-export interface PregnancyContext {
-  gestationalWeeks?: number | null;
-  careSetting?: 'emergencyDepartment' | 'earlyPregnancyService' | 'other' | null;
-  pregnancyTestType?: 'urine' | 'serum' | null;
-  pregnancyTestResult?: 'positive' | 'negative' | 'indeterminate' | null;
-  ultrasoundRoute?: 'transvaginal' | 'transabdominal' | null;
-  ultrasoundFinding?: 'noPregnancyVisualized' | 'indeterminate' | 'intrauterineReported' | 'other' | null;
-  previousIntrauterinePregnancyConfirmed?: boolean | null;
-  clinicallyStable?: boolean | null;
-  assistedReproduction?: boolean | null;
-  abdominalTrauma?: boolean | null;
-}
 export interface CaseInput {
   moduleHint: string; ageRange: string | null; caseType: 'brief' | 'detailed';
   pregnancyPossible: boolean | null; pidDiagnosedOrPresumed: boolean | null; additionalNotes: string;
@@ -27,7 +18,7 @@ export interface CaseInput {
 }
 export interface Source { number: number; sourceId: string; title: string; verifiedUrl: string | null; organization?: string; date?: string }
 export interface Statement { text: string; numbers: number[] }
-export interface Review { heading: string; warnings: Statement[]; considerations: Statement[]; messages: string[]; question: string | null; sources: Source[]; notice: string; context?: string; scopeNotice?: string }
+export interface Review { moduleId?: string; heading: string; warnings: Statement[]; considerations: Statement[]; messages: string[]; question: string | null; sources: Source[]; notice: string; context?: string; scopeNotice?: string }
 
 function record(payload: unknown): Record<string, unknown> {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new Error(UnexpectedMessage);
@@ -49,8 +40,10 @@ export function safeUrl(sourceUrl: string | null): boolean {
   } catch { return false; }
 }
 
-export async function requestJson(path: string, signal: AbortSignal, caseInput?: CaseInput): Promise<{ status: number; payload: unknown; runtimeMode: RuntimeMode }> {
+export async function requestJson(path: string, signal: AbortSignal, caseInput?: LegacyCase | CanonicalCase): Promise<{ status: number; payload: unknown; runtimeMode: RuntimeMode }> {
   signal.throwIfAborted();
+  // Validate through the shared contract; retain the existing wire format.
+  if (caseInput) { if ('schemaVersion' in caseInput) canonicalToLegacy(caseInput); else legacyToCanonical(caseInput); }
   const response = await fetch('/api' + path, {
     method: caseInput ? 'POST' : 'GET', signal, cache: 'no-store', credentials: 'omit', redirect: 'error',
     headers: caseInput ? { Accept: 'application/json', 'Content-Type': 'application/json' } : { Accept: 'application/json' },
@@ -173,5 +166,5 @@ export function readReview(payload: unknown, synthetic = false, runtimeMode: Run
     default: throw new Error(UnexpectedMessage);
   }
   // Validate the wire notice first; the authoritative response mode controls this display-only notice.
-  return { heading, warnings, considerations, messages, question, sources: sources.filter(source => citedIds.has(source.sourceId)), notice: synthetic ? SyntheticNotice : notice, ...(context ? { context } : {}), ...(scopeNotice ? { scopeNotice } : {}) };
+  return { ...(typeof outcome.moduleId === 'string' ? { moduleId: plainText(outcome.moduleId, 64) } : {}), heading, warnings, considerations, messages, question, sources: sources.filter(source => citedIds.has(source.sourceId)), notice: synthetic ? SyntheticNotice : notice, ...(context ? { context } : {}), ...(scopeNotice ? { scopeNotice } : {}) };
 }

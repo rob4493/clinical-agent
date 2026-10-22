@@ -13,7 +13,6 @@ Design rules:
 from __future__ import annotations
 
 from enum import Enum
-from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, FiniteFloat
 from backend.app.models.contracts import ModuleId

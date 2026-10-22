@@ -1,9 +1,8 @@
-import Policy from './policy.json';
 import { Atom, ordinaryAtoms, pregnancyAtoms, structuralFocus, unsupportedFindings } from './synthesis';
 import { CaseInput, context, RecordFields, weeks } from './input';
 import { Claim, DecisionNotice, Module1, Module2, Package } from './packages';
 import { caseText, nonspecific, retrieve1, retrieve2 } from './retrieval';
-import { evaluateSafety, halt, Halt, Safety, Warning, warningCoverage } from './safety';
+import { evaluateSafety, Warning, warningCoverage } from './safety';
 import { evidenceNotes, prescribingIntent, PrescribingNotice, hcgClarification } from './requestPolicy';
 
 export interface Envelope { warnings:Warning[]; response:RecordFields; sources:{number:number;source:RecordFields}[]; renderedText:string }
@@ -140,7 +139,7 @@ function analyzeClinical(caseInput:CaseInput,packages:Package[]):Analysis {
   if(!focus)atoms=ordinaryAtoms(caseInput,claims,preliminary,direct);
   if(preliminary)question=PreliminaryQuestion;
  } else {
-  atoms=pregnancyAtoms(caseInput,claims);
+  atoms=pregnancyAtoms(claims);
   const ctx=context(caseInput);
   if(claims.length===2&&claims.some(claim=>claim.claimId==='M2NSymptoms')&&claims.some(claim=>claim.claimId==='M2NPainAssessment')&&['clinicallyStable','hemodynamicInstability','heavyBleeding','significantConcernAboutPainOrBleeding','worseningPelvicPain'].every(name=>ctx[name]===null)&&!/instab|stable|severe|worsen|heavy|shoulder|weakness|dizz|faint/i.test(text))question=UrgentQuestion;
  }

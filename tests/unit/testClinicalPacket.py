@@ -11,7 +11,6 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 from backend.app.main import createApp
-from backend.app.models.clinicalReview import ReviewTemplate
 from backend.app.models.retrieval import KnowledgeChunk
 from backend.app.models.review import SourceReview
 from backend.app.modules.catalog import CatalogError, CatalogStore

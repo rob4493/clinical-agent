@@ -107,15 +107,17 @@ describe('clinician workflow with mocked HTTP only', () => {
     await userEvent.type(screen.getByLabelText('Additional clinical information'), 'Fictional additional context only.');
     expect(screen.getByLabelText('Selected structured context')).toHaveTextContent('Age: 25-34');
     await userEvent.click(screen.getByRole('button', { name: 'Analyze' }));
-    await screen.findByRole('heading', { name: 'Evidence-supported considerations' });
+    await screen.findByRole('heading', { name: 'Summary' });
     const options = fetchMock.mock.calls.find(([url]) => url.endsWith('/v1/analyze'))![1]!;
     expect(JSON.parse(options.body as string)).toEqual({ moduleHint: 'FictionalModule', ageRange: '25-34', caseType: 'detailed', pregnancyPossible: pregnancyJson, pidDiagnosedOrPresumed: pidJson, additionalNotes: 'Fictional additional context only.' });
     expect(options.credentials).toBe('omit'); expect(options.cache).toBe('no-store');
   });
   it('renders considerations, numbered citations, exact safe links and the fixed final notice', async () => {
     mockHttp(); render(<App />); await submit();
-    expect(await screen.findByRole('heading', { name: 'Evidence-supported considerations' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Summary' })).toBeVisible();
     expect(screen.getByText(ConsiderationText)).toBeVisible();
+    expect(screen.queryByRole('link', { name: /Fictional reference.*opens in a new tab/ })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Sources (1)' }));
     const link = screen.getByRole('link', { name: /Fictional reference.*opens in a new tab/ });
     expect(link).toHaveAttribute('href', 'https://fictional.invalid/Evidence%2FAlpha');
     expect(link).toHaveAttribute('target', '_blank'); expect(link).toHaveAttribute('rel', 'noopener noreferrer');
@@ -158,7 +160,7 @@ describe('clinician workflow with mocked HTTP only', () => {
     let resolveResponse!: (response: Response) => void;
     const pendingResponse = new Promise<Response>(resolve => { resolveResponse = resolve; });
     const fetchMock = mockHttp();
-    fetchMock.mockImplementation(async (url, options) => url.endsWith('/v1/analyze') ? pendingResponse : reply(url.endsWith('/ready') ? Ready : Modules));
+    fetchMock.mockImplementation(async url => url.endsWith('/v1/analyze') ? pendingResponse : reply(url.endsWith('/ready') ? Ready : Modules));
     render(<App />); await chooseModule();
     await userEvent.type(screen.getByLabelText('Additional clinical information'), 'Fictional transient narrative');
     fireEvent.submit(document.getElementById('caseForm')!); fireEvent.submit(document.getElementById('caseForm')!);
@@ -169,7 +171,7 @@ describe('clinician workflow with mocked HTTP only', () => {
     expect(signal.aborted).toBe(true); expect(screen.getByLabelText('Additional clinical information')).toHaveValue('');
     expect(screen.getByLabelText(/Clinical module/)).toHaveValue('');
     resolveResponse(reply(analysisResult()));
-    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Evidence-supported considerations' })).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Summary' })).not.toBeInTheDocument());
   });
   it('clears all entered fields and the response', async () => {
     mockHttp(); render(<App />); await chooseModule();
@@ -210,6 +212,10 @@ describe('clinician workflow with mocked HTTP only', () => {
   it('provides keyboard access, labels, privacy context and narrative bounds', async () => {
     mockHttp(); render(<App />); await screen.findByRole('option', { name: 'Fictional review module' });
     await userEvent.tab(); expect(screen.getByRole('link', { name: 'Skip to case entry' })).toHaveFocus();
+    await userEvent.tab(); expect(screen.getByRole('link', { name: 'Endo — case details' })).toHaveFocus();
+    for (const label of ['Case details', 'Documents', 'Evidence review', 'Scope & safety']) {
+      await userEvent.tab(); expect(screen.getByRole('link', { name: new RegExp(label) })).toHaveFocus();
+    }
     await userEvent.tab(); expect(screen.getByText('Clinical scope, limitations and boundary testing')).toHaveFocus();
     await userEvent.tab(); expect(screen.getByLabelText(/Clinical module/)).toHaveFocus();
     expect(screen.getByLabelText('Additional clinical information')).toHaveAttribute('maxlength', '2000');
@@ -222,7 +228,7 @@ describe('clinician workflow with mocked HTTP only', () => {
     await userEvent.selectOptions(screen.getByLabelText('Age range'), '25-34');
     await userEvent.type(screen.getByLabelText('Additional clinical information'), 'Fictional context for refinement.');
     await userEvent.click(screen.getByRole('button', { name: 'Analyze' }));
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Evidence-supported considerations' })).toHaveFocus());
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Summary' })).toHaveFocus());
     expect(screen.getByLabelText('Age range')).toHaveValue('25-34');
     expect(screen.getByLabelText('Additional clinical information')).toHaveValue('Fictional context for refinement.');
   });

@@ -1,6 +1,6 @@
 export default function ScopePanel({ synthetic, competition = false, pregnancyAvailable = false }: { synthetic: boolean; competition?: boolean; pregnancyAvailable?: boolean }) {
   return <section className="scopePanel" aria-labelledby="scopeTitle">
-    <h2 id="scopeTitle">{synthetic ? 'Current coverage' : 'What this version can review'}</h2>
+    <h2 id="scopeTitle" tabIndex={-1}>{synthetic ? 'Current coverage' : 'What this version can review'}</h2>
     <div className="scopeCoverage"><span className="coverageFocus">Endometriosis and chronic pelvic pain workflow</span>{competition && pregnancyAvailable && <span className="coverageFocus">Early Pregnancy Pain and Bleeding · competition evaluation</span>}</div>
     <div className="futureModules" aria-label="Inactive future modules">{!pregnancyAvailable && <span>Early pregnancy pain and bleeding <small>In development</small></span>}<span>Pelvic inflammatory disease <small>In development</small></span><span>Polycystic ovary syndrome <small>In development</small></span></div>
     <p>{competition ? 'The separate competition package is available for controlled evaluation. Production clinical modules remain inactive pending expert review.' : 'Authentic clinical modules remain inactive and unavailable pending expert review.'}</p>

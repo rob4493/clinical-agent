@@ -1,4 +1,4 @@
-"""Explicit source-free startup; competition requires separately installed private evidence."""
+"""Explicit source-free demo startup; private evidence is an optional separate graph."""
 
 import argparse
 import os
