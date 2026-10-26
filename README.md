@@ -173,6 +173,8 @@ Endo is the Clinical Evidence Assistant shown in the browser. The centered case 
 
 Response display and reviewed plain-language wording: see [Response presentation](shared/ResponsePresentation.md).
 
+Protected Netlify Deploy Previews use browser-managed same-origin credentials for `/api/*`, so an existing Netlify login also authenticates API requests. The client never reads or constructs cookies, adds Authorization headers, or sends requests to a cross-origin API target; redirects remain blocked. This does not change server-to-IBM authentication.
+
 ## Optional IBM presentation shadow integration
 
 The Netlify runtime includes a **disabled-by-default, server-only** watsonx.ai shadow adapter. It is not required to run either evaluation module. When explicitly enabled by an authorized operator, it sends only reviewed public presentation facts to IBM, validates the result and discards the generated prose. The visible response remains deterministic. It never sends case notes or uploaded documents.
