@@ -19,19 +19,19 @@ async function openForm() {
 function selectCase(caseId: string) { fireEvent.change(screen.getByLabelText('Try a demonstration case'), { target: { value: caseId } }); }
 
 describe('fictional input presets with mocked HTTP only', () => {
-  it.each(['brief', 'mild', 'detailed', 'urgent', 'conflict', 'clarification', 'unsupported'])('loads %s through an accessible reference-style card without submitting', async caseId => {
+  it.each(['brief', 'mild', 'detailed', 'urgent', 'conflict', 'clarification', 'unsupported'])('loads %s through the retained preset dropdown without submitting', async caseId => {
     const requests = await openForm();
     const example = DemoCases.find(example => example.id === caseId)!;
-    const card = screen.getByRole('button', { name: new RegExp(example.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) });
-    card.focus(); await userEvent.keyboard('{Enter}');
-    expect(card).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByLabelText('Try a demonstration case')).toHaveValue(caseId);
+    const selector = screen.getByLabelText('Try a demonstration case');
+    selector.focus(); await userEvent.selectOptions(selector, caseId);
+    expect(selector).toHaveValue(caseId);
     expect(screen.getByLabelText('Additional clinical information')).toHaveValue(example.narrative);
     expect(screen.getByLabelText(/Clinical module/)).toHaveValue('FictionalModule');
     expect(example.narrative).not.toMatch(/fictional demonstration/i);
     expect(requests.mock.calls.every(([url]) => !url.endsWith('/v1/analyze'))).toBe(true);
-    await userEvent.click(screen.getByRole('button', { name: 'Clear case' }));
-    expect(card).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.queryByRole('heading', { name: 'Explore cases' })).not.toBeInTheDocument();
+    expect(document.querySelector('.demoShelf')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Clear case' })); expect(selector).toHaveValue('');
   });
   it.each([
     ['brief', 'brief', 'unknown', 'Recurrent pelvic discomfort. Timing, examination and test findings are not provided. Please review the reported pattern and uncertainty.'],

@@ -18,7 +18,7 @@ export interface CaseInput {
 }
 export interface Source { number: number; sourceId: string; title: string; verifiedUrl: string | null; organization?: string; date?: string }
 export interface Statement { text: string; numbers: number[] }
-export interface Review { moduleId?: string; heading: string; warnings: Statement[]; considerations: Statement[]; messages: string[]; question: string | null; sources: Source[]; notice: string; context?: string; scopeNotice?: string }
+export interface Review { displaySummary?: Statement; moduleId?: string; heading: string; warnings: Statement[]; considerations: Statement[]; messages: string[]; question: string | null; sources: Source[]; notice: string; context?: string; scopeNotice?: string }
 
 function record(payload: unknown): Record<string, unknown> {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new Error(UnexpectedMessage);

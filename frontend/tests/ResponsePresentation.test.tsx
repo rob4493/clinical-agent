@@ -1,9 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import Wording from '../../shared/responsePresentation.json';
+import Compact from '../../shared/summaryPresentation.json';
+import Module1 from '../../evaluation/modules/module1/claims.json';
+import { webcrypto, createHash } from 'node:crypto';
 import ResponsePanel from '../src/ResponsePanel';
-import { presentStatement, summarizeReview } from '../src/responsePresentation';
+import { compactSummary, presentStatement, summarizeReview, explainFindings } from '../src/responsePresentation';
 import { CompetitionNotice, PrescribingNotice, type Review } from '../src/api';
 
 function reviewFor(entry = Wording.entries[0]): Review {
@@ -82,5 +85,90 @@ describe('reviewed response presentation', () => {
     await userEvent.click(screen.getByRole('button', { name: 'View clinical and educational details' }));
     rerender(<ResponsePanel review={reviewFor()} />);
     expect(screen.getByRole('button', { name: 'View clinical and educational details' })).toHaveAttribute('aria-expanded', 'false');
+  });
+});
+
+
+describe('exact compact summary variants', () => {
+  const claims = new Map(Module1.claims.map(claim => [claim.claimId, claim]));
+  const pattern = Wording.entries.find(entry => entry.claimIds.includes('C05'))!;
+  const special: Record<string, string> = {
+    pattern: pattern.original,
+    preliminary: 'The reported pelvic discomfort is nonspecific. Endometriosis and overlapping urinary, bowel or musculoskeletal contributors remain considerations; the available information does not identify the cause.',
+  };
+  const originals = Object.fromEntries(Compact.entries.map(entry => [entry.id, entry.parts.map(part => special[part] ?? claims.get(part)!.supportedStatement).join(' ')]));
+  it.each(Compact.entries)('binds $id to unchanged source-backed paragraphs and keeps full detail', async entry => {
+    vi.stubGlobal('crypto', webcrypto);
+    expect(createHash('sha256').update(originals[entry.id]).digest('hex')).toBe(entry.statementHash);
+    expect(entry.claimIds.every(claimId => claims.has(claimId))).toBe(true);
+    expect([...new Set(entry.claimIds.map(claimId => claims.get(claimId)!.sourceId))].sort()).toEqual(entry.sourceIds);
+    expect(entry.summary.split(/\s+/).length).toBeLessThanOrEqual(40);
+    expect(entry.summary.match(/[.!?](?:\s|$)/g)?.length ?? 1).toBeLessThanOrEqual(2);
+    const review = reviewFor(); review.considerations = [{ text: originals[entry.id], numbers: entry.sourceIds.map((sourceId, index) => { review.sources[index] = { number: index + 1, sourceId, title: 'Reference', verifiedUrl: null }; return index + 1; }) }];
+    review.sources = review.sources.slice(0, entry.sourceIds.length);
+    const compact = await compactSummary(review); expect(compact?.text).toBe(entry.summary);
+    render(<ResponsePanel review={{ ...review, displaySummary: compact }} />);
+    expect(screen.getByText(entry.summary)).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: 'View clinical and educational details' }));
+    expect(screen.getByText(originals[entry.id])).toBeVisible();
+    review.considerations[0].text += ' Changed clinical meaning.'; expect(await compactSummary(review)).toBeUndefined();
+    review.considerations[0].text = originals[entry.id]; review.sources[0].sourceId = 'WrongSource'; expect(await compactSummary(review)).toBeUndefined();
+  });
+});
+
+
+describe('substantive visual explanation', () => {
+  const finding = { id: 'pelvicPain' as const, label: 'Pelvic pain or discomfort', reported: '', numbers: [7, 3], kind: 'reported' as const };
+  function supported(claimIds: string[]): Review {
+    const claims = claimIds.map(id => Module1.claims.find(claim => claim.claimId === id)!);
+    return { ...reviewFor(), sources: [{ number: 7, sourceId: 'ACOG-CPP', title: 'Reference', verifiedUrl: null }, { number: 3, sourceId: 'NICE-NG73', title: 'Reference', verifiedUrl: null }, { number: 9, sourceId: 'WHO-2025', title: 'Reference', verifiedUrl: null }], considerations: claims.map(claim => ({ text: claim.supportedStatement, numbers: [claim.sourceId === 'ACOG-CPP' ? 7 : claim.sourceId === 'WHO-2025' ? 9 : 3] })) };
+  }
+  it('retains selected patterns, triggers, uncertainty and examination meaning visibly with exact citations', async () => {
+    vi.stubGlobal('crypto', webcrypto);
+    const review = supported(['CppPattern', 'C01', 'N01', 'CppHistory', 'N12']);
+    const findings = await explainFindings([finding], review);
+    expect(findings[0].paragraphs).toHaveLength(5);
+    expect(findings[0].paragraphs![0].numbers).toEqual([7]);
+    expect(findings[0].paragraphs![2].numbers).toEqual([3]);
+    render(<ResponsePanel review={review} findings={findings} />);
+    const visible = document.querySelector('.visualSummary')!;
+    for (const wording of ['come and go', 'bowel or bladder activity', 'one clear cause', 'does not confirm it', 'daily-life impact', 'look for masses']) expect(visible).toHaveTextContent(wording);
+    expect(visible).not.toHaveTextContent('Reported symptom');
+    expect(visible).not.toHaveTextContent('school');
+    expect(visible).not.toHaveTextContent('declined');
+    expect(screen.getByRole('button', { name: 'View clinical and educational details' })).toHaveAttribute('aria-expanded', 'false');
+    expect(visible.querySelectorAll('.findingExplanation p')).toHaveLength(2);
+  });
+  it('keeps the fully supported detailed example within 80–120 words without borrowing citations', async () => {
+    vi.stubGlobal('crypto', webcrypto);
+    const review = supported(['CppPattern', 'C01', 'N01', 'WhoImpact', 'CppHistory', 'N12', 'N13']);
+    const result = await explainFindings([finding], review);
+    const paragraphs = result[0].paragraphs!;
+    const words = paragraphs.map(paragraph => paragraph.text).join(' ').split(/\s+/).length;
+    expect(words).toBeGreaterThanOrEqual(80); expect(words).toBeLessThanOrEqual(120);
+    expect(paragraphs.find(paragraph => paragraph.text.includes('school'))!.numbers).toEqual([9]);
+    expect(paragraphs.find(paragraph => paragraph.text.includes('declined'))!.numbers).toEqual([3]);
+  });
+  it.each(Compact.visualEntries)('pins every visual translation to its exact claim and source IDs: $claimIds', entry => {
+    const claims = entry.claimIds.map(id => Module1.claims.find(claim => claim.claimId === id)!);
+    expect(claims.every(Boolean)).toBe(true);
+    expect([...new Set(claims.map(claim => claim.sourceId))].sort()).toEqual([...entry.sourceIds].sort());
+    if (claims.length === 1) expect(createHash('sha256').update(claims[0].supportedStatement).digest('hex')).toBe(entry.statementHash);
+  });
+  it('never borrows unreturned quality-of-life or examination-alternative claims', async () => {
+    vi.stubGlobal('crypto', webcrypto);
+    const result = await explainFindings([finding], supported(['N01']));
+    expect(result[0].paragraphs).toEqual([{ text: Compact.visualEntries.find(entry => entry.claimIds[0] === 'N01')!.text, numbers: [3] }]);
+  });
+  it.each(['wrongSource', 'changedMeaning', 'unknownAddition', 'urgent', 'conflict', 'wrongModule'])('does not translate unsupported or halted context: %s', async mode => {
+    vi.stubGlobal('crypto', webcrypto);
+    const review = supported(['N01']);
+    if (mode === 'wrongSource') review.sources[1].sourceId = 'OtherSource';
+    if (mode === 'changedMeaning') review.considerations[0].text = review.considerations[0].text.replace('rather than', 'and');
+    if (mode === 'unknownAddition') review.considerations[0].text += ' This confirms the diagnosis.';
+    if (mode === 'urgent') review.warnings = [{ text: 'Immediate assessment.', numbers: [3] }];
+    if (mode === 'conflict') review.messages = ['Clarification required.'];
+    if (mode === 'wrongModule') review.moduleId = 'module_02_early_pregnancy';
+    expect(await explainFindings([finding], review)).toEqual([finding]);
   });
 });

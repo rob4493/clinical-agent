@@ -33,6 +33,7 @@ dist/
 .pytest_cache/
 /.pytestCompetition*/
 /.test*/
+/.test*.json
 /frontend/.testNetlifyTools/
 /.netlify/
 /frontend/.netlify/

@@ -34,7 +34,7 @@ async function run() {
    for (const scenario of [...Module1Cases.map(([label,outcome])=>({id:label,label,moduleId:'module_01_endo',status:200,outcome})),...PregnancyCases.map(preset=>({id:preset.id,label:preset.label,moduleId:preset.moduleId,status:Expected[preset.id][0],outcome:Expected[preset.id][1]}))]) {
     await page.getByRole('button',{name:'Clear case',exact:true}).click();
     await page.locator('#module').selectOption(scenario.moduleId);
-    await page.getByRole('button',{name:scenario.label,exact:false}).first().click();
+    await page.getByLabel('Try a demonstration case').selectOption({label:scenario.label});
     const received = page.waitForResponse(response=>response.url().endsWith('/api/v1/analyze') && response.request().method()==='POST');
     await page.getByRole('button',{name:'Analyze',exact:true}).click();
     const response = await received;

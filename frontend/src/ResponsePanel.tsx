@@ -3,13 +3,15 @@ import { safeUrl } from './api';
 import { useEffect, useState } from 'react';
 import SourceDetails from './SourceDetails';
 import Disclosure from './Disclosure';
+import VisualFindings from './VisualFindings';
+import { neutralFindings, successfulReview, type FindingCard } from './findingRules';
 import { summarizeReview } from './responsePresentation';
 
 function Citation({ statement, onCite, sourcesOpen }: { statement: Statement; onCite?: () => void; sourcesOpen?: boolean }) {
   return <>{statement.text}{statement.numbers.length > 0 && <button type="button" className="citation citationButton" onClick={onCite} aria-expanded={sourcesOpen} aria-controls="reviewSources" aria-label={`View cited sources ${statement.numbers.join(',')}`}>[{statement.numbers.join(',')}]</button>}</>;
 }
 
-export default function ResponsePanel({ review, synthetic = false, pending = false, competition = false }: { review: Review | null; synthetic?: boolean; pending?: boolean; competition?: boolean }) {
+export default function ResponsePanel({ review, synthetic = false, pending = false, competition = false, findings = [] }: { findings?: FindingCard[]; review: Review | null; synthetic?: boolean; pending?: boolean; competition?: boolean }) {
   const [sourceId, setSourceId] = useState<string | null>(null);
   const [sourcesOpen, setSourcesOpen] = useState(false);
   useEffect(() => { setSourceId(null); setSourcesOpen(false); }, [review]);
@@ -21,18 +23,19 @@ export default function ResponsePanel({ review, synthetic = false, pending = fal
     : { tone: 'insufficient', label: 'Analysis unavailable · review limitation' };
   const urgentOnly = review.warnings.length > 0 && review.considerations.length === 0 && review.messages.length === 0 && !review.question;
   const concise = summarizeReview(review);
+  const summary = review.displaySummary ?? concise.summary;
   return <section id="evidenceWorkspace" tabIndex={-1} className={`card responseCard ${presentation.tone}`} aria-label="Clinical evidence review">
     {review.warnings.length > 0 && <div className="urgentPanel" role="alert"><h2 tabIndex={-1} id="urgentTitle"><span aria-hidden="true">! </span>Urgent assessment</h2><p className="urgentLabel">Priority warning — review first</p>{review.warnings.map((warning, index) => <p key={index}><Citation sourcesOpen={sourcesOpen} onCite={openSources} statement={warning} /></p>)}</div>}
     {review.scopeNotice && <p className="scopeNotice" role="note">{review.scopeNotice}</p>}
     {synthetic && <p className="syntheticLabel">Synthetic demonstration response</p>}
     {!urgentOnly && <>{!synthetic && <p className="outcomeLabel">{presentation.label}</p>}<h2 tabIndex={-1} id="reviewTitle">{review.considerations.length ? 'Summary' : review.heading}</h2>
 </>}
-    {concise.summary && <section aria-labelledby="reviewTitle"><p className="directAnswer"><Citation sourcesOpen={sourcesOpen} onCite={openSources} statement={concise.summary} /></p></section>}
+    <VisualFindings findings={successfulReview(review) ? review.warnings.length ? neutralFindings(review) : findings.length ? findings : neutralFindings(review) : []} summary={summary ? <Citation sourcesOpen={sourcesOpen} onCite={openSources} statement={summary} /> : undefined} onCite={openSources} sourcesOpen={sourcesOpen} />
     {concise.next && <section aria-labelledby="nextTitle"><h3 id="nextTitle">Next consideration</h3><p><Citation sourcesOpen={sourcesOpen} onCite={openSources} statement={concise.next} /></p></section>}
     {concise.points.length > 0 && <Disclosure resetKey={review} label={`Key points (${concise.points.length})`}><ul className="keyPoints">{concise.points.map((statement, index) => <li key={index}><Citation sourcesOpen={sourcesOpen} onCite={openSources} statement={statement} /></li>)}</ul></Disclosure>}
     {review.messages.map((message, index) => <p key={index}>{message}</p>)}
     {review.question && <div className="followup"><h3>Questions to clarify</h3><p>{review.question}</p></div>}
-    {review.considerations.length > 0 && <Disclosure resetKey={review} label="View clinical and educational details">
+    {review.considerations.length > 0 && <Disclosure resetKey={review} label="View clinical and educational details" triggerId="clinicalDetailsTrigger" contentId="clinicalDetails">
       <h3>Clinical interpretation</h3>
       {review.context && <p>{review.context}</p>}
       {review.considerations.map((statement, index) => <p key={index}><Citation sourcesOpen={sourcesOpen} onCite={openSources} statement={statement} /></p>)}

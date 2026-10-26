@@ -48,7 +48,7 @@ async function runChecks() {
       for (const scenario of scenarios) {
         stage = viewport.name + ':preset:' + scenario.label;
         await page.getByRole('button',{name:'Clear case',exact:true}).click();
-        await page.getByRole('button',{name:new RegExp('^'+scenario.label)}).click();
+        await page.getByLabel('Try a demonstration case').selectOption({label:scenario.label});
         assert.equal(await page.locator('#module').inputValue(),'module_01_endo');
         assert.equal(await page.locator('.decisionNotice').count(),0);
         await page.getByRole('button',{name:'Analyze',exact:true}).click();
@@ -129,7 +129,7 @@ async function runChecks() {
         try { await route.fulfill({response}); } catch { /* Browser abort may close the held request. */ }
       });
       await page.getByRole('button',{name:'Clear case',exact:true}).click();
-      await page.getByRole('button',{name:/^Brief/}).click();
+      await page.getByLabel('Try a demonstration case').selectOption('brief');
       await page.getByRole('button',{name:'Analyze',exact:true}).click();
       await receivedResponse;
       await page.getByRole('button',{name:'Clear case',exact:true}).click(); releaseResponse();

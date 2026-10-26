@@ -29,7 +29,10 @@ describe('internal read-only demo source details', () => {
   it.each([null, { ...Details, statements: ['<svg>unsafe</svg>'] }, { ...Details, statements: [] }])('rejects malformed source content', async payload => {
     mockDetails(payload); openPanel(); await userEvent.click(screen.getByRole('button', { name: /View source/ }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Source details are unavailable');
-    expect(document.querySelector('svg')).toBeNull();
+    // Project-owned visual icons are allowed outside the untrusted source dialog.
+    expect(screen.getByRole('dialog').querySelector('svg')).toBeNull();
+    for (const icon of document.querySelectorAll('svg')) expect(icon.closest('.summaryIcons[aria-hidden="true"]')).not.toBeNull();
+    expect(screen.queryByText('unsafe')).not.toBeInTheDocument();
   });
   it('rejects a changed authoritative runtime mode', async () => {
     mockDetails(Details, 'standard'); openPanel(); await userEvent.click(screen.getByRole('button', { name: /View source/ }));

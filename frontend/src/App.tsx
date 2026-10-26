@@ -3,6 +3,9 @@ import type { FormEvent } from 'react';
 import type { ClinicalModule, Review, RuntimeMode, PregnancyContext } from './api';
 import { CompetitionBanner, DemoNotice, isReady, readError, readModules, readReview, requestJson, UnexpectedMessage } from './api';
 import ResponsePanel from './ResponsePanel';
+import { compactSummary, explainFindings } from './responsePresentation';
+import { resolveVisualFindings } from './findingRules';
+import type { FindingCard } from './findingRules';
 import { DemoCases, PregnancyCases } from './DemoCases';
 import PregnancyFields from './PregnancyFields';
 import ScopePanel from './ScopePanel';
@@ -31,6 +34,7 @@ export default function App() {
   const [earlyPregnancy, setEarlyPregnancy] = useState<PregnancyContext>({});
   const [demoCaseId, setDemoCaseId] = useState('');
   const [review, setReview] = useState<Review | null>(null);
+  const [findings, setFindings] = useState<FindingCard[]>([]);
   const [error, setError] = useState('');
   const [availabilityError, setAvailabilityError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -41,7 +45,7 @@ export default function App() {
   const [pending, setPending] = useState(false);
   const [uploads, setUploads] = useState<UploadSession>(EmptySession);
   const [uploadGeneration, setUploadGeneration] = useState(0);
-  const updateUploads = useCallback((session: UploadSession) => { setUploads(session); setReview(null); setError(''); }, []);
+  const updateUploads = useCallback((session: UploadSession) => { setUploads(session); setReview(null); setFindings([]); setError(''); }, []);
   const [cancellationMessage, setCancellationMessage] = useState('');
   const requestController = useRef<AbortController | null>(null);
   const requestTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -59,7 +63,7 @@ export default function App() {
     if (requestTimer.current !== null) clearTimeout(requestTimer.current);
     requestTimer.current = null;
     pendingRequest.current = false;
-    setPending(false); setReview(null); setError(''); setCancellationMessage('');
+    setPending(false); setReview(null); setFindings([]); setError(''); setCancellationMessage('');
     requestController.current = null;
     setModuleId(''); setAgeRange(''); setCaseType('brief');
     setPregnancy('unknown'); setPid('unknown'); setNarrative(''); setDemoCaseId('');
@@ -115,7 +119,7 @@ export default function App() {
     };
   }, [clearCase, loadAvailability]);
 
-  function discardReview() { setReview(null); setError(''); setCancellationMessage(''); }
+  function discardReview() { setReview(null); setFindings([]); setError(''); setCancellationMessage(''); }
 
   function chooseDemo(caseId: string) {
     if (!(synthetic || runtimeMode === 'competition') || pendingRequest.current) return;
@@ -171,7 +175,15 @@ export default function App() {
       if (result.runtimeMode !== runtimeMode) throw new Error(UnexpectedMessage);
       if (result.status === 422) setError(readError(result.payload));
       else if ([200, 404, 503].includes(result.status)) {
-        setReview(readReview(result.payload, synthetic, runtimeMode));
+        const completed = readReview(result.payload, synthetic, runtimeMode);
+        const visuals = await resolveVisualFindings(payload, completed);
+        // Native fingerprinting is asynchronous: cancellation still owns the result.
+        if (!mounted.current || controller.signal.aborted || requestGeneration.current !== generation) return;
+        const displaySummary = await compactSummary(completed);
+        if (!mounted.current || controller.signal.aborted || requestGeneration.current !== generation) return;
+        const explained = await explainFindings(visuals, completed);
+        if (!mounted.current || controller.signal.aborted || requestGeneration.current !== generation) return;
+        setFindings(explained); setReview(displaySummary ? { ...completed, displaySummary } : completed);
       } else throw new Error(UnexpectedMessage);
     } catch (failure) {
       if (mounted.current && !controller.signal.aborted && requestGeneration.current === generation) setError(failure instanceof DocumentError ? failure.message : UnexpectedMessage);
@@ -252,13 +264,8 @@ export default function App() {
             <p className="submissionStatus" role="status" aria-live="polite">{pending ? 'Request in progress. Please wait.' : cancellationMessage || (review ? 'Response available for review.' : '')}</p>
           </form>
         </section>
-        <ResponsePanel review={review} synthetic={synthetic} competition={runtimeMode === 'competition'} pending={pending} />
+        <ResponsePanel findings={findings} review={review} synthetic={synthetic} competition={runtimeMode === 'competition'} pending={pending} />
       </div>
-      {(synthetic || runtimeMode === 'competition') && <section className="demoShelf" aria-labelledby="demoShelfTitle">
-        <div className="shelfHeading"><h2 id="demoShelfTitle">Explore cases</h2><p>Load an editable example. Review it before selecting Analyze.</p></div>
-        <div className="demoCards">{examples.map((example, index) => <button type="button" key={example.id} className={`demoCard demoTone${index % 7}`} disabled={pending} aria-pressed={demoCaseId === example.id} aria-describedby="demoShelfHelp" onClick={() => chooseDemo(example.id)}><span className="demoIcon" aria-hidden="true">{['≡', '☷', '▤', '!', '⇄', '?', '○'][index % 7]}</span><span><strong>{example.label}</strong><small>{example.explanation}</small></span></button>)}</div>
-        <p id="demoShelfHelp" className="fieldHint">Choosing a case fills the case fields and available demonstration module. Review before selecting Analyze; examples never submit automatically.</p>
-      </section>}
       <footer><strong>Endo</strong><span>Minimum necessary information. Independent clinical judgment.</span></footer>
     </main>
     </div>

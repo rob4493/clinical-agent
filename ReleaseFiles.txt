@@ -130,6 +130,7 @@ frontend/scripts/prepareEvaluation.mjs
 frontend/src/App.tsx
 frontend/src/DemoCases.ts
 frontend/src/Disclosure.tsx
+frontend/src/FindingIcon.tsx
 frontend/src/PregnancyCases.json
 frontend/src/PregnancyFields.tsx
 frontend/src/ResponsePanel.tsx
@@ -137,6 +138,7 @@ frontend/src/ReviewShell.tsx
 frontend/src/ScopePanel.tsx
 frontend/src/SourceDetails.tsx
 frontend/src/UploadPanel.tsx
+frontend/src/VisualFindings.tsx
 frontend/src/api.ts
 frontend/src/documents/parse.worker.ts
 frontend/src/documents/parser.ts
@@ -145,6 +147,7 @@ frontend/src/documents/readDocument.ts
 frontend/src/documents/review.ts
 frontend/src/documents/session.ts
 frontend/src/documents/types.ts
+frontend/src/findingRules.ts
 frontend/src/main.tsx
 frontend/src/responsePresentation.ts
 frontend/src/styles.css
@@ -165,6 +168,7 @@ frontend/tests/SourceDetails.test.tsx
 frontend/tests/SyntheticPresentation.test.tsx
 frontend/tests/UploadPanel.test.tsx
 frontend/tests/UploadWorkflow.test.tsx
+frontend/tests/VisualFindings.test.tsx
 frontend/tests/api.test.ts
 frontend/tests/competitionBrowser.cjs
 frontend/tests/demoBrowser.cjs
@@ -177,6 +181,7 @@ frontend/tests/presentationBrowser.cjs
 frontend/tests/setup.ts
 frontend/tests/uploadBrowser.cjs
 frontend/tests/uploadBuild.mjs
+frontend/tests/visualBrowser.cjs
 frontend/tsconfig.json
 frontend/vite.config.ts
 netlify.toml
@@ -197,6 +202,7 @@ shared/DocumentReview.md
 shared/EndoDesign.md
 shared/README.md
 shared/ResponsePresentation.md
+shared/VisualFindings.md
 shared/caseBridge.ts
 shared/checkSchema.mjs
 shared/clinicalData.schema.json
@@ -207,6 +213,7 @@ shared/requestIntent.ts
 shared/responsePresentation.json
 shared/schemaArtifacts.json
 shared/schemaRules.ts
+shared/summaryPresentation.json
 tests/__init__.py
 tests/conftest.py
 tests/fixtures/clinicalDataCases.json

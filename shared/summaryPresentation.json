@@ -1,0 +1,313 @@
+{
+  "version": 1,
+  "purpose": "Project-authored display summaries for exact source-bound deterministic paragraphs. Original wording remains in clinical details. No source-document hashes or passages.",
+  "entries": [
+    {
+      "id": "patternOverlap",
+      "moduleId": "module_01_endo",
+      "claimIds": [
+        "N01",
+        "C05",
+        "C01"
+      ],
+      "sourceIds": [
+        "ACOG-CPP",
+        "NICE-NG73"
+      ],
+      "statementHash": "67c69a5d0f42e969396f31886fe819035bea00a671800a4bccdb9903892d70b5",
+      "summary": "Pelvic pain related to periods or sex can fit endometriosis, but does not confirm it. With ongoing pain, other contributors may overlap.",
+      "parts": [
+        "pattern",
+        "C01"
+      ]
+    },
+    {
+      "id": "persistentPain",
+      "moduleId": "module_01_endo",
+      "claimIds": [
+        "N01"
+      ],
+      "sourceIds": [
+        "NICE-NG73"
+      ],
+      "statementHash": "4cbdb13c41563bba702977b2bbf3479c92b468564b656a5cf418cf7294d536d8",
+      "summary": "Ongoing pelvic pain can fit endometriosis, but does not confirm it.",
+      "parts": [
+        "N01"
+      ]
+    },
+    {
+      "id": "sexualOrCyclicPain",
+      "moduleId": "module_01_endo",
+      "claimIds": [
+        "C05"
+      ],
+      "sourceIds": [
+        "ACOG-CPP"
+      ],
+      "statementHash": "7aff5303a66fe48df07cede1ef134d08c6f318c44673d023edacb38378cb0a16",
+      "summary": "Pelvic pain related to periods or pain during sex can fit endometriosis, but does not confirm it.",
+      "parts": [
+        "C05"
+      ]
+    },
+    {
+      "id": "overlapThenPain",
+      "moduleId": "module_01_endo",
+      "claimIds": [
+        "C01",
+        "N01"
+      ],
+      "sourceIds": [
+        "ACOG-CPP",
+        "NICE-NG73"
+      ],
+      "statementHash": "8b1f2eeddc50a712669b47c99bf1a55335ebae1a438003827913926a819a72de",
+      "summary": "Ongoing pelvic pain can have several contributors, including endometriosis. These symptoms alone do not identify the cause.",
+      "parts": [
+        "C01",
+        "N01"
+      ]
+    },
+    {
+      "id": "painThenOverlap",
+      "moduleId": "module_01_endo",
+      "claimIds": [
+        "N01",
+        "C01"
+      ],
+      "sourceIds": [
+        "ACOG-CPP",
+        "NICE-NG73"
+      ],
+      "statementHash": "bcac768c8f30298e121bf17f28c2f17f95d994714eb9921f2e87ca8aeeb48c0e",
+      "summary": "Ongoing pelvic pain can have several contributors, including endometriosis. These symptoms alone do not identify the cause.",
+      "parts": [
+        "N01",
+        "C01"
+      ]
+    },
+    {
+      "id": "preliminary",
+      "moduleId": "module_01_endo",
+      "claimIds": [
+        "N01",
+        "C01",
+        "C11"
+      ],
+      "sourceIds": [
+        "ACOG-CPP",
+        "NICE-NG73"
+      ],
+      "statementHash": "d2448a523583efaa0756d8bd82f24ecd6cabb3b819ba9f42ed962d88ff5a684d",
+      "summary": "Ongoing pelvic pain can have several contributors, including endometriosis. These symptoms alone do not identify the cause.",
+      "parts": [
+        "preliminary"
+      ]
+    },
+    {
+      "id": "briefPreset",
+      "moduleId": "module_01_endo",
+      "claimIds": [
+        "N01",
+        "CppPattern",
+        "N12"
+      ],
+      "sourceIds": [
+        "ACOG-CPP",
+        "NICE-NG73"
+      ],
+      "statementHash": "bc695b2cefde79fc6ae088255221d2aa76726fa411f82c7e16a50fdcb0351bf4",
+      "summary": "Ongoing pelvic pain can fit endometriosis, but does not confirm it. Its timing, triggers and examination findings help frame the review.",
+      "parts": [
+        "N01",
+        "CppPattern",
+        "N12"
+      ]
+    },
+    {
+      "id": "detailedPreset",
+      "moduleId": "module_01_endo",
+      "claimIds": [
+        "N12",
+        "CppHistory"
+      ],
+      "sourceIds": [
+        "ACOG-CPP",
+        "NICE-NG73"
+      ],
+      "statementHash": "d5a7fbcd134efd5c74db30f676aef645d594ee83339b79396799dc61f549f85f",
+      "summary": "When reviewing possible endometriosis, the pattern of pain, its effect on daily life and examination findings are relevant.",
+      "parts": [
+        "N12",
+        "CppHistory"
+      ]
+    }
+  ],
+  "visualEntries": [
+    {
+      "claimIds": [
+        "C01"
+      ],
+      "sourceIds": [
+        "ACOG-CPP"
+      ],
+      "statementHash": "c12b8c58977ca571f08a20e2a3a92b8f08c8ec85f64ed0d5f8aeea3ed12cfd06",
+      "text": "Urinary, bowel and other contributors may overlap; assessment may not identify one clear cause.",
+      "findings": [
+        "pelvicPain"
+      ]
+    },
+    {
+      "claimIds": [
+        "C05"
+      ],
+      "sourceIds": [
+        "ACOG-CPP"
+      ],
+      "statementHash": "7aff5303a66fe48df07cede1ef134d08c6f318c44673d023edacb38378cb0a16",
+      "text": "Pain that changes with periods or occurs during sex can be consistent with endometriosis, but these patterns do not identify the cause.",
+      "findings": [
+        "pelvicPain",
+        "sexualPain"
+      ]
+    },
+    {
+      "claimIds": [
+        "C11"
+      ],
+      "sourceIds": [
+        "ACOG-CPP"
+      ],
+      "statementHash": "fa2514c7be2dad52c1465987c29be18ccb7fbf78a46b600a63dd9fb5fea19196",
+      "text": "Lower-back problems, sensitive points in muscles and pelvic muscle spasm can also contribute to pelvic pain.",
+      "findings": [
+        "pelvicPain"
+      ]
+    },
+    {
+      "claimIds": [
+        "CppHistory"
+      ],
+      "sourceIds": [
+        "ACOG-CPP"
+      ],
+      "statementHash": "af851e7ec802f414ab72d11897444f28722cf73268de4205dfaee26793acc487",
+      "text": "Timing, location, severity, daily-life impact and what eases or worsens pain help frame a focused clinical review.",
+      "findings": [
+        "pelvicPain"
+      ]
+    },
+    {
+      "claimIds": [
+        "CppPattern"
+      ],
+      "sourceIds": [
+        "ACOG-CPP"
+      ],
+      "statementHash": "43f46cd285ec83c2df404f2aae32c838dd234390ce89937e74e23aa54eb27e6a",
+      "text": "Pelvic pain may be ongoing or come and go. Its relationship to periods, bowel or bladder activity, meals and sex helps describe the pattern.",
+      "findings": [
+        "pelvicPain"
+      ]
+    },
+    {
+      "claimIds": [
+        "N01"
+      ],
+      "sourceIds": [
+        "NICE-NG73"
+      ],
+      "statementHash": "4cbdb13c41563bba702977b2bbf3479c92b468564b656a5cf418cf7294d536d8",
+      "text": "Persistent pelvic pain can lead a clinician to consider endometriosis, but does not confirm it.",
+      "findings": [
+        "pelvicPain"
+      ]
+    },
+    {
+      "claimIds": [
+        "N02"
+      ],
+      "sourceIds": [
+        "NICE-NG73"
+      ],
+      "statementHash": "293b8b2ebbfa1eaa233313c608bb93ccd03c67b6d77d0d343099a62c67036788",
+      "text": "Period pain that interferes with daily activities or quality of life is relevant when a clinician considers endometriosis.",
+      "findings": [
+        "pelvicPain"
+      ]
+    },
+    {
+      "claimIds": [
+        "N12"
+      ],
+      "sourceIds": [
+        "NICE-NG73"
+      ],
+      "statementHash": "0f835fd84369f1cc890dfcf83e5a86ef224631532c61143a0b46f38441371508",
+      "text": "Abdominal and internal pelvic examinations look for masses and relevant findings when assessing possible endometriosis.",
+      "findings": [
+        "pelvicPain"
+      ]
+    },
+    {
+      "claimIds": [
+        "N13"
+      ],
+      "sourceIds": [
+        "NICE-NG73"
+      ],
+      "statementHash": "309ec8f808e75986b9082147ff55467eb3ab11dd809ecaddc351ea80c42e02e2",
+      "text": "In the UK pathway, abdominal examination is an alternative if internal examination is unsuitable or declined.",
+      "findings": [
+        "pelvicPain"
+      ]
+    },
+    {
+      "claimIds": [
+        "WhoImpact"
+      ],
+      "sourceIds": [
+        "WHO-2025"
+      ],
+      "statementHash": "f7118102484cc73916cdd807a6f18739b8fe437a9fef9238705a4f26bfd41aa7",
+      "text": "Symptoms may affect school, work, sexual wellbeing and quality of life without indicating disease extent.",
+      "findings": [
+        "pelvicPain",
+        "sexualPain"
+      ]
+    },
+    {
+      "claimIds": [
+        "N01",
+        "C05"
+      ],
+      "sourceIds": [
+        "ACOG-CPP",
+        "NICE-NG73"
+      ],
+      "statementHash": "5eed88dda35c2e93c141c50d44705f5420e5339e5191eac950b9f8192482af17",
+      "text": "Pain related to periods or sex can be consistent with endometriosis, but these symptoms do not confirm it.",
+      "findings": [
+        "pelvicPain",
+        "sexualPain"
+      ]
+    },
+    {
+      "claimIds": [
+        "N01",
+        "C01",
+        "C11"
+      ],
+      "sourceIds": [
+        "NICE-NG73",
+        "ACOG-CPP"
+      ],
+      "statementHash": "d2448a523583efaa0756d8bd82f24ecd6cabb3b819ba9f42ed962d88ff5a684d",
+      "text": "Pelvic discomfort alone does not identify its cause. Endometriosis remains one possibility, while urinary, bowel and muscle or joint contributors may overlap.",
+      "findings": [
+        "pelvicPain"
+      ]
+    }
+  ]
+}
