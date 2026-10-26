@@ -169,6 +169,7 @@ frontend/tests/SyntheticPresentation.test.tsx
 frontend/tests/UploadPanel.test.tsx
 frontend/tests/UploadWorkflow.test.tsx
 frontend/tests/VisualFindings.test.tsx
+frontend/tests/WatsonShadow.test.ts
 frontend/tests/api.test.ts
 frontend/tests/competitionBrowser.cjs
 frontend/tests/demoBrowser.cjs
@@ -191,11 +192,13 @@ netlify/evaluation/assertions.ts
 netlify/evaluation/input.ts
 netlify/evaluation/packages.ts
 netlify/evaluation/policy.json
+netlify/evaluation/presentationProjector.ts
 netlify/evaluation/requestPolicy.ts
 netlify/evaluation/retrieval.ts
 netlify/evaluation/reviewSeal.ts
 netlify/evaluation/safety.ts
 netlify/evaluation/synthesis.ts
+netlify/evaluation/watsonShadow.ts
 netlify/functions/evaluate.ts
 pytest.ini
 shared/DocumentReview.md
@@ -203,6 +206,7 @@ shared/EndoDesign.md
 shared/README.md
 shared/ResponsePresentation.md
 shared/VisualFindings.md
+shared/WatsonShadow.md
 shared/caseBridge.ts
 shared/checkSchema.mjs
 shared/clinicalData.schema.json
