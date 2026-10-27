@@ -1,0 +1,198 @@
+{
+  "presentationVersion": "1",
+  "purpose": "Closed project-authored evaluation presentation variants; exact complete coverage only, never new evidence.",
+  "entries": [
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2NSerialLimits",
+        "M2NSymptomsOverHcg",
+        "M2NEmptyUterus"
+      ],
+      "sourceIds": [
+        "NICE-NG126-2026"
+      ],
+      "original": "An empty uterus on transvaginal ultrasound does not establish ectopic pregnancy by itself. Serial serum hCG results do not locate the pregnancy; symptoms take priority over a reassuring trend, and a changed clinical picture needs review regardless of previous results. Viability must not be inferred from these results alone.",
+      "wording": "An empty uterus on an internal pelvic ultrasound does not by itself establish ectopic pregnancy. Repeated blood pregnancy-hormone (hCG) results do not locate the pregnancy or establish viability; changing symptoms need review even after reassuring results."
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2NSymptoms",
+        "M2NPainAssessment"
+      ],
+      "sourceIds": [
+        "NICE-NG126-2026"
+      ],
+      "original": "Pain or bleeding in early pregnancy may warrant early-pregnancy assessment, but these symptoms alone do not identify the cause or confirm ectopic pregnancy. The urgency of referral depends on the overall clinical presentation.",
+      "wording": "Pain or bleeding in early pregnancy may need assessment, but symptoms alone cannot identify the cause or confirm ectopic pregnancy. The overall clinical picture determines how urgently assessment may be needed."
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2AIndeterminateHcg",
+        "M2ASerialScope"
+      ],
+      "sourceIds": [
+        "ACEP-EARLYPREG-2017"
+      ],
+      "original": "A single serum hCG result does not exclude ectopic pregnancy after an indeterminate transvaginal ultrasound; the available evidence does not support generating an individualized serial-testing schedule.",
+      "wording": "One blood pregnancy-hormone (hCG) result cannot rule out ectopic pregnancy after an inconclusive internal pelvic ultrasound. This initial emergency-assessment evidence cannot provide an individual repeat-testing schedule; that does not mean repeat testing is unnecessary."
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2AIndeterminateHcg"
+      ],
+      "sourceIds": [
+        "ACEP-EARLYPREG-2017"
+      ],
+      "original": "A single serum hCG result does not exclude ectopic pregnancy after an indeterminate transvaginal ultrasound.",
+      "wording": "One blood pregnancy-hormone (hCG) result cannot rule out ectopic pregnancy after an inconclusive internal pelvic ultrasound."
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2NPulDefinition",
+        "M2NPulPossibility"
+      ],
+      "sourceIds": [
+        "NICE-NG126-2026"
+      ],
+      "original": "With a positive pregnancy test and no intrauterine or extrauterine pregnancy seen on transvaginal ultrasound, location remains unresolved and ectopic pregnancy remains a consideration, not a confirmed diagnosis.",
+      "wording": "With a positive pregnancy test and an internal pelvic ultrasound showing no pregnancy inside or outside the uterus, the location remains unknown. Ectopic pregnancy remains a possibility, not a confirmed diagnosis."
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2NHcgLocation"
+      ],
+      "sourceIds": [
+        "NICE-NG126-2026"
+      ],
+      "original": "A serum hCG result alone does not determine pregnancy location when it remains unresolved on the reported scan.",
+      "wording": "When a scan leaves the pregnancy location unresolved, one blood pregnancy-hormone (hCG) result cannot locate it."
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2NSerialLimits"
+      ],
+      "sourceIds": [
+        "NICE-NG126-2026"
+      ],
+      "original": "Serial serum hCG measurements do not determine pregnancy location. In the UK unresolved-location pathway, a changing clinical picture requires review even after a reassuring trend; the application must not infer viability from that trend.",
+      "wording": "Serial serum hCG measurements do not determine pregnancy location. In the UK unresolved-location pathway, a changing clinical picture requires review even after a reassuring trend; the application must not infer viability from that trend."
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2NHcgLocation"
+      ],
+      "sourceIds": [
+        "NICE-NG126-2026"
+      ],
+      "original": "When pregnancy location is unresolved, a serum hCG value alone cannot locate it. This limitation applies within the UK early-pregnancy pathway.",
+      "wording": "When pregnancy location is unresolved, a serum hCG value alone cannot locate it. This limitation applies within the UK early-pregnancy pathway."
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2NSymptomsOverHcg"
+      ],
+      "sourceIds": [
+        "NICE-NG126-2026"
+      ],
+      "original": "In the UK unresolved-location pathway, symptoms that change or newly develop still need attention despite an earlier hCG result that appeared reassuring.",
+      "wording": "In the UK unresolved-location pathway, symptoms that change or newly develop still need attention despite an earlier hCG result that appeared reassuring."
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2NEmptyUterus"
+      ],
+      "sourceIds": [
+        "NICE-NG126-2026"
+      ],
+      "original": "An empty uterus on a transvaginal scan is insufficient on its own to identify ectopic pregnancy; interpretation still needs the remaining scan findings and clinical picture.",
+      "wording": "An empty uterus on a transvaginal scan is insufficient on its own to identify ectopic pregnancy; interpretation still needs the remaining scan findings and clinical picture."
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2AIndeterminateHcg"
+      ],
+      "sourceIds": [
+        "ACEP-EARLYPREG-2017"
+      ],
+      "original": "For the policy's stable US emergency-department population, ectopic pregnancy cannot be ruled out using the initial serum hCG value after an indeterminate transvaginal scan.",
+      "wording": "For the policy's stable US emergency-department population, ectopic pregnancy cannot be ruled out using the initial serum hCG value after an indeterminate transvaginal scan."
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2ASerialScope"
+      ],
+      "sourceIds": [
+        "ACEP-EARLYPREG-2017"
+      ],
+      "original": "Initial emergency-department assessment is the policy's subject. It cannot supply an individualized serial serum hCG schedule, and that scope limit is not advice against serial testing.",
+      "wording": "Initial emergency-department assessment is the policy's subject. It cannot supply an individualized serial serum hCG schedule, and that scope limit is not advice against serial testing."
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2NPulDefinition"
+      ],
+      "sourceIds": [
+        "NICE-NG126-2026"
+      ],
+      "original": "A positive pregnancy test together with a transvaginal scan showing neither an intrauterine nor an extrauterine pregnancy leaves the location unresolved. It does not identify an ectopic pregnancy.",
+      "wording": "A positive pregnancy test together with a transvaginal scan showing neither an intrauterine nor an extrauterine pregnancy leaves the location unresolved. It does not identify an ectopic pregnancy."
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2NPulPossibility"
+      ],
+      "sourceIds": [
+        "NICE-NG126-2026"
+      ],
+      "original": "An unresolved pregnancy location leaves ectopic pregnancy among the possibilities, without confirming it or assigning a probability.",
+      "wording": "An unresolved pregnancy location leaves ectopic pregnancy among the possibilities, without confirming it or assigning a probability."
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2NSingleScan"
+      ],
+      "sourceIds": [
+        "NICE-NG126-2026"
+      ],
+      "original": "A very early scan can leave uncertainty about pregnancy loss. One scan must not be treated as guaranteeing that conclusion when the findings are incomplete.",
+      "wording": "A very early scan can leave uncertainty about pregnancy loss. One scan must not be treated as guaranteeing that conclusion when the findings are incomplete."
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2NSymptoms"
+      ],
+      "sourceIds": [
+        "NICE-NG126-2026"
+      ],
+      "original": "Early-pregnancy pain or bleeding has to be interpreted with the reported examination and test findings; those symptoms alone cannot identify ectopic pregnancy.",
+      "wording": "Early-pregnancy pain or bleeding has to be interpreted with the reported examination and test findings; those symptoms alone cannot identify ectopic pregnancy."
+    },
+    {
+      "moduleId": "module_02_early_pregnancy",
+      "claimIds": [
+        "M2NPainAssessment"
+      ],
+      "sourceIds": [
+        "NICE-NG126-2026"
+      ],
+      "original": "Within the UK early-pregnancy pathway, current pain with signs or symptoms of a complication warrants assessment. The overall clinical presentation determines referral urgency, not the symptom alone.",
+      "wording": "Within the UK early-pregnancy pathway, current pain with signs or symptoms of a complication warrants assessment. The overall clinical presentation determines referral urgency, not the symptom alone."
+    }
+  ]
+}

@@ -76,6 +76,8 @@ Metadata is validated and discarded. Warning links are never followed, rendered,
 
 ## Canonical shadow-conformance stage
 
+The separate optional `reviewed` mode is documented in [WatsonReviewed.md](WatsonReviewed.md). The shadow wire format, exact-output validator and discard behavior below are unchanged.
+
 This phase checks provider connectivity and exact-output conformance only. It does not authorize unrestricted generative clinical paraphrasing. canonicalPresentation builds presentationVersion exactly "1" and one paragraph with only factIds, claimIds and text from the already-approved Presentation. The Watson user message has exactly one property: requiredOutput. Module/source IDs, URLs, citation numbers, clinical conditions and original case data are excluded. The builder never generates, shortens, expands, reorders or normalizes wording.
 
 The model is instructed to return the value itself, without a wrapper, code fences or commentary, and preserve all property/array order, punctuation and spacing. IBM JSON mode remains enabled. Valid JSON proceeds through the existing strict presentation validator and then exact equality with the canonical object. Invalid generated JSON (including Markdown), wrappers, reordered IDs/properties, extra/missing/duplicate facts or changed text yield presentation-validation. Malformed outer provider envelopes still yield model-response. No output repair, trimming, approximate matching or semantic similarity is used. Validated provider prose is discarded; only the existing privacy-safe status/reason headers can differ from the deterministic response.

@@ -30,7 +30,7 @@ export default function ResponsePanel({ review, synthetic = false, pending = fal
     {synthetic && <p className="syntheticLabel">Synthetic demonstration response</p>}
     {!urgentOnly && <>{!synthetic && <p className="outcomeLabel">{presentation.label}</p>}<h2 tabIndex={-1} id="reviewTitle">{review.considerations.length ? 'Summary' : review.heading}</h2>
 </>}
-    <VisualFindings findings={successfulReview(review) ? review.warnings.length ? neutralFindings(review) : findings.length ? findings : neutralFindings(review) : []} summary={summary ? <Citation sourcesOpen={sourcesOpen} onCite={openSources} statement={summary} /> : undefined} onCite={openSources} sourcesOpen={sourcesOpen} />
+    <VisualFindings findings={successfulReview(review) ? review.warnings.length ? neutralFindings(review) : findings.length ? findings : neutralFindings(review) : []} reviewedSummary={review.warnings.length || review.scopeNotice || review.messages.length ? undefined : review.reviewedSummary} summary={summary ? <Citation sourcesOpen={sourcesOpen} onCite={openSources} statement={summary} /> : undefined} onCite={openSources} sourcesOpen={sourcesOpen} />
     {concise.next && <section aria-labelledby="nextTitle"><h3 id="nextTitle">Next consideration</h3><p><Citation sourcesOpen={sourcesOpen} onCite={openSources} statement={concise.next} /></p></section>}
     {concise.points.length > 0 && <Disclosure resetKey={review} label={`Key points (${concise.points.length})`}><ul className="keyPoints">{concise.points.map((statement, index) => <li key={index}><Citation sourcesOpen={sourcesOpen} onCite={openSources} statement={statement} /></li>)}</ul></Disclosure>}
     {review.messages.map((message, index) => <p key={index}>{message}</p>)}

@@ -164,11 +164,13 @@ frontend/tests/Module02.test.tsx
 frontend/tests/NetlifyFunction.test.ts
 frontend/tests/RequestPolicy.test.ts
 frontend/tests/ResponsePresentation.test.tsx
+frontend/tests/ReviewedSummary.test.tsx
 frontend/tests/SourceDetails.test.tsx
 frontend/tests/SyntheticPresentation.test.tsx
 frontend/tests/UploadPanel.test.tsx
 frontend/tests/UploadWorkflow.test.tsx
 frontend/tests/VisualFindings.test.tsx
+frontend/tests/WatsonReviewed.test.ts
 frontend/tests/WatsonShadow.test.ts
 frontend/tests/api.test.ts
 frontend/tests/competitionBrowser.cjs
@@ -196,6 +198,7 @@ netlify/evaluation/presentationProjector.ts
 netlify/evaluation/requestPolicy.ts
 netlify/evaluation/retrieval.ts
 netlify/evaluation/reviewSeal.ts
+netlify/evaluation/reviewedPresentation.ts
 netlify/evaluation/safety.ts
 netlify/evaluation/synthesis.ts
 netlify/evaluation/watsonShadow.ts
@@ -206,6 +209,7 @@ shared/EndoDesign.md
 shared/README.md
 shared/ResponsePresentation.md
 shared/VisualFindings.md
+shared/WatsonReviewed.md
 shared/WatsonShadow.md
 shared/caseBridge.ts
 shared/checkSchema.mjs
@@ -215,6 +219,7 @@ shared/documentBridge.ts
 shared/requestIntent.json
 shared/requestIntent.ts
 shared/responsePresentation.json
+shared/reviewedVariants.json
 shared/schemaArtifacts.json
 shared/schemaRules.ts
 shared/summaryPresentation.json
@@ -271,6 +276,7 @@ tests/unit/testRegistry.py
 tests/unit/testRequestPolicy.py
 tests/unit/testResponsePresentation.py
 tests/unit/testRetrieval.py
+tests/unit/testReviewedPresentation.py
 tests/unit/testReviews.py
 tests/unit/testSafetyService.py
 tests/unit/testScaffolds.py

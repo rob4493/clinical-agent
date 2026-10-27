@@ -2,6 +2,7 @@ import { setImmediate } from 'node:timers/promises';
 import { analyze, unavailable } from '../evaluation/analysis';
 import { InputError, parseJson, validateCase } from '../evaluation/input';
 import { DecisionNotice, EvaluationNotice, hashBytes, loadPackages, Module1 } from '../evaluation/packages';
+import type { PublicPresentation } from '../evaluation/reviewedPresentation';
 import { runShadow, shadowHeaders, MaximumShadowTimeout, type ShadowStatus, type ShadowReason } from '../evaluation/watsonShadow';
 
 const FunctionDeadline=10000;
@@ -18,11 +19,12 @@ async function bodyText(request:Request,signal:AbortSignal):Promise<string> {
   signal.throwIfAborted();return new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(parts));
  } finally {signal.removeEventListener('abort',abort);reader.releaseLock();}
 }
-/** Deterministic evaluation is authoritative; optional server-only shadow calls never replace it. */
+/** Deterministic evaluation is authoritative; optional server-only presentations never replace the clinical envelope. */
 export default async function evaluate(request:Request):Promise<Response> {
  const started=Date.now();
  let shadow:ShadowStatus='skipped';
  let shadowReason:ShadowReason='internal';
+ let reviewedPresentation:PublicPresentation|undefined;
  const signal=AbortSignal.any([request.signal,AbortSignal.timeout(FunctionDeadline)]);
  const address=new URL(request.url);
  const path=address.pathname.replace(/^\/\.netlify\/functions\/evaluate/,'').replace(/^\/api/,'')||'/';
@@ -58,10 +60,10 @@ export default async function evaluate(request:Request):Promise<Response> {
   // result survives a package/citation/warning change during the operation.
   if(hashBytes(JSON.stringify(loadPackages()))!==initialPin)throw new Error('Stale evaluation state.');
   // Only the purpose-built public projector can feed IBM. The clinical response is immutable here.
-  shadow=await runShadow(result,packages,signal,Math.min(MaximumShadowTimeout,FunctionDeadline-ResponseReserve-(Date.now()-started)),undefined,reason=>{shadowReason=reason;});
+  shadow=await runShadow(result,packages,signal,Math.min(MaximumShadowTimeout,FunctionDeadline-ResponseReserve-(Date.now()-started)),undefined,reason=>{shadowReason=reason;},presentation=>{reviewedPresentation=presentation;});
   signal.throwIfAborted();
   if(hashBytes(JSON.stringify(loadPackages()))!==initialPin)throw new Error('Stale evaluation state.');
-  return json(result.envelope,result.status,shadow,shadowReason);
+  return json(shadow==='reviewed-success'&&reviewedPresentation?{...result.envelope,reviewedPresentation}:result.envelope,result.status,shadow,shadowReason);
  } catch(failure) {
   if(request.signal.aborted)return new Response(null,{status:499,headers:{...Headers,...(path==='/v1/analyze'?shadowHeaders(shadow,shadowReason):{})}});
   if(failure instanceof InputError || failure instanceof SyntaxError)return json({detail:new InputError().message},422,path==='/v1/analyze'?shadow:undefined,shadowReason);
