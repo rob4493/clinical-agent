@@ -4,6 +4,10 @@ import { projectPresentation, validatePresentation, PresentationError, type Pres
 import type { Analysis } from './analysis';
 import type { Package } from './packages';
 
+export const MinimumShadowTimeout=100;
+export const MaximumShadowTimeout=8000;
+const DefaultShadowTimeout=1500;
+
 export type ShadowStatus='skipped'|'shadow-success'|'shadow-fallback';
 const ShadowReasons=['configuration','iam-timeout','iam-rejected','iam-response','model-timeout','model-rejected','model-response','presentation-validation','internal'] as const;
 export type ShadowReason=typeof ShadowReasons[number];
@@ -25,8 +29,8 @@ class ShadowConfig {
   let url:URL;
   try {url=new URL(endpoint);} catch(failure){if(failure instanceof TypeError)throw new ShadowFault('configuration');throw failure;}
   if(url.protocol!=='https:'||!OfficialHosts.has(url.hostname)||url.username||url.password||url.port||url.search||url.hash||url.pathname!=='/'||endpoint!==url.origin&&endpoint!==url.origin+'/')throw new ShadowFault('configuration');
-  const timeout=environment.WATSONX_AI_TIMEOUT_MS??'1500';
-  if(!/^\d+$/.test(timeout)||Number(timeout)<100||Number(timeout)>3000)throw new ShadowFault('configuration');
+  const timeout=environment.WATSONX_AI_TIMEOUT_MS??String(DefaultShadowTimeout);
+  if(!/^\d+$/.test(timeout)||Number(timeout)<MinimumShadowTimeout||Number(timeout)>MaximumShadowTimeout)throw new ShadowFault('configuration');
   this.#key=key;this.#project=project;this.#url=url.origin;this.#model=model;this.#version=version;this.#timeout=Number(timeout);
  }
  fingerprint(){return createHash('sha256').update(this.#key).digest('hex');}
@@ -103,14 +107,14 @@ export function createShadowAdapter(transport:Transport=(input,init)=>fetch(inpu
    if(!refresh.waiters&&pending===refresh)refresh.controller.abort();
   }
  }
- return async function shadow(result:Analysis,packages:Package[],signal:AbortSignal,budget=3000,environment:Environment=process.env,onFallback?:(reason:ShadowReason)=>void):Promise<ShadowStatus> {
+ return async function shadow(result:Analysis,packages:Package[],signal:AbortSignal,budget=MaximumShadowTimeout,environment:Environment=process.env,onFallback?:(reason:ShadowReason)=>void):Promise<ShadowStatus> {
   let phase:'iam'|'model'|undefined;let deadline:AbortSignal|undefined;
   try {
    if(environment.WATSONX_ENABLED===undefined||environment.WATSONX_ENABLED==='false')return 'skipped';
    const presentation=projectPresentation(result,packages);if(!presentation)return 'skipped';
    if(environment.WATSONX_ENABLED!=='true')throw new ShadowFault('configuration');
    const config=new ShadowConfig(environment);
-   if(!Number.isFinite(budget)||budget<100)throw new ShadowFault('configuration');
+   if(!Number.isFinite(budget)||budget<MinimumShadowTimeout)throw new ShadowFault('configuration');
    phase='iam';deadline=AbortSignal.timeout(Math.min(config.timeout(),Math.floor(budget)));
    const operationSignal=AbortSignal.any([signal,deadline]);
    operationSignal.throwIfAborted();

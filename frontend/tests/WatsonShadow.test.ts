@@ -63,7 +63,7 @@ describe('bounded native transport shadow adapter',()=>{
  });
  it.each([undefined,'false'])('is disabled without exact opt-in: %s',async enabled=>{const transport=fakeTransport();expect(await createShadowAdapter(transport)(example(),Packages,new AbortController().signal,3000,{...Environment,WATSONX_ENABLED:enabled})).toBe('skipped');expect(transport).not.toHaveBeenCalled();});
  it.each([
-  ['WATSONX_ENABLED','TRUE'],['WATSONX_PRESENTATION_MODE','live'],['WATSONX_AI_AUTH_TYPE','IAM'],['WATSONX_AI_APIKEY',''],['WATSONX_AI_PROJECT_ID','bad'],['WATSONX_AI_MODEL_ID','bad model'],['WATSONX_AI_API_VERSION','2024-02-30'],['WATSONX_AI_TIMEOUT_MS','0'],['WATSONX_AI_TIMEOUT_MS','3001'],
+  ['WATSONX_ENABLED','TRUE'],['WATSONX_PRESENTATION_MODE','live'],['WATSONX_AI_AUTH_TYPE','IAM'],['WATSONX_AI_APIKEY',''],['WATSONX_AI_PROJECT_ID','bad'],['WATSONX_AI_MODEL_ID','bad model'],['WATSONX_AI_API_VERSION','2024-02-30'],['WATSONX_AI_TIMEOUT_MS','0'],['WATSONX_AI_TIMEOUT_MS','8001'],
   ...['http://us-south.ml.cloud.ibm.com','https://example.invalid','https://us-south.ml.cloud.ibm.com.evil.invalid','https://user:secret@us-south.ml.cloud.ibm.com','https://us-south.ml.cloud.ibm.com/path','https://us-south.ml.cloud.ibm.com?secret=x','https://us-south.ml.cloud.ibm.com#x','https://us-south.ml.cloud.ibm.com:443','https://US-SOUTH.ml.cloud.ibm.com'].map(url=>['WATSONX_AI_URL',url])
  ])('fails closed before fetch on configuration %s',async(key,value)=>{const transport=fakeTransport();expect(await createShadowAdapter(transport)(example(),Packages,new AbortController().signal,3000,{...Environment,[key]:value})).toBe('shadow-fallback');expect(transport).not.toHaveBeenCalled();});
  it('caches tokens in memory and refreshes before expiration',async()=>{let clock=100000;const transport=fakeTransport(),shadow=createShadowAdapter(transport,()=>clock);await shadow(example(),Packages,new AbortController().signal,3000,Environment);await shadow(example(),Packages,new AbortController().signal,3000,Environment);expect(transport.mock.calls.filter(([url])=>url.includes('/identity/token'))).toHaveLength(1);clock+=3600000;await shadow(example(),Packages,new AbortController().signal,3000,Environment);expect(transport.mock.calls.filter(([url])=>url.includes('/identity/token'))).toHaveLength(2);});
@@ -215,5 +215,70 @@ describe('bounded privacy-safe fallback diagnostics',()=>{
   const transport=vi.fn(async()=>new Promise<Response>(()=>{})),shadow=createShadowAdapter(transport),first=vi.fn(),second=vi.fn();
   const one=shadow(example(),Packages,new AbortController().signal,3000,Environment,first),two=shadow(example(),Packages,new AbortController().signal,3000,Environment,second);
   timers[1].abort();expect(await one).toBe('shadow-fallback');expect(await two).toBe('shadow-fallback');expect(first).toHaveBeenCalledExactlyOnceWith('iam-timeout');expect(second).toHaveBeenCalledExactlyOnceWith('iam-timeout');expect(transport).toHaveBeenCalledTimes(1);
+ });
+});
+
+
+describe('extended bounded shadow deadline',()=>{
+ function fakeDeadlines(){
+  vi.useFakeTimers({toFake:['setTimeout','clearTimeout','Date']});
+  return vi.spyOn(AbortSignal,'timeout').mockImplementation(duration=>{const controller=new AbortController();setTimeout(()=>controller.abort(new DOMException('Controlled deadline.','TimeoutError')),duration);return controller.signal;});
+ }
+ function delayedTransport(iamDelay:number,modelDelay:number){
+  const base=fakeTransport();
+  return vi.fn((url:string,init:RequestInit)=>new Promise<Response>((resolve,reject)=>{
+   const signal=init.signal as AbortSignal;
+   if(signal.aborted){reject(new Error('Cancelled synthetic transport.'));return;}
+   const abort=()=>{clearTimeout(timer);reject(new Error('Cancelled synthetic transport.'));};
+   const timer=setTimeout(()=>{signal.removeEventListener('abort',abort);void base(url,init).then(resolve,reject);},url.includes('/identity/token')?iamDelay:modelDelay);
+   signal.addEventListener('abort',abort,{once:true});
+  }));
+ }
+ const Extended={...Environment,WATSONX_AI_TIMEOUT_MS:'8000'};
+ function notes(){return DemoCases.find(example=>example.id==='brief')!.narrative;}
+ function request(){return new Request('http://localhost/api/v1/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({moduleHint:'module_01_endo',caseType:'brief',pregnancyPossible:false,pidDiagnosedOrPresumed:false,additionalNotes:notes()})});}
+ async function turn(){await new Promise<void>(resolve=>setImmediate(resolve));}
+ it.each(['100','3001','5000','7999','8000'])('accepts the reviewed timeout %s without the old ceiling',async timeout=>{
+  const transport=fakeTransport(),reason=vi.fn();expect(await createShadowAdapter(transport)(example(),Packages,new AbortController().signal,undefined,{...Environment,WATSONX_AI_TIMEOUT_MS:timeout},reason)).toBe('shadow-success');expect(transport).toHaveBeenCalledTimes(2);expect(reason).not.toHaveBeenCalled();
+ });
+ it.each(['8001','-1','0','1.5','8000.0','1e3',' 8000','8000 ','NaN','Infinity','abc',''])('rejects malformed or out-of-range timeout %s as configuration',async timeout=>{
+  const transport=fakeTransport(),reason=vi.fn();expect(await createShadowAdapter(transport)(example(),Packages,new AbortController().signal,undefined,{...Environment,WATSONX_AI_TIMEOUT_MS:timeout},reason)).toBe('shadow-fallback');expect(reason).toHaveBeenCalledExactlyOnceWith('configuration');expect(transport).not.toHaveBeenCalled();
+ });
+ it('permits a model response after three seconds and before the shared eight-second deadline',async()=>{
+  fakeDeadlines();const transport=delayedTransport(1000,4000),reason=vi.fn();let settled=false;const result=example(),before=JSON.stringify(result);
+  const pending=createShadowAdapter(transport)(result,Packages,new AbortController().signal,undefined,Extended,reason).then(status=>{settled=true;return status;});
+  await vi.advanceTimersByTimeAsync(3999);expect(settled).toBe(false);await vi.advanceTimersByTimeAsync(1002);expect(await pending).toBe('shadow-success');expect(transport).toHaveBeenCalledTimes(2);expect(reason).not.toHaveBeenCalled();expect(JSON.stringify(result)).toBe(before);
+ });
+ it('returns model-timeout when model processing exceeds the shared eight-second deadline',async()=>{
+  fakeDeadlines();const transport=delayedTransport(0,8001),reason=vi.fn();const pending=createShadowAdapter(transport)(example(),Packages,new AbortController().signal,undefined,Extended,reason);
+  await vi.advanceTimersByTimeAsync(8001);expect(await pending).toBe('shadow-fallback');expect(reason).toHaveBeenCalledExactlyOnceWith('model-timeout');expect(transport).toHaveBeenCalledTimes(2);expect((transport.mock.calls[1][1].signal as AbortSignal).aborted).toBe(true);
+ });
+ it('does not give IAM and model work separate eight-second budgets',async()=>{
+  fakeDeadlines();const transport=delayedTransport(5000,4000),reason=vi.fn();const pending=createShadowAdapter(transport)(example(),Packages,new AbortController().signal,undefined,Extended,reason);
+  await vi.advanceTimersByTimeAsync(5001);expect(transport).toHaveBeenCalledTimes(2);await vi.advanceTimersByTimeAsync(3000);expect(await pending).toBe('shadow-fallback');expect(reason).toHaveBeenCalledExactlyOnceWith('model-timeout');expect(transport).toHaveBeenCalledTimes(2);
+ });
+ it('still bounds IAM alone by the same total deadline',async()=>{
+  fakeDeadlines();const transport=delayedTransport(9000,0),reason=vi.fn();const pending=createShadowAdapter(transport)(example(),Packages,new AbortController().signal,undefined,Extended,reason);
+  await vi.advanceTimersByTimeAsync(8001);expect(await pending).toBe('shadow-fallback');expect(reason).toHaveBeenCalledExactlyOnceWith('iam-timeout');expect(transport).toHaveBeenCalledTimes(1);
+ });
+ it('cancels extended model transport without retries',async()=>{
+  fakeDeadlines();const transport=delayedTransport(0,7000),reason=vi.fn(),owner=new AbortController();const pending=createShadowAdapter(transport)(example(),Packages,owner.signal,undefined,Extended,reason);
+  await vi.advanceTimersByTimeAsync(4000);owner.abort();expect(await pending).toBe('shadow-fallback');expect((transport.mock.calls[1][1].signal as AbortSignal).aborted).toBe(true);await vi.advanceTimersByTimeAsync(10000);expect(transport).toHaveBeenCalledTimes(2);expect(reason).toHaveBeenCalledExactlyOnceWith('internal');
+ });
+ it('keeps the Function bounded by ten seconds even for a stalled body',async()=>{
+  fakeDeadlines();const transport=vi.fn();vi.stubGlobal('fetch',transport);let settled=false;
+  const body=new ReadableStream({pull(){return new Promise<void>(()=>{});}});
+  const pending=evaluate(new Request('http://localhost/api/v1/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body,duplex:'half'} as RequestInit)).then(response=>{settled=true;return response;});
+  await vi.advanceTimersByTimeAsync(9999);expect(settled).toBe(false);await vi.advanceTimersByTimeAsync(2);const response=await pending;expect(response.status).toBe(503);expect(response.headers.get('X-Endo-Watson')).toBe('skipped');expect(transport).not.toHaveBeenCalled();
+ });
+ it('returns the exact deterministic body with bounded diagnostics and a response reserve after slow input',async()=>{
+  vi.stubEnv('WATSONX_ENABLED','false');const baseline=await evaluate(request());const expected=await baseline.text();
+  for(const [key,value] of Object.entries(Extended))vi.stubEnv(key,value);vi.stubEnv('WATSONX_AI_APIKEY','syntheticExtendedFunctionKey');
+  const timers=fakeDeadlines(),transport=delayedTransport(1000,7000);vi.stubGlobal('fetch',transport);
+  const payload=await request().text();const body=new ReadableStream<Uint8Array>({start(controller){setTimeout(()=>{controller.enqueue(new TextEncoder().encode(payload));controller.close();},2000);}});
+  const pending=evaluate(new Request('http://localhost/api/v1/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body,duplex:'half'} as RequestInit));
+  await vi.advanceTimersByTimeAsync(2000);for(let index=0;index<4;index++)await turn();
+  expect(timers).toHaveBeenCalledWith(10000);expect(timers).toHaveBeenCalledWith(7500);
+  await vi.advanceTimersByTimeAsync(7501);const response=await pending;expect(response.status).toBe(baseline.status);expect(await response.text()).toBe(expected);expect(response.headers.get('X-Endo-Watson')).toBe('shadow-fallback');expect(response.headers.get('X-Endo-Watson-Reason')).toBe('model-timeout');expect(transport).toHaveBeenCalledTimes(2);expect(JSON.stringify([...response.headers])).not.toMatch(/synthetic|cloud\.ibm|Error:|503/);
  });
 });

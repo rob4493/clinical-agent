@@ -2,7 +2,10 @@ import { setImmediate } from 'node:timers/promises';
 import { analyze, unavailable } from '../evaluation/analysis';
 import { InputError, parseJson, validateCase } from '../evaluation/input';
 import { DecisionNotice, EvaluationNotice, hashBytes, loadPackages, Module1 } from '../evaluation/packages';
-import { runShadow, shadowHeaders, type ShadowStatus, type ShadowReason } from '../evaluation/watsonShadow';
+import { runShadow, shadowHeaders, MaximumShadowTimeout, type ShadowStatus, type ShadowReason } from '../evaluation/watsonShadow';
+
+const FunctionDeadline=10000;
+const ResponseReserve=500;
 
 const Headers = {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Clinical-Mode':'competition','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'};
 function json(payload:unknown,status=200,shadow?:ShadowStatus,reason?:ShadowReason):Response { return new Response(JSON.stringify(payload),{status,headers:{...Headers,...(shadow?shadowHeaders(shadow,reason):{})}}); }
@@ -20,7 +23,7 @@ export default async function evaluate(request:Request):Promise<Response> {
  const started=Date.now();
  let shadow:ShadowStatus='skipped';
  let shadowReason:ShadowReason='internal';
- const signal=AbortSignal.any([request.signal,AbortSignal.timeout(5000)]);
+ const signal=AbortSignal.any([request.signal,AbortSignal.timeout(FunctionDeadline)]);
  const address=new URL(request.url);
  const path=address.pathname.replace(/^\/\.netlify\/functions\/evaluate/,'').replace(/^\/api/,'')||'/';
  try {
@@ -55,7 +58,7 @@ export default async function evaluate(request:Request):Promise<Response> {
   // result survives a package/citation/warning change during the operation.
   if(hashBytes(JSON.stringify(loadPackages()))!==initialPin)throw new Error('Stale evaluation state.');
   // Only the purpose-built public projector can feed IBM. The clinical response is immutable here.
-  shadow=await runShadow(result,packages,signal,Math.min(3000,4900-(Date.now()-started)),undefined,reason=>{shadowReason=reason;});
+  shadow=await runShadow(result,packages,signal,Math.min(MaximumShadowTimeout,FunctionDeadline-ResponseReserve-(Date.now()-started)),undefined,reason=>{shadowReason=reason;});
   signal.throwIfAborted();
   if(hashBytes(JSON.stringify(loadPackages()))!==initialPin)throw new Error('Stale evaluation state.');
   return json(result.envelope,result.status,shadow,shadowReason);

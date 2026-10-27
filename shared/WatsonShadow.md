@@ -22,7 +22,7 @@ Warnings, conflicts, clarification, insufficient evidence, unavailable modules/p
 | WATSONX_AI_URL | Explicit official regional HTTPS origin; no userinfo, port notation, path, query, fragment or redirect. |
 | WATSONX_AI_MODEL_ID | Explicit format-validated model identifier; availability is not inferred. |
 | WATSONX_AI_API_VERSION | Explicit valid ISO date; never defaults to today's date. |
-| WATSONX_AI_TIMEOUT_MS | Default 1500; integer 100–3000. One total shadow budget includes refresh wait, IAM, generation, reading and validation. |
+| WATSONX_AI_TIMEOUT_MS | Default 1500; integer 100–8000. One total shadow budget includes refresh wait, IAM, generation, reading and validation. |
 
 The .env.example placeholders do not enable Watson. Python's existing WATSONX_API_KEY and related settings are a separate integration boundary; they are not silently aliased. No provider setting may use a VITE_ prefix. Configuration uses private fields to avoid accidental object serialization of secrets. Settings are read only on an eligible analysis request, never during import, app construction, health, readiness or discovery.
 
@@ -32,7 +32,7 @@ The adapter permits only the documented regional model API hosts for Dallas, Fra
 
 Tokens are kept only in the Function process and refreshed at least 60 seconds before the earlier reported expiry. Concurrent callers share one refresh. Cancelling one waiter does not cancel another; when the last waiter leaves, refresh is aborted. Credential rotation cannot inherit an old credential's token. A 401/403 clears the cached token without replaying generation. Cold starts and separate serverless instances have independent caches; no distributed coordination is claimed.
 
-The existing Function deadline remains five seconds; frontend default is twenty seconds. Shadow receives at most the configured timeout and the remaining Function budget minus a response reserve. IAM refresh also has its own bounded lifetime. Each caller's wait consumes its total budget. Request cancellation is propagated to generation and refresh ownership; cancellation is not retryable. Native transport abort cannot prove IBM stopped remote computation or billing. No provider work runs as an unawaited background task.
+The Function total deadline is ten seconds; frontend default is twenty seconds. Shadow receives at most the configured timeout and the remaining Function budget minus a 500 ms response reserve. Its maximum shadow budget is 8000 ms. Named constants keep these bounds aligned; the default configured timeout remains 1500 ms. IAM refresh also has its own bounded lifetime. Each caller's wait consumes its total budget. Request cancellation is propagated to generation and refresh ownership; cancellation is not retryable. Native transport abort cannot prove IBM stopped remote computation or billing. No provider work runs as an unawaited background task.
 
 ## Strict response validation and deterministic fallback
 
