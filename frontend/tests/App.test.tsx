@@ -110,7 +110,7 @@ describe('clinician workflow with mocked HTTP only', () => {
     await screen.findByRole('heading', { name: 'Summary' });
     const options = fetchMock.mock.calls.find(([url]) => url.endsWith('/v1/analyze'))![1]!;
     expect(JSON.parse(options.body as string)).toEqual({ moduleHint: 'FictionalModule', ageRange: '25-34', caseType: 'detailed', pregnancyPossible: pregnancyJson, pidDiagnosedOrPresumed: pidJson, additionalNotes: 'Fictional additional context only.' });
-    expect(options.credentials).toBe('omit'); expect(options.cache).toBe('no-store');
+    expect(options.credentials).toBe('same-origin'); expect(options.cache).toBe('no-store');
   });
   it('renders considerations, numbered citations, exact safe links and the fixed final notice', async () => {
     mockHttp(); render(<App />); await submit();

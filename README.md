@@ -172,3 +172,11 @@ See [Document review and limits](shared/DocumentReview.md) for supported formats
 Endo is the Clinical Evidence Assistant shown in the browser. The centered case workspace keeps explicit module selection, document review and evidence safeguards. There is no separate reviewer agent or Review Companion panel. See [Endo design and accessibility](shared/EndoDesign.md) for the visual system and its differences from the design reference.
 
 Response display and reviewed plain-language wording: see [Response presentation](shared/ResponsePresentation.md).
+
+Protected Netlify Deploy Previews use browser-managed same-origin credentials for `/api/*`, so an existing Netlify login also authenticates API requests. The client never reads or constructs cookies, adds Authorization headers, or sends requests to a cross-origin API target; redirects remain blocked. This does not change server-to-IBM authentication.
+
+## Optional IBM presentation shadow integration
+
+The Netlify runtime includes a **disabled-by-default, server-only** watsonx.ai shadow adapter. It is not required to run either evaluation module. When explicitly enabled by an authorized operator, it sends only reviewed public presentation facts to IBM, validates the result and discards the generated prose. The visible response remains deterministic. It never sends case notes or uploaded documents.
+
+See [shadow-mode configuration, safeguards and limitations](shared/WatsonShadow.md). No IBM integration is enabled by this repository. Do not put provider settings in frontend/Vite variables. Actual model availability, IAM permissions and IBM data-handling settings require a separate controlled connectivity review.

@@ -44,8 +44,9 @@ export async function requestJson(path: string, signal: AbortSignal, caseInput?:
   signal.throwIfAborted();
   // Validate through the shared contract; retain the existing wire format.
   if (caseInput) { if ('schemaVersion' in caseInput) canonicalToLegacy(caseInput); else legacyToCanonical(caseInput); }
+  // Let the browser attach same-origin preview authentication; never handle cookies here.
   const response = await fetch('/api' + path, {
-    method: caseInput ? 'POST' : 'GET', signal, cache: 'no-store', credentials: 'omit', redirect: 'error',
+    method: caseInput ? 'POST' : 'GET', signal, cache: 'no-store', credentials: 'same-origin', redirect: 'error',
     headers: caseInput ? { Accept: 'application/json', 'Content-Type': 'application/json' } : { Accept: 'application/json' },
     ...(caseInput ? { body: JSON.stringify(caseInput) } : {}),
   });

@@ -1,6 +1,46 @@
-import { describe, expect, it } from 'vitest';
-import { DecisionNotice, SyntheticNotice, readModules, readReview, safeUrl } from '../src/api';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { DecisionNotice, SyntheticNotice, readModules, readReview, safeUrl, requestJson } from '../src/api';
 import { analysisResult } from './fixtures';
+
+afterEach(() => { vi.unstubAllGlobals(); });
+
+describe('same-origin preview authentication', () => {
+  it.each(['/v1/modules', '/ready', '/v1/runtime', '/v1/competition/sources/NICE-NG73'])('uses browser-managed credentials only on its own API path: %s', async path => {
+    const transport = vi.fn(async () => new Response('{}', { headers: { 'X-Clinical-Mode': 'competition' } }));
+    vi.stubGlobal('fetch', transport);
+    const controller = new AbortController();
+    await requestJson(path, controller.signal);
+    const [url, init] = (transport.mock.calls[0] as unknown as [string, RequestInit]);
+    expect(url).toBe('/api' + path);
+    const target = new URL(url, 'https://preview.example.invalid');
+    expect(target.origin).toBe('https://preview.example.invalid');
+    expect(target.pathname.startsWith('/api/')).toBe(true);
+    expect(init).toMatchObject({ method: 'GET', credentials: 'same-origin', redirect: 'error', cache: 'no-store', signal: controller.signal });
+    expect(init.credentials).not.toBe('include');
+    expect(init.headers).toEqual({ Accept: 'application/json' });
+    expect(init.body).toBeUndefined();
+  });
+  it('preserves structured POST validation and cancellation without credential-bearing headers', async () => {
+    const transport = vi.fn(async () => new Response('{}', { headers: { 'X-Clinical-Mode': 'competition' } }));
+    vi.stubGlobal('fetch', transport);
+    const controller = new AbortController();
+    const caseInput = { moduleHint: 'module_01_endo', caseType: 'brief' as const, pregnancyPossible: null, pidDiagnosedOrPresumed: null, additionalNotes: 'Synthetic pelvic discomfort.' };
+    await requestJson('/v1/analyze', controller.signal, caseInput);
+    const [url, init] = (transport.mock.calls[0] as unknown as [string, RequestInit]);
+    expect(url).toBe('/api/v1/analyze');
+    expect(init).toMatchObject({ method: 'POST', credentials: 'same-origin', redirect: 'error', cache: 'no-store', signal: controller.signal });
+    expect(init.headers).toEqual({ Accept: 'application/json', 'Content-Type': 'application/json' });
+    expect(new Headers(init.headers).has('Authorization')).toBe(false);
+    expect(new Headers(init.headers).has('Cookie')).toBe(false);
+    expect(JSON.parse(init.body as string)).toEqual(caseInput);
+  });
+  it('does not fetch after cancellation', async () => {
+    const transport = vi.fn(); vi.stubGlobal('fetch', transport);
+    const controller = new AbortController(); controller.abort();
+    await expect(requestJson('/ready', controller.signal)).rejects.toThrow();
+    expect(transport).not.toHaveBeenCalled();
+  });
+});
 
 describe('public response projection', () => {
   it.each(['ProviderUnavailable', 'OutsideScope'])('renders the distinct %s outcome', outcome => {
