@@ -6,7 +6,7 @@ import type { Analysis } from './analysis';
 import type { Package } from './packages';
 
 export const MinimumShadowTimeout=100;
-export const MaximumShadowTimeout=8000;
+export const MaximumShadowTimeout=12000;
 const DefaultShadowTimeout=1500;
 
 export type ShadowStatus='skipped'|'shadow-success'|'shadow-fallback'|'reviewed-success'|'reviewed-fallback';

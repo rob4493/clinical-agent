@@ -5,8 +5,8 @@ import { DecisionNotice, EvaluationNotice, hashBytes, loadPackages, Module1 } fr
 import type { PublicPresentation } from '../evaluation/reviewedPresentation';
 import { runShadow, shadowHeaders, MaximumShadowTimeout, type ShadowStatus, type ShadowReason } from '../evaluation/watsonShadow';
 
-const FunctionDeadline=10000;
-const ResponseReserve=500;
+const FunctionDeadline=15000;
+const ResponseReserve=1000;
 
 const Headers = {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Clinical-Mode':'competition','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'};
 function json(payload:unknown,status=200,shadow?:ShadowStatus,reason?:ShadowReason):Response { return new Response(JSON.stringify(payload),{status,headers:{...Headers,...(shadow?shadowHeaders(shadow,reason):{})}}); }

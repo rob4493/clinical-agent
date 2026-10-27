@@ -94,7 +94,7 @@ describe('Actual offline Netlify function',()=>{
    const stream=new ReadableStream({pull(){deadline.abort(new DOMException('Deadline exceeded.','TimeoutError'));}});
    const pending=evaluate(new Request('http://localhost/api/v1/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:stream,duplex:'half'} as RequestInit));
    const response=await pending;expect(response.status).toBe(503);expect(await response.text()).not.toContain('prompt');
-   expect(timeout).toHaveBeenCalledWith(10000);
+   expect(timeout).toHaveBeenCalledWith(15000);
   } finally {timeout.mockRestore();}
  });
  for(const [notes,allowed] of [

@@ -42,7 +42,7 @@ const Routes:[string,Record<string,unknown>][]=[
  ['Mild pelvic pain. Can a single serum hCG result exclude ectopic pregnancy?',Stable],
  ['Mild pelvic pain. How should serial hCG be interpreted?',Stable],
 ];
-afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();vi.restoreAllMocks();});
+afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals();vi.unstubAllEnvs();vi.restoreAllMocks();});
 
 describe('closed reviewed presentation vocabulary',()=>{
  it('binds every new mapping to exact public claims and sources without modifying them',()=>{
@@ -152,5 +152,50 @@ describe('closed reviewed presentation vocabulary',()=>{
  });
  it('never logs rejected content or returns metadata/credentials in diagnostics',async()=>{
   const logs=[vi.spyOn(console,'log'),vi.spyOn(console,'warn'),vi.spyOn(console,'error')],reason=vi.fn();await createShadowAdapter(transport(()=>'{"PrivateProviderSentinel":true}'))(module1(),Packages,new AbortController().signal,undefined,Environment,reason);for(const log of logs)expect(log).not.toHaveBeenCalled();expect(shadowHeaders('reviewed-success')).toEqual({'X-Endo-Watson':'reviewed-success'});expect(shadowHeaders('skipped')).toEqual({'X-Endo-Watson':'skipped'});
+ });
+});
+
+describe('twelve-second reviewed operation budget',()=>{
+ const Extended={...Environment,WATSONX_AI_TIMEOUT_MS:'12000'};
+ function fakeDeadlines(){
+  vi.useFakeTimers({toFake:['setTimeout','clearTimeout','Date']});
+  return vi.spyOn(AbortSignal,'timeout').mockImplementation(duration=>{const owner=new AbortController();setTimeout(()=>owner.abort(new DOMException('Controlled deadline.','TimeoutError')),duration);return owner.signal;});
+ }
+ function delayed(iamDelay:number,modelDelay:number){
+  const base=transport();return vi.fn((url:string,init:RequestInit)=>new Promise<Response>((resolve,reject)=>{
+   const signal=init.signal as AbortSignal;
+   if(signal.aborted){reject(new Error('Synthetic cancellation.'));return;}
+   const abort=()=>{clearTimeout(timer);reject(new Error('Synthetic cancellation.'));};
+   const timer=setTimeout(()=>{signal.removeEventListener('abort',abort);void base(url,init).then(resolve,reject);},url.includes('/identity/token')?iamDelay:modelDelay);
+   signal.addEventListener('abort',abort,{once:true});
+  }));
+ }
+ it.each(['8001','11999','12000'])('accepts reviewed timeout %s without changing approved output',async timeout=>{
+  const fetch=transport(),display=vi.fn(),reason=vi.fn();expect(await createShadowAdapter(fetch)(module1(),Packages,new AbortController().signal,undefined,{...Extended,WATSONX_AI_TIMEOUT_MS:timeout},reason,display)).toBe('reviewed-success');expect(display).toHaveBeenCalledOnce();expect(reason).not.toHaveBeenCalled();expect(fetch).toHaveBeenCalledTimes(2);
+ });
+ it('rejects 12001 before any provider activity',async()=>{
+  const fetch=transport(),reason=vi.fn();expect(await createShadowAdapter(fetch)(module1(),Packages,new AbortController().signal,undefined,{...Extended,WATSONX_AI_TIMEOUT_MS:'12001'},reason)).toBe('reviewed-fallback');expect(reason).toHaveBeenCalledExactlyOnceWith('configuration');expect(fetch).not.toHaveBeenCalled();
+ });
+ it('accepts an exact reviewed response between eight and twelve seconds',async()=>{
+  fakeDeadlines();const fetch=delayed(500,9000),display=vi.fn(),reason=vi.fn();let settled=false;
+  const pending=createShadowAdapter(fetch)(module1(),Packages,new AbortController().signal,undefined,Extended,reason,display).then(status=>{settled=true;return status;});
+  await vi.advanceTimersByTimeAsync(8999);expect(settled).toBe(false);await vi.advanceTimersByTimeAsync(502);expect(await pending).toBe('reviewed-success');expect(display).toHaveBeenCalledOnce();expect(reason).not.toHaveBeenCalled();expect(fetch).toHaveBeenCalledTimes(2);
+ });
+ it.each([{iam:0,model:12001,budget:12000,elapsed:12001},{iam:7000,model:6000,budget:12000,elapsed:12001},{iam:0,model:6000,budget:5000,elapsed:5001}])('caps IAM plus model by the smaller configured/remaining budget: $budget',async scenario=>{
+  fakeDeadlines();const fetch=delayed(scenario.iam,scenario.model),reason=vi.fn(),display=vi.fn(),result=module1(),before=JSON.stringify(result);
+  const pending=createShadowAdapter(fetch)(result,Packages,new AbortController().signal,scenario.budget,Extended,reason,display);await vi.advanceTimersByTimeAsync(scenario.elapsed);
+  expect(await pending).toBe('reviewed-fallback');expect(reason).toHaveBeenCalledExactlyOnceWith('model-timeout');expect(display).not.toHaveBeenCalled();expect((fetch.mock.calls[1][1].signal as AbortSignal).aborted).toBe(true);expect(fetch).toHaveBeenCalledTimes(2);expect(JSON.stringify(result)).toBe(before);
+ });
+ it('cancels during the extended window and never retries or emits a late presentation',async()=>{
+  fakeDeadlines();const fetch=delayed(0,20000),owner=new AbortController(),display=vi.fn();const pending=createShadowAdapter(fetch)(module1(),Packages,owner.signal,undefined,Extended,undefined,display);
+  await vi.advanceTimersByTimeAsync(9000);owner.abort();expect(await pending).toBe('reviewed-fallback');expect((fetch.mock.calls[1][1].signal as AbortSignal).aborted).toBe(true);await vi.advanceTimersByTimeAsync(25000);expect(display).not.toHaveBeenCalled();expect(fetch).toHaveBeenCalledTimes(2);
+ });
+ it('returns the unchanged deterministic Function response after a twelve-second model timeout',async()=>{
+  const request=()=>new Request('http://localhost/api/v1/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({moduleHint:Module1,additionalNotes:'Normal transvaginal ultrasound. Does this exclude endometriosis?'})});
+  vi.stubEnv('WATSONX_ENABLED','false');const baseline=await evaluate(request()),expected=await baseline.text();
+  for(const [key,value] of Object.entries(Extended))vi.stubEnv(key,value);vi.stubEnv('WATSONX_AI_APIKEY','syntheticTwelveSecondFunctionKey');const timers=fakeDeadlines(),fetch=delayed(0,13000);vi.stubGlobal('fetch',fetch);
+  const pending=evaluate(request());for(let turn=0;turn<4;turn++)await new Promise<void>(resolve=>setImmediate(resolve));
+  expect(timers).toHaveBeenCalledWith(15000);expect(timers).toHaveBeenCalledWith(12000);
+  await vi.advanceTimersByTimeAsync(12001);const response=await pending;expect(response.status).toBe(baseline.status);expect(await response.text()).toBe(expected);expect(response.headers.get('X-Endo-Watson')).toBe('reviewed-fallback');expect(response.headers.get('X-Endo-Watson-Reason')).toBe('model-timeout');expect(fetch).toHaveBeenCalledTimes(2);expect((fetch.mock.calls[1][1].signal as AbortSignal).aborted).toBe(true);expect(JSON.stringify([...response.headers])).not.toMatch(/synthetic|cloud\.ibm|Error:|503/);
  });
 });
