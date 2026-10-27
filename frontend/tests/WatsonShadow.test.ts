@@ -282,3 +282,54 @@ describe('extended bounded shadow deadline',()=>{
   await vi.advanceTimersByTimeAsync(7501);const response=await pending;expect(response.status).toBe(baseline.status);expect(await response.text()).toBe(expected);expect(response.headers.get('X-Endo-Watson')).toBe('shadow-fallback');expect(response.headers.get('X-Endo-Watson-Reason')).toBe('model-timeout');expect(transport).toHaveBeenCalledTimes(2);expect(JSON.stringify([...response.headers])).not.toMatch(/synthetic|cloud\.ibm|Error:|503/);
  });
 });
+
+
+describe('documented IBM chat response metadata',()=>{
+ const Warning={id:'synthetic_disclaimer_warning',message:'PrivateSyntheticWarningMessage',more_info:'https://example.invalid/PrivateSyntheticWarningLink'};
+ const Metadata={created_at:'2026-10-27T12:34:56.123Z',model_version:'1.0.0',system:{warnings:[Warning]}};
+ async function result(metadata:Record<string,unknown>,change?:(content:ReturnType<typeof chat>)=>unknown){
+  const transport=fakeTransport(content=>change?change(Object.assign(content,metadata)):{...content,...metadata});const reason=vi.fn();const status=await createShadowAdapter(transport)(example(),Packages,new AbortController().signal,undefined,Environment,reason);return {status,reason,transport};
+ }
+ it('accepts documented optional metadata with one valid assistant choice and consistent token usage',async()=>{
+  const checked=await result({...Metadata,model_id:Environment.WATSONX_AI_MODEL_ID,created:1793104496,usage:{prompt_tokens:20,completion_tokens:30,total_tokens:50}});
+  expect(checked.status).toBe('shadow-success');expect(checked.reason).not.toHaveBeenCalled();expect(checked.transport).toHaveBeenCalledTimes(2);
+ });
+ it.each([{},{system:{}},{system:{warnings:[]}},{system:{warnings:[{id:'warning',message:'Synthetic metadata only.'}]}},{system:{warnings:[{message:'Synthetic metadata with optional id omitted.'}]}},{system:{warnings:Array.from({length:8},()=>Warning)}}])('accepts only bounded optional warning metadata and existing minimal responses',async metadata=>{
+  expect((await result(metadata)).status).toBe('shadow-success');
+ });
+ it.each(['2024-02-29T00:00:00Z','2026-10-27T12:34:56.123456789Z','2026-10-27T12:34:56+01:30'])('accepts a valid bounded ISO timestamp: %s',async stamp=>{expect((await result({created_at:stamp})).status).toBe('shadow-success');});
+ const malformed:{label:string;metadata:Record<string,unknown>}[]=[
+  {label:'unknown root',metadata:{unexpected:'PrivateMetadata'}},
+  ...[null,42,'',' ','invalid','2026-10-27','2026-10-27T12:34:56','2026-02-30T12:34:56Z','2025-02-29T00:00:00Z','2026-13-01T00:00:00Z','2026-10-27T24:00:00Z','2026-10-27T12:60:00Z','2026-10-27T12:34:56+24:00','2026-10-27T12:34:56.123456789123456789Z','x'.repeat(41)].map((stamp,index)=>({label:'timestamp '+index,metadata:{created_at:stamp}})),
+  ...[null,42,'',' ','not a version','1.0.0\n','https://example.invalid/version','v'.repeat(129)].map((version,index)=>({label:'version '+index,metadata:{model_version:version}})),
+  ...[null,[],true,'warnings'].map((system,index)=>({label:'system type '+index,metadata:{system}})),
+  {label:'unknown system property',metadata:{system:{warnings:[],private:'marker'}}},
+  ...[null,{},'warning',Array.from({length:9},()=>Warning),[null],[[]],[{}],[{id:'missing message'}]].map((warnings,index)=>({label:'warning structure '+index,metadata:{system:{warnings}}})),
+  ...[{...Warning,private:'marker'},{...Warning,message:2048},{...Warning,message:''},{...Warning,message:'x'.repeat(2049)},{...Warning,id:'x'.repeat(129)},{...Warning,id:'bad id'},{...Warning,id:null},{...Warning,id:42},{...Warning,additional_properties:{private:'marker'}},{...Warning,more_info:null},{...Warning,more_info:'https:example.invalid'},{...Warning,more_info:'https:///example.invalid'},{...Warning,more_info:'javascript:alert(1)'},{...Warning,more_info:'https://user:secret@example.invalid/'},{...Warning,more_info:'https://example.invalid/'+ 'x'.repeat(2049)}].map((warning,index)=>({label:'warning field '+index,metadata:{system:{warnings:[warning]}}})),
+ ];
+ it.each(malformed)('rejects $label as model-response without accepting arbitrary fields',async({metadata})=>{
+  const checked=await result(metadata);expect(checked.status).toBe('shadow-fallback');expect(checked.reason).toHaveBeenCalledExactlyOnceWith('model-response');
+ });
+ it('accepts bounded version labels and warning strings exactly at their limits',async()=>{
+  const prefix='https://example.invalid/';const checked=await result({model_version:'v'+'1'.repeat(127),system:{warnings:[{id:'w'.repeat(128),message:'m'.repeat(2048),more_info:prefix+'a'.repeat(2048-prefix.length)}]}});expect(checked.status).toBe('shadow-success');
+ });
+ it('still enforces the response-wide 32 KiB limit when individual metadata strings fit',async()=>{
+  const prefix='https://example.invalid/';const warning={id:'w'.repeat(128),message:'m'.repeat(2048),more_info:prefix+'a'.repeat(2048-prefix.length)};
+  const checked=await result({system:{warnings:Array.from({length:8},()=>warning)}});expect(checked.status).toBe('shadow-fallback');expect(checked.reason).toHaveBeenCalledExactlyOnceWith('model-response');
+ });
+ it('rejects duplicate metadata keys before metadata validation',async()=>{
+  const base=fakeTransport();const transport=vi.fn((url:string,init:RequestInit)=>url.includes('/identity/token')?base(url,init):Promise.resolve(new Response(JSON.stringify({...chat(output(projectPresentation(example(),Packages)!)),...Metadata}).replace('"model_version":"1.0.0"','"model_version":"1.0.0","model_version":"1.0.0"'),{headers:{'Content-Type':'application/json'}})));
+  const reason=vi.fn();expect(await createShadowAdapter(transport)(example(),Packages,new AbortController().signal,undefined,Environment,reason)).toBe('shadow-fallback');expect(reason).toHaveBeenCalledExactlyOnceWith('model-response');
+ });
+ it('passes validated metadata through to unchanged strict presentation validation',async()=>{
+  const checked=await result(Metadata,content=>{const presentation=JSON.parse(content.choices[0].message.content);presentation.paragraphs[0].text='Unsupported synthetic prose.';content.choices[0].message.content=JSON.stringify(presentation);return content;});expect(checked.status).toBe('shadow-fallback');expect(checked.reason).toHaveBeenCalledExactlyOnceWith('presentation-validation');
+ });
+ it('discards warning metadata without exposing it in Function bodies, headers, logs or later requests',async()=>{
+  const request=()=>new Request('http://localhost/api/v1/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({moduleHint:'module_01_endo',caseType:'brief',pregnancyPossible:false,pidDiagnosedOrPresumed:false,additionalNotes:DemoCases.find(example=>example.id==='brief')!.narrative})});
+  vi.stubEnv('WATSONX_ENABLED','false');const baseline=await evaluate(request()),expected=await baseline.text();for(const [key,value] of Object.entries(Environment))vi.stubEnv(key,value);vi.stubEnv('WATSONX_AI_APIKEY','syntheticMetadataOnlyKey');
+  const transport=fakeTransport(content=>({...content,...Metadata}));vi.stubGlobal('fetch',transport);const log=vi.spyOn(console,'log'),warn=vi.spyOn(console,'warn'),error=vi.spyOn(console,'error');
+  const response=await evaluate(request()),body=await response.text();expect(body).toBe(expected);expect(response.headers.get('X-Endo-Watson')).toBe('shadow-success');expect(response.headers.has('X-Endo-Watson-Reason')).toBe(false);
+  const exposed=body+JSON.stringify([...response.headers]);for(const marker of [Warning.id,Warning.message,Warning.more_info,Metadata.created_at,Metadata.model_version,'created_at','model_version','system.warnings','syntheticMetadataOnlyKey','syntheticBearerToken'])expect(exposed).not.toContain(marker);
+  const clean=fakeTransport();vi.stubGlobal('fetch',clean);const next=await evaluate(request());expect(await next.text()).toBe(expected);expect(next.headers.get('X-Endo-Watson')).toBe('shadow-success');expect(transport.mock.calls.filter(([url])=>url===Warning.more_info)).toHaveLength(0);expect(log).not.toHaveBeenCalled();expect(warn).not.toHaveBeenCalled();expect(error).not.toHaveBeenCalled();
+ });
+});

@@ -73,6 +73,39 @@ async function responseJson(response:Response,signal:AbortSignal,phase:'iam'|'mo
 function record(content:unknown,reason:ShadowReason):Record<string,unknown> {if(!content||typeof content!=='object'||Array.isArray(content))throw new ShadowFault(reason);return content as Record<string,unknown>;}
 function checkKeys(content:Record<string,unknown>,allowed:string[]){const reason:ShadowReason='model-response';if(Object.keys(content).some(name=>!allowed.includes(name)))throw new ShadowFault(reason);}
 
+/** Provider metadata is bounded compatibility data, never presentation content or a new instruction. */
+function validateMetadata(payload:Record<string,unknown>):void {
+ const reason:ShadowReason='model-response';
+ function bounded(text:unknown,limit:number):text is string {
+  return typeof text==='string'&&text.trim().length>0&&text.length<=limit&&!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(text);
+ }
+ if(Object.hasOwn(payload,'created_at')) {
+  const stamp=payload.created_at;
+  if(!bounded(stamp,40)||/\s/.test(stamp)||!/^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,9})?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/.test(stamp)||!Number.isFinite(Date.parse(stamp)))throw new ShadowFault(reason);
+  const date=stamp.slice(0,10);
+  if(new Date(date+'T00:00:00Z').toISOString().slice(0,10)!==date)throw new ShadowFault(reason);
+ }
+ if(Object.hasOwn(payload,'model_version')&&(!bounded(payload.model_version,128)||/\s/.test(payload.model_version)||!/^[A-Za-z0-9][A-Za-z0-9._+-]*$/.test(payload.model_version)))throw new ShadowFault(reason);
+ if(Object.hasOwn(payload,'system')) {
+  const system=record(payload.system,reason);checkKeys(system,['warnings']);
+  if(Object.hasOwn(system,'warnings')) {
+   if(!Array.isArray(system.warnings)||system.warnings.length>8)throw new ShadowFault(reason);
+   for(const supplied of system.warnings) {
+    const warning=record(supplied,reason);checkKeys(warning,['id','message','more_info']);
+    if(!bounded(warning.message,2048))throw new ShadowFault(reason);
+    if(Object.hasOwn(warning,'id')&&(!bounded(warning.id,128)||/\s/.test(warning.id)||!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(warning.id)))throw new ShadowFault(reason);
+    if(Object.hasOwn(warning,'more_info')) {
+     if(!bounded(warning.more_info,2048)||!/^https?:\/\/[^/]/i.test(warning.more_info)||/\s|\\/.test(warning.more_info))throw new ShadowFault(reason);
+     let link:URL;
+     try {link=new URL(warning.more_info);} catch(failure){if(failure instanceof TypeError)throw new ShadowFault(reason);throw failure;}
+     if(!['http:','https:'].includes(link.protocol)||!link.hostname||link.username||link.password)throw new ShadowFault(reason);
+    }
+   }
+  }
+ }
+ // Nothing is returned or retained: warning text/links cannot affect the generated presentation.
+}
+
 /** One isolated adapter owns only token state, never case data or generated prose. */
 export function createShadowAdapter(transport:Transport=(input,init)=>fetch(input,init),clock:()=>number=Date.now) {
  let token:{identity:string;secret:string;expires:number}|undefined;
@@ -123,7 +156,8 @@ export function createShadowAdapter(transport:Transport=(input,init)=>fetch(inpu
    const response=await abortable(transport(config.endpoint(),{method:'POST',redirect:'error',cache:'no-store',credentials:'omit',headers:{Authorization:'Bearer '+bearer,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(config.request(presentation)),signal:operationSignal}),operationSignal);
    if(response.status===401||response.status===403)token=undefined;
    const payload=record(await responseJson(response,operationSignal,'model'),reason);
-   checkKeys(payload,['id','model_id','model','created','object','choices','usage']);
+   checkKeys(payload,['id','model_id','model','created','created_at','model_version','system','object','choices','usage']);
+   validateMetadata(payload);
    if(payload.id!==undefined&&(typeof payload.id!=='string'||payload.id.length>256)||payload.created!==undefined&&(!Number.isSafeInteger(payload.created)||(payload.created as number)<0)||payload.object!==undefined&&payload.object!=='chat.completion')throw new ShadowFault(reason);
    if(payload.model_id!==undefined&&payload.model_id!==config.model()||payload.model!==undefined&&payload.model!==config.model()||!Array.isArray(payload.choices)||payload.choices.length!==1)throw new ShadowFault(reason);
    const choice=record(payload.choices[0],reason);checkKeys(choice,['index','message','finish_reason']);
