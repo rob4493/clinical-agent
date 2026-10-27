@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createShadowAdapter, shadowHeaders, type ShadowReason } from '../../netlify/evaluation/watsonShadow';
-import { projectPresentation, validatePresentation, type Presentation } from '../../netlify/evaluation/presentationProjector';
+import { projectPresentation, canonicalPresentation, validatePresentation, type Presentation, type CanonicalPresentation } from '../../netlify/evaluation/presentationProjector';
 import { analyze, type Analysis } from '../../netlify/evaluation/analysis';
 import { loadPackages } from '../../netlify/evaluation/packages';
 import { validateCase } from '../../netlify/evaluation/input';
@@ -16,12 +16,12 @@ function example():Analysis {
  const entry=Wording.entries.find(entry=>entry.claimIds.includes('C05'))!;
  return {status:200,envelope:{warnings:[],response:{responseType:'AgentResponse',moduleId:entry.moduleId,supportedInterpretations:[{text:entry.original,citations:entry.sourceIds.map(sourceTag=>({sourceTag}))}]},sources:entry.sourceIds.map((sourceId,index)=>({number:index+1,source:{sourceId,verifiedUrl:'https://example.invalid'}})),renderedText:'Deterministic response stays unchanged.'}};
 }
-function output(presentation:Presentation){return {presentationVersion:'1',paragraphs:[{factIds:presentation.findings.map(fact=>fact.factId),claimIds:[...new Set(presentation.findings.flatMap(fact=>fact.claimIds))],text:presentation.findings.map(fact=>fact.wording).join(' ')}]};}
+function output(presentation:Presentation){return {presentationVersion:'1',paragraphs:[{factIds:presentation.findings.map(fact=>fact.factId),claimIds:[...new Set(presentation.findings.flatMap(fact=>fact.claimIds))].sort(),text:presentation.findings.map(fact=>fact.wording).join(' ')}]};}
 function json(payload:unknown,status=200){return new Response(JSON.stringify(payload),{status,headers:{'Content-Type':'application/json'}});}
 function chat(payload:unknown){return {choices:[{index:0,finish_reason:'stop',message:{role:'assistant',content:JSON.stringify(payload)}}]};}
 function fakeTransport(change?:(content:ReturnType<typeof chat>)=>unknown){return vi.fn(async(input:string,init:RequestInit)=>{
  if(input==='https://iam.cloud.ibm.com/identity/token')return json({access_token:'syntheticBearerToken',token_type:'Bearer',expires_in:3600});
- const request=JSON.parse(init.body as string);const supplied=JSON.parse(request.messages[1].content) as Presentation;const content=chat(output(supplied));return json(change?change(content):content);
+ const request=JSON.parse(init.body as string);const supplied=JSON.parse(request.messages[1].content) as {requiredOutput:CanonicalPresentation};const content=chat(supplied.requiredOutput);return json(change?change(content):content);
 });}
 afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals();vi.unstubAllEnvs();vi.restoreAllMocks();});
 
@@ -102,7 +102,8 @@ describe('bounded native transport shadow adapter',()=>{
   const transport=fakeTransport();expect(await createShadowAdapter(transport)(result,Packages,new AbortController().signal,3000,Environment)).toBe('shadow-success');
   const sent=JSON.parse(transport.mock.calls[1][1].body as string);const clinical=JSON.parse(sent.messages[1].content);
   expect(JSON.stringify(clinical)).not.toContain('private');expect(JSON.stringify(clinical)).not.toMatch(/https?:|sourceTag|sourceId|numbers|warning|prescrib/i);
-  expect(Object.keys(clinical).sort()).toEqual(['findings','moduleId','presentationVersion']);
+  expect(Object.keys(clinical)).toEqual(['requiredOutput']);
+  expect(clinical.requiredOutput).toEqual(output(projectPresentation(result,Packages)!));
   expect(transport.mock.calls[1][1].body).not.toContain(Environment.WATSONX_AI_APIKEY);
  });
  it.each([{expires_in:0},{expires_in:60},{expires_in:61.5},{expires_in:'3600'},{expiration:0},{token_type:'other'},{access_token:'unsafe token'}])('rejects malformed IAM values without generation',async invalid=>{
@@ -126,16 +127,16 @@ describe('bounded native transport shadow adapter',()=>{
   const transport=fakeTransport(),shadow=createShadowAdapter(transport);await shadow(example(),Packages,new AbortController().signal,3000,Environment);await shadow(example(),Packages,new AbortController().signal,3000,{...Environment,WATSONX_AI_APIKEY:'differentSyntheticKey'});expect(transport.mock.calls.filter(([url])=>url.includes('/identity/token'))).toHaveLength(2);
  });
  it('keeps one generation cancellation isolated from a concurrent generation',async()=>{
-  const base=fakeTransport();const generations:{signal:AbortSignal;release:(response:Response)=>void;supplied:Presentation}[]=[];
-  const transport=vi.fn((url:string,init:RequestInit)=>url.includes('/identity/token')?base(url,init):new Promise<Response>(release=>{const body=JSON.parse(init.body as string);generations.push({signal:init.signal as AbortSignal,release,supplied:JSON.parse(body.messages[1].content)});}));
+  const base=fakeTransport();const generations:{signal:AbortSignal;release:(response:Response)=>void;supplied:CanonicalPresentation}[]=[];
+  const transport=vi.fn((url:string,init:RequestInit)=>url.includes('/identity/token')?base(url,init):new Promise<Response>(release=>{const body=JSON.parse(init.body as string);generations.push({signal:init.signal as AbortSignal,release,supplied:JSON.parse(body.messages[1].content).requiredOutput});}));
   const shadow=createShadowAdapter(transport),first=new AbortController(),second=new AbortController();const one=shadow(example(),Packages,first.signal,3000,Environment),two=shadow(example(),Packages,second.signal,3000,Environment);
-  await vi.waitFor(()=>expect(generations).toHaveLength(2));first.abort();expect(await one).toBe('shadow-fallback');expect(generations[1].signal.aborted).toBe(false);generations[1].release(json(chat(output(generations[1].supplied))));expect(await two).toBe('shadow-success');
+  await vi.waitFor(()=>expect(generations).toHaveLength(2));first.abort();expect(await one).toBe('shadow-fallback');expect(generations[1].signal.aborted).toBe(false);generations[1].release(json(chat(generations[1].supplied)));expect(await two).toBe('shadow-success');
  });
  it('does not retain presentation data between sequential requests',async()=>{
   const transport=fakeTransport(),shadow=createShadowAdapter(transport);
   for(const claim of ['N20','N22']){const mapping=Wording.entries.find(entry=>entry.claimIds.includes(claim))!;const result=example();result.envelope.response.supportedInterpretations=[{text:mapping.original,citations:mapping.sourceIds.map(sourceTag=>({sourceTag}))}];result.envelope.sources=mapping.sourceIds.map((sourceId,index)=>({number:index+1,source:{sourceId}}));expect(await shadow(result,Packages,new AbortController().signal,3000,Environment)).toBe('shadow-success');}
-  const bodies=transport.mock.calls.filter(([url])=>!url.includes('/identity/token')).map(([,init])=>JSON.parse(JSON.parse(init.body as string).messages[1].content) as Presentation);
-  expect(bodies[0].findings.flatMap(fact=>fact.claimIds)).toEqual(['N20']);expect(bodies[1].findings.flatMap(fact=>fact.claimIds)).toEqual(['N22']);
+  const bodies=transport.mock.calls.filter(([url])=>!url.includes('/identity/token')).map(([,init])=>JSON.parse(JSON.parse(init.body as string).messages[1].content).requiredOutput as CanonicalPresentation);
+  expect(bodies[0].paragraphs.flatMap(paragraph=>paragraph.claimIds)).toEqual(['N20']);expect(bodies[1].paragraphs.flatMap(paragraph=>paragraph.claimIds)).toEqual(['N22']);
  });
 });
 
@@ -183,7 +184,7 @@ describe('bounded privacy-safe fallback diagnostics',()=>{
    if(reason===(iam?'iam-timeout':'model-timeout')){queueMicrotask(()=>timers.find(timer=>timer.duration===1500)!.controller.abort());return new Promise<Response>(()=>{});}
    if(reason===(iam?'iam-rejected':'model-rejected'))return json({message:marker},503);
    if(reason===(iam?'iam-response':'model-response'))return new Response('{'+marker,{headers:{'Content-Type':'application/json'}});
-   if(!iam&&reason==='presentation-validation'){const request=JSON.parse(init.body as string),supplied=JSON.parse(request.messages[1].content) as Presentation;const invalid=output(supplied);invalid.paragraphs[0].text=marker;return json(chat(invalid));}
+   if(!iam&&reason==='presentation-validation'){const request=JSON.parse(init.body as string),invalid=JSON.parse(request.messages[1].content).requiredOutput as CanonicalPresentation;invalid.paragraphs[0].text=marker;return json(chat(invalid));}
    return base(url,init);
   });
   vi.stubGlobal('fetch',transport);const log=vi.spyOn(console,'log'),warn=vi.spyOn(console,'warn'),error=vi.spyOn(console,'error');
@@ -331,5 +332,55 @@ describe('documented IBM chat response metadata',()=>{
   const response=await evaluate(request()),body=await response.text();expect(body).toBe(expected);expect(response.headers.get('X-Endo-Watson')).toBe('shadow-success');expect(response.headers.has('X-Endo-Watson-Reason')).toBe(false);
   const exposed=body+JSON.stringify([...response.headers]);for(const marker of [Warning.id,Warning.message,Warning.more_info,Metadata.created_at,Metadata.model_version,'created_at','model_version','system.warnings','syntheticMetadataOnlyKey','syntheticBearerToken'])expect(exposed).not.toContain(marker);
   const clean=fakeTransport();vi.stubGlobal('fetch',clean);const next=await evaluate(request());expect(await next.text()).toBe(expected);expect(next.headers.get('X-Endo-Watson')).toBe('shadow-success');expect(transport.mock.calls.filter(([url])=>url===Warning.more_info)).toHaveLength(0);expect(log).not.toHaveBeenCalled();expect(warn).not.toHaveBeenCalled();expect(error).not.toHaveBeenCalled();
+ });
+});
+
+
+describe('canonical shadow output conformance',()=>{
+ function multiple():Analysis {
+  const result=example(),claim=Packages[0].claims.find(claim=>claim.claimId==='C01')!;
+  (result.envelope.response.supportedInterpretations as unknown[]).push({text:claim.supportedStatement,citations:[{sourceTag:claim.sourceId}]});return result;
+ }
+ it('assembles exactly one deterministic paragraph without normalizing approved bytes',()=>{
+  const supplied:Presentation={presentationVersion:'1',moduleId:'module_01_endo',findings:[{factId:'F2',claimIds:['N01','C05','N01'],wording:'Synthetic reviewed wording e\u0301.  '},{factId:'F1',claimIds:['C01','C05'],wording:' Second exact public statement.'}]};
+  const before=JSON.stringify(supplied),first=canonicalPresentation(supplied),second=canonicalPresentation(supplied);
+  expect(first).toEqual(second);expect(JSON.stringify(supplied)).toBe(before);expect(Object.keys(first)).toEqual(['presentationVersion','paragraphs']);expect(first.presentationVersion).toBe('1');expect(first.paragraphs).toHaveLength(1);
+  expect(Object.keys(first.paragraphs[0])).toEqual(['factIds','claimIds','text']);expect(first.paragraphs[0].factIds).toEqual(['F2','F1']);expect(new Set(first.paragraphs[0].factIds).size).toBe(supplied.findings.length);expect(first.paragraphs[0].claimIds).toEqual(['C01','C05','N01']);
+  expect(Buffer.from(first.paragraphs[0].text,'utf8')).toEqual(Buffer.from(supplied.findings.map(fact=>fact.wording).join(' '),'utf8'));expect(first.paragraphs[0].text).not.toBe(first.paragraphs[0].text.normalize('NFC'));
+ });
+ it('sends only the exact canonical public output in the user message',async()=>{
+  const result=multiple();result.envelope.response.additionalNotes='PrivateNarrativeMarker';result.envelope.response.uploads='PrivateUploadMarker';result.envelope.response.filename='PrivateFilenameMarker';result.envelope.response.measurements='PrivateMeasurementMarker';result.envelope.response.demographics='PrivateDemographicMarker';result.envelope.renderedText='PrivateCaseSpecificGeneratedMarker';
+  const supplied=projectPresentation(result,Packages)!,expected=canonicalPresentation(supplied),transport=fakeTransport();expect(await createShadowAdapter(transport)(result,Packages,new AbortController().signal,undefined,Environment)).toBe('shadow-success');
+  const body=JSON.parse(transport.mock.calls[1][1].body as string);expect(body.messages[1]).toEqual({role:'user',content:JSON.stringify({requiredOutput:expected})});const user=body.messages[1].content;
+  for(const forbidden of ['moduleId',supplied.moduleId,'sourceId','sourceTag','conditions','citations','https://','PrivateNarrativeMarker','PrivateUploadMarker','PrivateFilenameMarker','PrivateMeasurementMarker','PrivateDemographicMarker','PrivateCaseSpecificGeneratedMarker'])expect(user).not.toContain(forbidden);
+  expect(body.response_format).toEqual({type:'json_object'});expect(body.messages[0].content).toContain('Return the value of requiredOutput exactly');expect(body.messages[0].content).toContain('Do not omit, add or reorder');
+ });
+ it.each(['wording','punctuation','spacing','factOrder','claimOrder','rootOrder','paragraphOrder','extra','wrapper','markdown','missingFact','duplicateFact','twoParagraphs'])('rejects noncanonical $0 as presentation-validation',async mode=>{
+  const result=multiple(),supplied=projectPresentation(result,Packages)!,reason=vi.fn();
+  const transport=fakeTransport(content=>{
+   const returned=JSON.parse(content.choices[0].message.content);const paragraph=returned.paragraphs[0];
+   if(mode==='wording')paragraph.text+=' Unsupported addition.';if(mode==='punctuation')paragraph.text=paragraph.text.replace('.', '!');if(mode==='spacing')paragraph.text+=' ';
+   if(mode==='factOrder'){paragraph.factIds.reverse();paragraph.text=[...supplied.findings].reverse().map(fact=>fact.wording).join(' ');}
+   if(mode==='claimOrder')paragraph.claimIds.reverse();
+   if(mode==='extra')returned.extra='PrivateProviderMarker';
+   if(mode==='missingFact'){paragraph.factIds.pop();paragraph.claimIds=[...new Set(supplied.findings.slice(0,-1).flatMap(fact=>fact.claimIds))].sort();paragraph.text=supplied.findings.slice(0,-1).map(fact=>fact.wording).join(' ');}
+   if(mode==='duplicateFact')paragraph.factIds.push(paragraph.factIds[0]);
+   if(mode==='twoParagraphs')returned.paragraphs=supplied.findings.map(fact=>({factIds:[fact.factId],claimIds:[...new Set(fact.claimIds)].sort(),text:fact.wording}));
+   let text=JSON.stringify(returned);
+   if(mode==='rootOrder')text=JSON.stringify({paragraphs:returned.paragraphs,presentationVersion:returned.presentationVersion});
+   if(mode==='paragraphOrder')text=JSON.stringify({presentationVersion:'1',paragraphs:[{text:paragraph.text,claimIds:paragraph.claimIds,factIds:paragraph.factIds}]});
+   if(mode==='wrapper')text=JSON.stringify({requiredOutput:returned});if(mode==='markdown')text='```json\n'+text+'\n```';
+   content.choices[0].message.content=text;return content;
+  });
+  const before=JSON.stringify(result);expect(await createShadowAdapter(transport)(result,Packages,new AbortController().signal,undefined,Environment,reason)).toBe('shadow-fallback');expect(reason).toHaveBeenCalledExactlyOnceWith('presentation-validation');expect(JSON.stringify(result)).toBe(before);
+ });
+ it('keeps the existing validator unchanged while enforcing the stricter canonical order',()=>{
+  const supplied=projectPresentation(multiple(),Packages)!,canonical=canonicalPresentation(supplied);const reordered=structuredClone(canonical);reordered.paragraphs[0].factIds.reverse();reordered.paragraphs[0].text=[...supplied.findings].reverse().map(fact=>fact.wording).join(' ');
+  expect(()=>validatePresentation(reordered,supplied)).not.toThrow();expect(JSON.stringify(reordered)).not.toBe(JSON.stringify(canonical));
+ });
+ it('discards even an exact successful return from the actual Function response',async()=>{
+  const request=()=>new Request('http://localhost/api/v1/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({moduleHint:'module_01_endo',caseType:'brief',pregnancyPossible:false,pidDiagnosedOrPresumed:false,additionalNotes:DemoCases.find(example=>example.id==='brief')!.narrative})});
+  vi.stubEnv('WATSONX_ENABLED','false');const baseline=await evaluate(request()),original=await baseline.text();for(const [key,value] of Object.entries(Environment))vi.stubEnv(key,value);vi.stubEnv('WATSONX_AI_APIKEY','syntheticCanonicalFunctionKey');const transport=fakeTransport();vi.stubGlobal('fetch',transport);
+  const response=await evaluate(request());expect(response.status).toBe(baseline.status);expect(await response.text()).toBe(original);expect(response.headers.get('X-Endo-Watson')).toBe('shadow-success');expect(response.headers.has('X-Endo-Watson-Reason')).toBe(false);expect(original).not.toContain('requiredOutput');expect(original).not.toContain('factIds');
  });
 });

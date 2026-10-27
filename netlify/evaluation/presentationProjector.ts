@@ -51,6 +51,19 @@ export function projectPresentation(result:Analysis, packages:Package[]):Present
 
 export class PresentationError extends Error { constructor(){super('Invalid presentation.');} }
 
+export interface CanonicalPresentation { presentationVersion:'1'; paragraphs:[{factIds:string[];claimIds:string[];text:string}] }
+
+/** Assemble reviewed bytes only; neither clinical facts nor wording are generated here. */
+export function canonicalPresentation(supplied:Presentation):CanonicalPresentation {
+ const canonical:CanonicalPresentation={presentationVersion:'1',paragraphs:[{
+  factIds:supplied.findings.map(fact=>fact.factId),
+  claimIds:[...new Set(supplied.findings.flatMap(fact=>fact.claimIds))].sort(),
+  text:supplied.findings.map(fact=>fact.wording).join(' '),
+ }]};
+ validatePresentation(canonical,supplied);
+ return canonical;
+}
+
 /** IDs alone cannot establish semantic equivalence: accept only complete supplied public wording. */
 export function validatePresentation(payload:unknown, supplied:Presentation):void {
  function fields(content:unknown, names:string[]):Record<string,unknown> {
