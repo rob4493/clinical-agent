@@ -49,21 +49,23 @@ export function projectPresentation(result:Analysis, packages:Package[]):Present
  return {presentationVersion:'1',moduleId:entry.moduleId,findings:unique.map((mapping,index)=>({factId:'F'+(index+1),claimIds:[...mapping.claimIds],wording:mapping.wording}))};
 }
 
+export class PresentationError extends Error { constructor(){super('Invalid presentation.');} }
+
 /** IDs alone cannot establish semantic equivalence: accept only complete supplied public wording. */
 export function validatePresentation(payload:unknown, supplied:Presentation):void {
  function fields(content:unknown, names:string[]):Record<string,unknown> {
-  if(!content||typeof content!=='object'||Array.isArray(content)||Object.keys(content).sort().join('|')!==[...names].sort().join('|'))throw new Error('Invalid presentation.');
+  if(!content||typeof content!=='object'||Array.isArray(content)||Object.keys(content).sort().join('|')!==[...names].sort().join('|'))throw new PresentationError();
   return content as Record<string,unknown>;
  }
  const output=fields(payload,['presentationVersion','paragraphs']);
- if(output.presentationVersion!=='1'||!Array.isArray(output.paragraphs)||output.paragraphs.length<1||output.paragraphs.length>2)throw new Error('Invalid presentation.');
+ if(output.presentationVersion!=='1'||!Array.isArray(output.paragraphs)||output.paragraphs.length<1||output.paragraphs.length>2)throw new PresentationError();
  const used=new Set<string>();
  for(const paragraph of output.paragraphs) {
   const part=fields(paragraph,['factIds','claimIds','text']);
-  if(!Array.isArray(part.factIds)||!part.factIds.length||part.factIds.length>10||!Array.isArray(part.claimIds)||typeof part.text!=='string')throw new Error('Invalid presentation.');
-  const facts=part.factIds.map(id=>{const fact=supplied.findings.find(fact=>fact.factId===id);if(!fact||used.has(fact.factId))throw new Error('Invalid presentation.');used.add(fact.factId);return fact;});
+  if(!Array.isArray(part.factIds)||!part.factIds.length||part.factIds.length>10||!Array.isArray(part.claimIds)||typeof part.text!=='string')throw new PresentationError();
+  const facts=part.factIds.map(id=>{const fact=supplied.findings.find(fact=>fact.factId===id);if(!fact||used.has(fact.factId))throw new PresentationError();used.add(fact.factId);return fact;});
   const claims=[...new Set(facts.flatMap(fact=>fact.claimIds))].sort();
-  if(part.claimIds.length!==claims.length||new Set(part.claimIds).size!==part.claimIds.length||[...part.claimIds].sort().join('|')!==claims.join('|')||part.text!==facts.map(fact=>fact.wording).join(' '))throw new Error('Invalid presentation.');
+  if(part.claimIds.length!==claims.length||new Set(part.claimIds).size!==part.claimIds.length||[...part.claimIds].sort().join('|')!==claims.join('|')||part.text!==facts.map(fact=>fact.wording).join(' '))throw new PresentationError();
  }
- if(used.size!==supplied.findings.length)throw new Error('Invalid presentation.');
+ if(used.size!==supplied.findings.length)throw new PresentationError();
 }

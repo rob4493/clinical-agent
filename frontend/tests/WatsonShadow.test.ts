@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createShadowAdapter } from '../../netlify/evaluation/watsonShadow';
+import { createShadowAdapter, shadowHeaders, type ShadowReason } from '../../netlify/evaluation/watsonShadow';
 import { projectPresentation, validatePresentation, type Presentation } from '../../netlify/evaluation/presentationProjector';
 import { analyze, type Analysis } from '../../netlify/evaluation/analysis';
 import { loadPackages } from '../../netlify/evaluation/packages';
@@ -162,5 +162,58 @@ describe('actual Function shadow boundary',()=>{
  it('returns no clinical response on client disconnect during a shadow call',async()=>{
   for(const [key,value] of Object.entries(Environment))vi.stubEnv(key,value);const owner=new AbortController();vi.stubGlobal('fetch',vi.fn(async()=>{owner.abort();throw new Error('privateTransportFailure');}));
   const response=await evaluate(new Request('http://localhost/api/v1/analyze',{method:'POST',signal:owner.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({moduleHint:'module_01_endo',caseType:'brief',pregnancyPossible:false,pidDiagnosedOrPresumed:false,additionalNotes:DemoCases.find(example=>example.id==='brief')!.narrative})}));expect(response.status).toBe(499);expect(await response.text()).toBe('');
+ });
+});
+
+
+describe('bounded privacy-safe fallback diagnostics',()=>{
+ const Reasons:ShadowReason[]=['configuration','iam-timeout','iam-rejected','iam-response','model-timeout','model-rejected','model-response','presentation-validation','internal'];
+ function clinicalRequest(){return new Request('http://localhost/api/v1/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({moduleHint:'module_01_endo',caseType:'brief',pregnancyPossible:false,pidDiagnosedOrPresumed:false,additionalNotes:DemoCases.find(example=>example.id==='brief')!.narrative})});}
+ it.each(Reasons)('returns only the bounded category %s while preserving the complete deterministic response',async reason=>{
+  vi.stubEnv('WATSONX_ENABLED','false');const baseline=await evaluate(clinicalRequest());const expected=await baseline.text();
+  for(const [key,value] of Object.entries(Environment))vi.stubEnv(key,value);
+  vi.stubEnv('WATSONX_AI_APIKEY','syntheticDiagnostics'+reason);vi.stubEnv('WATSONX_AI_TIMEOUT_MS','1500');
+  if(reason==='configuration')vi.stubEnv('WATSONX_AI_AUTH_TYPE','invalid');
+  const timers:{duration:number;controller:AbortController}[]=[];
+  if(reason.endsWith('-timeout'))vi.spyOn(AbortSignal,'timeout').mockImplementation(duration=>{const controller=new AbortController();timers.push({duration,controller});return controller.signal;});
+  const base=fakeTransport();const marker='privateProviderPromptClinicalUploadMarker';
+  const transport=vi.fn(async(url:string,init:RequestInit)=>{
+   const iam=url.includes('/identity/token');
+   if(reason==='internal')throw Object.assign(new Error(marker+' iam-rejected model-timeout'),{reason:'model-rejected'});
+   if(reason===(iam?'iam-timeout':'model-timeout')){queueMicrotask(()=>timers.find(timer=>timer.duration===1500)!.controller.abort());return new Promise<Response>(()=>{});}
+   if(reason===(iam?'iam-rejected':'model-rejected'))return json({message:marker},503);
+   if(reason===(iam?'iam-response':'model-response'))return new Response('{'+marker,{headers:{'Content-Type':'application/json'}});
+   if(!iam&&reason==='presentation-validation'){const request=JSON.parse(init.body as string),supplied=JSON.parse(request.messages[1].content) as Presentation;const invalid=output(supplied);invalid.paragraphs[0].text=marker;return json(chat(invalid));}
+   return base(url,init);
+  });
+  vi.stubGlobal('fetch',transport);const log=vi.spyOn(console,'log'),warn=vi.spyOn(console,'warn'),error=vi.spyOn(console,'error');
+  const response=await evaluate(clinicalRequest());const body=await response.text();
+  expect(response.status).toBe(baseline.status);expect(body).toBe(expected);
+  expect(response.headers.get('X-Endo-Watson')).toBe('shadow-fallback');expect(response.headers.get('X-Endo-Watson-Reason')).toBe(reason);
+  const exposed=JSON.stringify([...response.headers])+body;
+  for(const sensitive of [marker,'syntheticDiagnostics'+reason,'syntheticBearerToken',Environment.WATSONX_AI_PROJECT_ID,Environment.WATSONX_AI_MODEL_ID,Environment.WATSONX_AI_URL,'identity/token','503','Error:'])expect(exposed).not.toContain(sensitive);
+  expect(log).not.toHaveBeenCalled();expect(warn).not.toHaveBeenCalled();expect(error).not.toHaveBeenCalled();
+  if(reason==='configuration')expect(transport).not.toHaveBeenCalled();
+ });
+ it.each(['skipped','shadow-success'] as const)('omits the reason header for %s even when a reason is supplied',status=>{expect(shadowHeaders(status,'configuration')).toEqual({'X-Endo-Watson':status});});
+ it('bounds header values even if a caller supplies an invalid internal reason',()=>{expect(shadowHeaders('shadow-fallback','privateMarker' as ShadowReason)).toEqual({'X-Endo-Watson':'shadow-fallback','X-Endo-Watson-Reason':'internal'});});
+ it('omits the reason on actual skipped and successful responses',async()=>{
+  vi.stubEnv('WATSONX_ENABLED','false');expect((await evaluate(clinicalRequest())).headers.has('X-Endo-Watson-Reason')).toBe(false);
+  for(const [key,value] of Object.entries(Environment))vi.stubEnv(key,value);vi.stubEnv('WATSONX_AI_APIKEY','syntheticDiagnosticsSuccess');vi.stubGlobal('fetch',fakeTransport());const response=await evaluate(clinicalRequest());expect(response.headers.get('X-Endo-Watson')).toBe('shadow-success');expect(response.headers.has('X-Endo-Watson-Reason')).toBe(false);
+ });
+ it('does not convert a disconnect into a clinical response for a diagnostic',async()=>{
+  for(const [key,value] of Object.entries(Environment))vi.stubEnv(key,value);vi.stubEnv('WATSONX_AI_APIKEY','syntheticDiagnosticsDisconnect');
+  const owner=new AbortController();vi.stubGlobal('fetch',vi.fn(async()=>{owner.abort();throw new Error('privateDisconnectMarker');}));
+  const response=await evaluate(new Request(clinicalRequest(),{signal:owner.signal}));expect(response.status).toBe(499);expect(await response.text()).toBe('');expect([...response.headers].join()).not.toContain('privateDisconnectMarker');
+ });
+ it.each([new Error('iam-timeout'),new DOMException('model-timeout','TimeoutError'),{reason:'configuration',message:'iam-rejected'}])('classifies an unrecognized error only as internal',async failure=>{
+  const reason=vi.fn();const transport=vi.fn(async()=>{throw failure;});expect(await createShadowAdapter(transport)(example(),Packages,new AbortController().signal,3000,Environment,reason)).toBe('shadow-fallback');expect(reason).toHaveBeenCalledExactlyOnceWith('internal');
+ });
+ it('classifies malformed IAM bytes as iam-response',async()=>{const reason=vi.fn();const transport=vi.fn(async()=>new Response(new Uint8Array([255]),{headers:{'Content-Type':'application/json'}}));await createShadowAdapter(transport)(example(),Packages,new AbortController().signal,3000,Environment,reason);expect(reason).toHaveBeenCalledExactlyOnceWith('iam-response');});
+ it('classifies a shared IAM refresh deadline independently of waiter deadlines',async()=>{
+  const timers:AbortController[]=[];vi.spyOn(AbortSignal,'timeout').mockImplementation(()=>{const controller=new AbortController();timers.push(controller);return controller.signal;});
+  const transport=vi.fn(async()=>new Promise<Response>(()=>{})),shadow=createShadowAdapter(transport),first=vi.fn(),second=vi.fn();
+  const one=shadow(example(),Packages,new AbortController().signal,3000,Environment,first),two=shadow(example(),Packages,new AbortController().signal,3000,Environment,second);
+  timers[1].abort();expect(await one).toBe('shadow-fallback');expect(await two).toBe('shadow-fallback');expect(first).toHaveBeenCalledExactlyOnceWith('iam-timeout');expect(second).toHaveBeenCalledExactlyOnceWith('iam-timeout');expect(transport).toHaveBeenCalledTimes(1);
  });
 });
