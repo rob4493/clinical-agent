@@ -1,5 +1,6 @@
 import Wording from '../../shared/responsePresentation.json';
 import Compact from '../../shared/summaryPresentation.json';
+import Reviewed from '../../shared/reviewedVariants.json';
 import { hashBytes, type Package } from './packages';
 import type { Analysis } from './analysis';
 
@@ -7,12 +8,12 @@ export interface PresentationFact { factId:string; claimIds:string[]; wording:st
 export interface Presentation { presentationVersion:'1'; moduleId:string; findings:PresentationFact[] }
 
 /** Exact public mappings are the only egress vocabulary; case objects never enter this boundary. */
-export function projectPresentation(result:Analysis, packages:Package[]):Presentation|null {
+export function projectPresentation(result:Analysis, packages:Package[], reviewed=false):Presentation|null {
  if(result.status!==200||result.envelope.warnings.length||result.envelope.response.responseType!=='AgentResponse')return null;
  const entry=packages.find(candidate=>candidate.moduleId===result.envelope.response.moduleId);
  const statements=result.envelope.response.supportedInterpretations;
  if(!entry||!Array.isArray(statements)||!statements.length||statements.length>3)return null;
- const mappings=[...Wording.entries.map(mapping=>({moduleId:mapping.moduleId,hash:hashBytes(mapping.original),claimIds:mapping.claimIds,sourceIds:mapping.sourceIds,wording:mapping.summary})),
+ const mappings=[...(reviewed?Reviewed.entries.map(mapping=>({moduleId:mapping.moduleId,hash:hashBytes(mapping.original),claimIds:mapping.claimIds,sourceIds:mapping.sourceIds,wording:mapping.wording})):[]),...Wording.entries.map(mapping=>({moduleId:mapping.moduleId,hash:hashBytes(mapping.original),claimIds:mapping.claimIds,sourceIds:mapping.sourceIds,wording:mapping.summary})),
   ...Compact.entries.map(mapping=>({moduleId:mapping.moduleId,hash:mapping.statementHash,claimIds:mapping.claimIds,sourceIds:mapping.sourceIds,wording:mapping.summary})),
   ...Compact.visualEntries.map(mapping=>({moduleId:'module_01_endo',hash:mapping.statementHash,claimIds:mapping.claimIds,sourceIds:mapping.sourceIds,wording:mapping.text}))];
  const selected:typeof mappings=[];

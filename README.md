@@ -180,3 +180,7 @@ Protected Netlify Deploy Previews use browser-managed same-origin credentials fo
 The Netlify runtime includes a **disabled-by-default, server-only** watsonx.ai shadow adapter. It is not required to run either evaluation module. When explicitly enabled by an authorized operator, it sends only reviewed public presentation facts to IBM, validates the result and discards the generated prose. The visible response remains deterministic. It never sends case notes or uploaded documents.
 
 See [shadow-mode configuration, safeguards and limitations](shared/WatsonShadow.md). No IBM integration is enabled by this repository. Do not put provider settings in frontend/Vite variables. Actual model availability, IAM permissions and IBM data-handling settings require a separate controlled connectivity review.
+
+### Optional reviewed Watson presentation
+
+The Netlify evaluation runtime works without IBM. Watson stays disabled by default. An administrator may test `shadow` (validated output is discarded) or `reviewed` (only exact repository-approved display variants may appear in the existing Summary). Neither mode changes the clinical analysis or approves clinical use. See [the protected-preview and rollback instructions](shared/WatsonReviewed.md). No credentials belong in browser settings.

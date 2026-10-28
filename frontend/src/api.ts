@@ -18,7 +18,7 @@ export interface CaseInput {
 }
 export interface Source { number: number; sourceId: string; title: string; verifiedUrl: string | null; organization?: string; date?: string }
 export interface Statement { text: string; numbers: number[] }
-export interface Review { displaySummary?: Statement; moduleId?: string; heading: string; warnings: Statement[]; considerations: Statement[]; messages: string[]; question: string | null; sources: Source[]; notice: string; context?: string; scopeNotice?: string }
+export interface Review { reviewedSummary?: Statement[]; displaySummary?: Statement; moduleId?: string; heading: string; warnings: Statement[]; considerations: Statement[]; messages: string[]; question: string | null; sources: Source[]; notice: string; context?: string; scopeNotice?: string }
 
 function record(payload: unknown): Record<string, unknown> {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new Error(UnexpectedMessage);
@@ -166,6 +166,26 @@ export function readReview(payload: unknown, synthetic = false, runtimeMode: Run
     case 'SelectModuleRequired': heading = 'Select a clinical module'; messages.push(plainText(outcome.message)); break;
     default: throw new Error(UnexpectedMessage);
   }
+  // Optional display content never makes a deterministic response unusable. The server
+  // owns variant/claim validation; this boundary checks safe public shape and citations.
+  let reviewedSummary: Statement[] | undefined;
+  if (runtimeMode === 'competition' && outcome.responseType === 'AgentResponse' && !warnings.length && !scopeNotice && envelope.reviewedPresentation !== undefined) {
+    try {
+      const presentation = record(envelope.reviewedPresentation);
+      if (Object.keys(presentation).sort().join('|') !== 'paragraphs|presentationVersion' || presentation.presentationVersion !== '1') throw new Error(UnexpectedMessage);
+      const paragraphs = array(presentation.paragraphs, 2);
+      if (!paragraphs.length) throw new Error(UnexpectedMessage);
+      reviewedSummary = paragraphs.map(paragraph => {
+        const part = record(paragraph);
+        if (Object.keys(part).sort().join('|') !== 'numbers|text') throw new Error(UnexpectedMessage);
+        const text = plainText(part.text, 16000);
+        if (/https?:\/\//i.test(text)) throw new Error(UnexpectedMessage);
+        const numbers = array(part.numbers, 32);
+        if (!numbers.length || new Set(numbers).size !== numbers.length || numbers.some(number => typeof number !== 'number' || !Number.isInteger(number) || !sourceNumbers.has(number) || !sources.some(source => source.number === number && citedIds.has(source.sourceId)))) throw new Error(UnexpectedMessage);
+        return { text, numbers: numbers as number[] };
+      });
+    } catch { reviewedSummary = undefined; }
+  }
   // Validate the wire notice first; the authoritative response mode controls this display-only notice.
-  return { ...(typeof outcome.moduleId === 'string' ? { moduleId: plainText(outcome.moduleId, 64) } : {}), heading, warnings, considerations, messages, question, sources: sources.filter(source => citedIds.has(source.sourceId)), notice: synthetic ? SyntheticNotice : notice, ...(context ? { context } : {}), ...(scopeNotice ? { scopeNotice } : {}) };
+  return { ...(reviewedSummary ? { reviewedSummary } : {}), ...(typeof outcome.moduleId === 'string' ? { moduleId: plainText(outcome.moduleId, 64) } : {}), heading, warnings, considerations, messages, question, sources: sources.filter(source => citedIds.has(source.sourceId)), notice: synthetic ? SyntheticNotice : notice, ...(context ? { context } : {}), ...(scopeNotice ? { scopeNotice } : {}) };
 }

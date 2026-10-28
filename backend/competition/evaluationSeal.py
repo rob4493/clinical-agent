@@ -1,3 +1,3 @@
 """Trusted review pin; deliberate changes require evaluation review and tests."""
 
-ReviewHash = "81718cb1e3e710a2cf1175e9d16118d4e14ed9ebced4c1b03549d22f15163389"
+ReviewHash = "c178335bba7d4b3c50921aa434aed84fa34e9f88027686f8469ba1aa2761706c"

@@ -22,7 +22,7 @@ Warnings, conflicts, clarification, insufficient evidence, unavailable modules/p
 | WATSONX_AI_URL | Explicit official regional HTTPS origin; no userinfo, port notation, path, query, fragment or redirect. |
 | WATSONX_AI_MODEL_ID | Explicit format-validated model identifier; availability is not inferred. |
 | WATSONX_AI_API_VERSION | Explicit valid ISO date; never defaults to today's date. |
-| WATSONX_AI_TIMEOUT_MS | Default 1500; integer 100–8000. One total shadow budget includes refresh wait, IAM, generation, reading and validation. |
+| WATSONX_AI_TIMEOUT_MS | Default 1500; integer 100–12000. One total shadow budget includes refresh wait, IAM, generation, reading and validation. |
 
 The .env.example placeholders do not enable Watson. Python's existing WATSONX_API_KEY and related settings are a separate integration boundary; they are not silently aliased. No provider setting may use a VITE_ prefix. Configuration uses private fields to avoid accidental object serialization of secrets. Settings are read only on an eligible analysis request, never during import, app construction, health, readiness or discovery.
 
@@ -32,7 +32,7 @@ The adapter permits only the documented regional model API hosts for Dallas, Fra
 
 Tokens are kept only in the Function process and refreshed at least 60 seconds before the earlier reported expiry. Concurrent callers share one refresh. Cancelling one waiter does not cancel another; when the last waiter leaves, refresh is aborted. Credential rotation cannot inherit an old credential's token. A 401/403 clears the cached token without replaying generation. Cold starts and separate serverless instances have independent caches; no distributed coordination is claimed.
 
-The Function total deadline is ten seconds; frontend default is twenty seconds. Shadow receives at most the configured timeout and the remaining Function budget minus a 500 ms response reserve. Its maximum shadow budget is 8000 ms. Named constants keep these bounds aligned; the default configured timeout remains 1500 ms. IAM refresh also has its own bounded lifetime. Each caller's wait consumes its total budget. Request cancellation is propagated to generation and refresh ownership; cancellation is not retryable. Native transport abort cannot prove IBM stopped remote computation or billing. No provider work runs as an unawaited background task.
+The Function total deadline is fifteen seconds; frontend default is twenty seconds. Shadow receives at most the configured timeout and the remaining Function budget minus a 1000 ms response reserve. Its maximum shadow budget is 12000 ms. Named constants keep these bounds aligned; the default configured timeout remains 1500 ms. IAM refresh also has its own bounded lifetime. Each caller's wait consumes its total budget. Request cancellation is propagated to generation and refresh ownership; cancellation is not retryable. Native transport abort cannot prove IBM stopped remote computation or billing. No provider work runs as an unawaited background task.
 
 ## Strict response validation and deterministic fallback
 
@@ -76,8 +76,12 @@ Metadata is validated and discarded. Warning links are never followed, rendered,
 
 ## Canonical shadow-conformance stage
 
+The separate optional `reviewed` mode is documented in [WatsonReviewed.md](WatsonReviewed.md). The shadow wire format, exact-output validator and discard behavior below are unchanged.
+
 This phase checks provider connectivity and exact-output conformance only. It does not authorize unrestricted generative clinical paraphrasing. canonicalPresentation builds presentationVersion exactly "1" and one paragraph with only factIds, claimIds and text from the already-approved Presentation. The Watson user message has exactly one property: requiredOutput. Module/source IDs, URLs, citation numbers, clinical conditions and original case data are excluded. The builder never generates, shortens, expands, reorders or normalizes wording.
 
 The model is instructed to return the value itself, without a wrapper, code fences or commentary, and preserve all property/array order, punctuation and spacing. IBM JSON mode remains enabled. Valid JSON proceeds through the existing strict presentation validator and then exact equality with the canonical object. Invalid generated JSON (including Markdown), wrappers, reordered IDs/properties, extra/missing/duplicate facts or changed text yield presentation-validation. Malformed outer provider envelopes still yield model-response. No output repair, trimming, approximate matching or semantic similarity is used. Validated provider prose is discarded; only the existing privacy-safe status/reason headers can differ from the deterministic response.
 
-All model/endpoint/API-version/token-limit/timeout/retry settings, the 32 KiB response limit, metadata checks, cancellation, evidence provenance, uploads and clinical presentation remain unchanged. The 78 claim packages are not modified.
+Apart from the bounded deadline limits documented above, model/endpoint/API-version/token-limit/retry settings, the 32 KiB response limit, metadata checks, cancellation, evidence provenance, uploads and clinical presentation remain unchanged. The 78 claim packages are not modified.
+
+The 12000 ms ceiling applies to both shadow and reviewed modes. The effective shared Watson budget is min(configured timeout, 12000, 15000 - elapsed Function time - 1000). No operation starts with less than the existing 100 ms minimum budget. This leaves at least a one-second response reserve when provider work is admitted; input that already consumed that reserve skips provider work. A longer ceiling does not change an already configured timeout or the 1500 ms default. Enabling a 12000 ms preview timeout requires a separately authorized environment change; this code update does not make it. Zero retries, abort propagation and fallback diagnostics are unchanged.
