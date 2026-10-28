@@ -1,0 +1,508 @@
+openapi: "3.0.3"
+info:
+  title: "Endo Clinical Evidence Tool — Synthetic Demonstration"
+  version: "1.0.0"
+  description: |
+    SYNTHETIC DEMONSTRATION ONLY. This tool calls the publicly accessible
+    Endo Clinical Evidence API at https://clinicalagent.netlify.app.
+
+    Authorised use: de-identified synthetic test cases only.
+    This endpoint must not receive patient-identifiable information through
+    Orchestrate or any other caller. There is no caller authentication on the
+    current endpoint; every request is accepted from any source. Do not
+    submit real patient data.
+
+    The Endo API is the clinical authority for all clinical content. Every
+    urgent warning, citation, evidence limitation, and decision-support notice
+    is owned and rendered by the API. The agent must return renderedText
+    verbatim and must never diagnose, stage, prescribe, dose, alter citations,
+    invent facts, or paraphrase clinical content.
+
+    FUTURE AUTHENTICATED ENDPOINT: Real clinical use requires a separate
+    service-to-service endpoint (/api/v1/orchestrate/analyze) with bearer-token
+    caller authentication, per-tenant API keys, TLS enforcement, and rate
+    limiting. That endpoint does not exist yet. Do not use the current public
+    endpoint for patient care. See orchestrate/README.md.
+
+servers:
+  - url: "https://clinicalagent.netlify.app"
+    description: >
+      Publicly accessible Endo Clinical Evidence API.
+      SYNTHETIC DEMONSTRATION ONLY — no caller authentication.
+      Do not submit patient-identifiable information.
+
+# No global security requirement. The current public endpoint has no
+# caller authentication. Declaring a credential that the server does not
+# validate would create misleading security and block Orchestrate tool testing.
+# See orchestrate/README.md for the future authenticated endpoint plan.
+security: []
+
+components:
+  schemas:
+
+    # ── Request ────────────────────────────────────────────────────────────────
+
+    PregnancyContext:
+      type: object
+      description: >
+        Optional Module 2 early-pregnancy structured facts.
+        Every omitted field remains Unknown; never infer a value from absence.
+        Only valid when moduleHint is module_02_early_pregnancy.
+      additionalProperties: false
+      properties:
+        gestationalWeeks:
+          type: number
+          minimum: 0
+          maximum: 45
+          nullable: true
+          description: "Reported gestational age in weeks. Unknown when omitted."
+        careSetting:
+          type: string
+          enum: ["emergencyDepartment", "earlyPregnancyService", "other"]
+          nullable: true
+        pregnancyTestType:
+          type: string
+          enum: ["urine", "serum"]
+          nullable: true
+        pregnancyTestResult:
+          type: string
+          enum: ["positive", "negative", "indeterminate"]
+          nullable: true
+        serumHcg:
+          type: number
+          minimum: 0
+          maximum: 10000000
+          nullable: true
+          description: "Serum hCG value in mIU/mL if reported. Unknown when omitted."
+        ultrasoundRoute:
+          type: string
+          enum: ["transvaginal", "transabdominal"]
+          nullable: true
+        ultrasoundFinding:
+          type: string
+          enum: ["noPregnancyVisualized", "indeterminate", "intrauterineReported", "other"]
+          nullable: true
+        previousIntrauterinePregnancyConfirmed:
+          type: boolean
+          nullable: true
+        assistedReproduction:
+          type: boolean
+          nullable: true
+        abdominalTrauma:
+          type: boolean
+          nullable: true
+        clinicallyStable:
+          type: boolean
+          nullable: true
+        heavyBleeding:
+          type: boolean
+          nullable: true
+        hemodynamicInstability:
+          type: boolean
+          nullable: true
+        significantConcernAboutPainOrBleeding:
+          type: boolean
+          nullable: true
+        worseningPelvicPain:
+          type: boolean
+          nullable: true
+
+    ClinicalCaseInput:
+      type: object
+      required:
+        - moduleHint
+      additionalProperties: false
+      description: >
+        De-identified case submitted by a clinician.
+        The clinician must explicitly select a module; do not infer it from symptoms.
+        Three-state booleans accept only JSON true, false, or null (null = Unknown).
+        Strings ("true", "yes") and integers are rejected with HTTP 422.
+        No patient names, MRNs, exact dates of birth, addresses, or contact
+        details may be submitted; the server rejects them with HTTP 422.
+      properties:
+        moduleHint:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: >
+            Clinician-selected module identifier. Required.
+            Use "module_01_endo" for Endometriosis & Chronic Pelvic Pain.
+            Use "module_02_early_pregnancy" for Early Pregnancy Pain and Bleeding.
+            Use "NotSure" to request module selection guidance.
+            Do not infer the module from symptoms.
+          example: "module_01_endo"
+        caseType:
+          type: string
+          enum: ["brief", "detailed"]
+          default: "detailed"
+          description: >
+            "brief" returns a condensed response (75-150 words).
+            "detailed" returns a fuller response (150-300 words).
+        ageRange:
+          type: string
+          maxLength: 200
+          nullable: true
+          description: >
+            Age range of the patient (e.g. "25-34"). A range is preferred
+            over an exact age for data minimisation. Unknown when omitted.
+        pregnancyPossible:
+          type: boolean
+          nullable: true
+          description: >
+            Three-state pregnancy status.
+            true = pregnancy is possible or known.
+            false = clinician explicitly states pregnancy is not possible.
+            null = not provided / Unknown. Never inferred.
+            Only JSON true, false, and null are accepted.
+        pidDiagnosedOrPresumed:
+          type: boolean
+          nullable: true
+          description: >
+            Three-state PID diagnostic status.
+            true = PID has been diagnosed or presumptively diagnosed by a clinician.
+            false = clinician explicitly states PID has not been diagnosed.
+            null = not provided / Unknown. Never inferred.
+            Only JSON true, false, and null are accepted.
+        earlyPregnancy:
+          $ref: "#/components/schemas/PregnancyContext"
+          nullable: true
+          description: >
+            Optional Module 2 early-pregnancy facts. Must be null or omitted
+            when moduleHint is not module_02_early_pregnancy.
+        painLocation:
+          type: string
+          maxLength: 500
+          nullable: true
+        painQuality:
+          type: string
+          maxLength: 500
+          nullable: true
+        painSeverity:
+          type: string
+          maxLength: 200
+          nullable: true
+        symptomTiming:
+          type: string
+          maxLength: 500
+          nullable: true
+        bowelUrinarySymptoms:
+          type: string
+          maxLength: 500
+          nullable: true
+        sexualPain:
+          type: string
+          maxLength: 500
+          nullable: true
+        menstrualHistory:
+          type: string
+          maxLength: 500
+          nullable: true
+        fertilityStatus:
+          type: string
+          maxLength: 500
+          nullable: true
+        priorTreatments:
+          type: string
+          maxLength: 500
+          nullable: true
+        familyHistory:
+          type: string
+          maxLength: 500
+          nullable: true
+        additionalNotes:
+          type: string
+          maxLength: 2000
+          nullable: true
+          description: >
+            Additional de-identified clinical context (free text).
+            Maximum 2000 characters. The server applies a PII safeguard filter.
+            Do not include names, MRNs, addresses, or contact details.
+
+    # ── Response ───────────────────────────────────────────────────────────────
+
+    UrgentWarning:
+      type: object
+      description: >
+        A triggered urgent warning. Must be presented before all other content.
+        Preserve the exact text and citations from the API.
+      properties:
+        ruleId:
+          type: string
+        text:
+          type: string
+          description: "Exact server-generated warning text. Never rewrite."
+        sourceTags:
+          type: array
+          items:
+            type: string
+
+    CitedSource:
+      type: object
+      description: >
+        A numbered source citation. Present only sources that the API returns.
+        Never invent, complete, or alter source URLs.
+      properties:
+        number:
+          type: integer
+          minimum: 1
+        source:
+          type: object
+          properties:
+            sourceId:
+              type: string
+            organization:
+              type: string
+            title:
+              type: string
+            publicationDate:
+              type: string
+              nullable: true
+            reviewDate:
+              type: string
+              nullable: true
+            jurisdiction:
+              type: string
+              nullable: true
+            verifiedUrl:
+              type: string
+              nullable: true
+              description: >
+                Verified URL from the knowledge base metadata, or null when
+                the URL is unresolved. Never complete or invent a URL.
+
+    AnalysisResult:
+      type: object
+      description: >
+        Clinical analysis envelope. The agent must:
+        1. Present urgent warnings first if the warnings array is non-empty.
+        2. Return the renderedText exactly as provided by the API.
+        3. Present cited sources at the bottom using only the sources array.
+        4. Never rewrite, summarise, or omit the decisionSupportNotice.
+        5. Never add clinical facts not present in the API response.
+        6. Treat all non-200/404/422/503 status codes as tool failures.
+      required:
+        - warnings
+        - response
+        - sources
+        - renderedText
+      properties:
+        warnings:
+          type: array
+          items:
+            $ref: "#/components/schemas/UrgentWarning"
+          description: >
+            Triggered urgent warnings. Present FIRST. Empty when no rule fires.
+            Do not add a routine no-urgent-warning statement when this is empty.
+        response:
+          type: object
+          description: >
+            Discriminated union on responseType. Inspect responseType before
+            treating the response as a clinical analysis. Not all 200 responses
+            are clinical success; DataConflict, ClarificationRequired,
+            EvidenceInsufficient, SelectModuleRequired, OutsideScope, and
+            ProviderUnavailable are all valid non-error 200 outcomes.
+          required:
+            - responseType
+          properties:
+            responseType:
+              type: string
+              enum:
+                - AgentResponse
+                - DataConflict
+                - ClarificationRequired
+                - EvidenceInsufficient
+                - SelectModuleRequired
+                - ModuleUnavailable
+                - ProviderUnavailable
+                - OutsideScope
+              description: >
+                AgentResponse = full clinical analysis.
+                DataConflict = structured/free-text conflict; no clinical output.
+                ClarificationRequired = structured field missing; no clinical output.
+                EvidenceInsufficient = knowledge base cannot support the request.
+                SelectModuleRequired = no module selected.
+                ModuleUnavailable = selected module is not active or approved.
+                ProviderUnavailable = generation dependency failure.
+                OutsideScope = request outside the module evidence boundary.
+            decisionSupportNotice:
+              type: string
+              description: >
+                Server-controlled clinician-facing notice. Present verbatim.
+                Never omit or rewrite this field.
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/CitedSource"
+          description: "Present only these sources. Never invent sources."
+        renderedText:
+          type: string
+          description: >
+            Complete server-rendered clinician-facing text. Present this
+            text exactly. It includes warnings first, numbered citations,
+            sources at the bottom, and the decision-support notice last.
+
+    ModuleSummary:
+      type: object
+      properties:
+        moduleId:
+          type: string
+        displayName:
+          type: string
+        version:
+          type: string
+        description:
+          type: string
+        supportedCaseTypes:
+          type: array
+          items:
+            type: string
+
+    ModuleList:
+      type: object
+      properties:
+        modules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ModuleSummary"
+
+    ErrorDetail:
+      type: object
+      required:
+        - detail
+      additionalProperties: false
+      properties:
+        detail:
+          type: string
+
+paths:
+
+  /api/v1/analyze:
+    post:
+      operationId: analyzeCase
+      summary: "Submit a de-identified clinical case for evidence-grounded review"
+      description: |
+        Submits a de-identified clinical case to the Endo clinical analysis engine.
+
+        The engine is the clinical authority. It applies deterministic safety rules,
+        retrieves approved evidence, validates citations, and returns a structured
+        response. The agent must relay the API response verbatim and must not add,
+        modify, or omit clinical content.
+
+        Required pre-submission checks:
+        - A module must be explicitly selected by the clinician; never infer it.
+        - The additionalNotes field must contain only de-identified text.
+        - No patient names, MRNs, exact dates of birth, addresses, or contact
+          details may be present; the server rejects them with 422.
+        - Do not send uploaded document text or file names.
+        - pregnancyPossible and pidDiagnosedOrPresumed accept only true/false/null.
+
+        Response handling — renderedText is the sole clinical output:
+        - renderedText is the only field displayed to the user. Return it exactly
+          and verbatim; do not summarise, paraphrase, reorder, or expand it.
+        - Do not independently display, append, or reconstruct warnings[],
+          response, or sources[]. Those fields must not appear in the user-facing
+          output separately.
+        - responseType and warnings[] may be inspected only for control-flow
+          and validation (e.g. confirming the call succeeded, deciding which
+          neutral error message to show when renderedText is absent).
+        - sources[] may be inspected only to verify that sources exist. Do not
+          append it separately — renderedText already contains the approved
+          citation presentation, including source lines and URLs.
+        - Preserve the API-provided urgent-warning order inside renderedText.
+          Urgent warnings are already first in renderedText; do not reorder them.
+        - If renderedText is absent or empty, output only the matching neutral
+          operational failure message; do not reconstruct output from other fields.
+        - 404 = module unavailable; output the neutral 404 message and stop.
+        - 422 = rejected input; output the neutral 422 message and stop.
+        - 503 = dependency failure; output the neutral 503 message and stop.
+        - Any other status or unrecognised shape = fail closed; output the
+          neutral failure message; do not generate a clinical response.
+      security: []
+      tags:
+        - "Clinical Analysis"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClinicalCaseInput"
+            examples:
+              module1Synthetic:
+                summary: "Synthetic Module 1 de-identified case (not for clinical use)"
+                value:
+                  moduleHint: "module_01_endo"
+                  caseType: "brief"
+                  ageRange: "25-34"
+                  pregnancyPossible: null
+                  pidDiagnosedOrPresumed: null
+                  additionalNotes: "Recurrent pelvic discomfort. Timing and examination findings not provided."
+              module2Synthetic:
+                summary: "Synthetic Module 2 de-identified case (not for clinical use)"
+                value:
+                  moduleHint: "module_02_early_pregnancy"
+                  caseType: "brief"
+                  ageRange: "25-34"
+                  pregnancyPossible: true
+                  pidDiagnosedOrPresumed: null
+                  earlyPregnancy:
+                    gestationalWeeks: 6
+                    careSetting: "earlyPregnancyService"
+                    pregnancyTestType: "serum"
+                    pregnancyTestResult: "positive"
+                  additionalNotes: "Mild pelvic pain and spotting in early pregnancy."
+      responses:
+        "200":
+          description: >
+            Analysis complete, or a pipeline halt (DataConflict, ClarificationRequired,
+            EvidenceInsufficient, SelectModuleRequired, OutsideScope, ProviderUnavailable).
+            Inspect responseType — not all 200 responses are clinical analyses.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisResult"
+        "404":
+          description: >
+            The selected module is not active or not approved.
+            Do not substitute model knowledge. Inform the clinician.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisResult"
+        "422":
+          description: >
+            Invalid input: schema error, unrecognised fields, or PII detected.
+            Do not alter clinical content and retry. Tell the clinician to
+            check fields and remove any identifiers, then resubmit.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetail"
+        "503":
+          description: >
+            Dependency failure. Do not substitute model knowledge.
+            Inform the clinician that the service is temporarily unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisResult"
+
+  /api/v1/modules:
+    get:
+      operationId: listModules
+      summary: "List available clinical modules"
+      description: >
+        Returns the modules that are currently active and available for selection.
+        Use this to confirm which modules a clinician can select before submitting
+        a case. An empty list means no modules are available; do not submit a case.
+      security: []
+      tags:
+        - "Discovery"
+      responses:
+        "200":
+          description: "Available module list."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModuleList"
+        "503":
+          description: "Registry unavailable."
