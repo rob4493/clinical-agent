@@ -9,14 +9,14 @@ import { PrescribingNotice } from '../../netlify/evaluation/requestPolicy';
 import evaluate from '../../netlify/functions/evaluate';
 import Mappings from '../../shared/reviewedVariants.json';
 import Cases from '../src/PregnancyCases.json';
+import { DemoCases } from '../src/DemoCases';
 import Content from '../.evaluationBundle/content.json';
 
 const Environment={WATSONX_ENABLED:'true',WATSONX_PRESENTATION_MODE:'reviewed',WATSONX_AI_AUTH_TYPE:'iam',WATSONX_AI_APIKEY:'syntheticReviewedKey',WATSONX_AI_PROJECT_ID:'12345678-1234-4123-8123-123456789abc',WATSONX_AI_URL:'https://us-south.ml.cloud.ibm.com',WATSONX_AI_MODEL_ID:'example/synthetic-model',WATSONX_AI_API_VERSION:'2024-03-14'};
 const Packages=loadPackages();
 function json(payload:unknown,status=200){return new Response(JSON.stringify(payload),{status,headers:{'Content-Type':'application/json'}});}
 function output(offer:ReviewedOffer):ReviewedOutput {
- const variants=offer.findings.map(finding=>finding.variants[0]);
- return {presentationVersion:'1',paragraphs:[{selections:offer.findings.map(finding=>({presentationId:finding.presentationId,variantId:finding.variants[0].variantId})),claimIds:[...new Set(variants.flatMap(variant=>variant.claimIds))].sort(),text:variants.map(variant=>variant.text).join(' ')}]};
+ return {presentationVersion:'1',paragraphs:[{selections:offer.findings.map(finding=>({presentationId:finding.presentationId,variantId:finding.variants[0].variantId}))}]};
 }
 function transport(change?:(text:string)=>string){return vi.fn(async(url:string,init:RequestInit)=>{
  if(url.includes('/identity/token'))return json({access_token:'syntheticReviewedBearer',token_type:'Bearer',expires_in:3600});
@@ -62,8 +62,8 @@ describe('closed reviewed presentation vocabulary',()=>{
  it('supports Module 1 and deterministic ordering/grouping of complete variants only',()=>{
   const offer=offerPresentation(module2('Mild pelvic pain.',Location),Packages)!,returned=output(offer);
   returned.paragraphs=offer.findings.slice().reverse().slice(0,2).map((finding,index)=>{
-   const group=index===0?[finding]:offer.findings.slice().reverse().slice(1),variants=group.map(finding=>finding.variants[0]);
-   return {selections:group.map(finding=>({presentationId:finding.presentationId,variantId:finding.variants[0].variantId})),claimIds:[...new Set(variants.flatMap(variant=>variant.claimIds))].sort(),text:variants.map(variant=>variant.text).join(' ')};
+   const group=index===0?[finding]:offer.findings.slice().reverse().slice(1);
+   return {selections:group.map(finding=>({presentationId:finding.presentationId,variantId:finding.variants[0].variantId}))};
   });
   expect(()=>validateReviewed(returned,offer)).not.toThrow();expect(offerPresentation(module1(),Packages)).not.toBeNull();
  });
@@ -78,9 +78,9 @@ describe('closed reviewed presentation vocabulary',()=>{
  it.each(['text','qualification','unknownId','variant','claim','url','extra','missing','duplicate','version','key','markdown','empty'])('rejects %s with unchanged deterministic fallback and no display callback',async mode=>{
   const result=module1(),before=JSON.stringify(result),callback=vi.fn(),reason=vi.fn(),fetch=transport(text=>{
    const returned=JSON.parse(text),paragraph=returned.paragraphs[0];
-   if(mode==='text')paragraph.text+=' Unsupported fact.';if(mode==='qualification')paragraph.text=paragraph.text.replace(/cannot|not/,'can');
+   if(mode==='text')paragraph.text='Unsupported provider fact.';if(mode==='qualification')paragraph.text='An altered qualification.';
    if(mode==='unknownId')paragraph.selections[0].presentationId='Punknown';if(mode==='variant')paragraph.selections[0].variantId='Vunknown';
-   if(mode==='claim')paragraph.claimIds.push('Unknown');if(mode==='url')paragraph.text+=' https://example.invalid';if(mode==='extra')paragraph.extra='PrivateProviderSentinel';
+   if(mode==='claim')paragraph.claimIds=['Unknown'];if(mode==='url')paragraph.text='https://example.invalid';if(mode==='extra')paragraph.extra='PrivateProviderSentinel';
    if(mode==='missing')paragraph.selections=[];if(mode==='duplicate')paragraph.selections.push(paragraph.selections[0]);if(mode==='version')returned.presentationVersion='2';if(mode==='empty')returned.paragraphs=[];
    if(mode==='key')return '{"presentationVersion":"1","presentationVersion":"1","paragraphs":[]}';if(mode==='markdown')return '```json\n'+text+'\n```';return JSON.stringify(returned);
   });
@@ -152,6 +152,57 @@ describe('closed reviewed presentation vocabulary',()=>{
  });
  it('never logs rejected content or returns metadata/credentials in diagnostics',async()=>{
   const logs=[vi.spyOn(console,'log'),vi.spyOn(console,'warn'),vi.spyOn(console,'error')],reason=vi.fn();await createShadowAdapter(transport(()=>'{"PrivateProviderSentinel":true}'))(module1(),Packages,new AbortController().signal,undefined,Environment,reason);for(const log of logs)expect(log).not.toHaveBeenCalled();expect(shadowHeaders('reviewed-success')).toEqual({'X-Endo-Watson':'reviewed-success'});expect(shadowHeaders('skipped')).toEqual({'X-Endo-Watson':'skipped'});
+ });
+});
+
+describe('opaque reviewed selections and trusted reconstruction',()=>{
+ function multiple1(){return analyze(validateCase({moduleHint:Module1,caseType:'brief',pregnancyPossible:false,pidDiagnosedOrPresumed:false,additionalNotes:DemoCases.find(example=>example.id==='brief')!.narrative}),Packages);}
+ it.each([1,2])('accepts multi-finding Module 1 in %s paragraphs with no returned clinical fields',async count=>{
+  const result=multiple1(),offer=offerPresentation(result,Packages)!;expect(offer.findings.length).toBeGreaterThan(1);const before=JSON.stringify(result),display=vi.fn();
+  const fetch=transport(text=>{
+   const returned=JSON.parse(text),selections=returned.paragraphs[0].selections.slice().reverse();
+   returned.paragraphs=count===1?[{selections}]:[{selections:selections.slice(0,1)},{selections:selections.slice(1)}];
+   expect(Object.keys(returned)).toEqual(['presentationVersion','paragraphs']);expect(returned.paragraphs.every((paragraph:{selections:unknown[]})=>Object.keys(paragraph).join('|')==='selections')).toBe(true);return JSON.stringify(returned);
+  });
+  expect(await createShadowAdapter(fetch)(result,Packages,new AbortController().signal,undefined,Environment,undefined,display)).toBe('reviewed-success');
+  const projected=display.mock.calls[0][0],findings=offer.findings.slice().reverse(),groups=count===1?[findings]:[findings.slice(0,1),findings.slice(1)];
+  expect(projected.paragraphs).toHaveLength(count);
+  groups.forEach((group,index)=>{
+   const variants=group.map(finding=>finding.variants[0]),claims=[...new Set(variants.flatMap(variant=>variant.claimIds))];
+   const numbers=[...new Set(claims.map(id=>result.envelope.sources.find(source=>source.source.sourceId===Packages[0].claims.find(claim=>claim.claimId===id)!.sourceId)!.number))].sort((left,right)=>left-right);
+   expect(Buffer.from(projected.paragraphs[index].text)).toEqual(Buffer.from(variants.map(variant=>variant.text).join(' ')));expect(projected.paragraphs[index].numbers).toEqual(numbers);expect(Object.keys(projected.paragraphs[index])).toEqual(['text','numbers']);
+  });
+  expect(JSON.stringify(result)).toBe(before);expect(projected).not.toHaveProperty('claimIds');
+ });
+ it('offers a strict selections-only output schema while retaining trusted input bindings',()=>{
+  const offer=offerPresentation(multiple1(),Packages)!;
+  const schema=offer.outputSchema;expect(schema.additionalProperties).toBe(false);expect(schema.required).toEqual(['presentationVersion','paragraphs']);
+  expect(schema.properties.paragraphs.minItems).toBe(1);expect(schema.properties.paragraphs.maxItems).toBe(2);
+  const paragraph=schema.properties.paragraphs.items;expect(paragraph.required).toEqual(['selections']);expect(Object.keys(paragraph.properties)).toEqual(['selections']);expect(paragraph.additionalProperties).toBe(false);expect(paragraph.properties.selections.minItems).toBe(1);expect(paragraph.properties.selections.maxItems).toBe(10);expect(paragraph.properties.selections.items.additionalProperties).toBe(false);
+  expect(offer.findings.every(finding=>finding.variants.every(variant=>variant.text.length>0&&variant.claimIds.length>0))).toBe(true);
+ });
+ it.each([{label:'empty',wording:''},{label:'oversized',wording:'x'.repeat(16001)}])('retains $label trusted paragraph checks',({wording})=>{
+  const offer=offerPresentation(module1(),Packages)!;offer.findings[0].variants[0].text=wording;
+  expect(()=>validateReviewed(output(offer),offer)).toThrow('Invalid presentation.');
+ });
+ it.each(['exactText','exactClaims','rootText','rootClaims','rootExtra','selectionExtra','crossedVariant','alteredId','missingFinding','duplicateAcrossParagraphs','emptyParagraph','tooManyParagraphs','tooManySelections','wrongSelections','wrongIdType','nestedDuplicateKey'])('rejects %s and retains the complete deterministic Function response',async mode=>{
+  const request=()=>new Request('http://localhost/api/v1/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({moduleHint:Module1,caseType:'brief',pregnancyPossible:false,pidDiagnosedOrPresumed:false,additionalNotes:DemoCases.find(example=>example.id==='brief')!.narrative})});
+  vi.stubEnv('WATSONX_ENABLED','false');const baseline=await evaluate(request()),original=await baseline.text();for(const [key,value] of Object.entries(Environment))vi.stubEnv(key,value);
+  const offer=offerPresentation(multiple1(),Packages)!,fetch=transport(text=>{
+   const returned=JSON.parse(text),part=returned.paragraphs[0],selection=part.selections[0];
+   if(mode==='exactText')part.text=offer.findings.map(finding=>finding.variants[0].text).join(' ');
+   if(mode==='exactClaims')part.claimIds=[...new Set(offer.findings.flatMap(finding=>finding.variants[0].claimIds))].sort();
+   if(mode==='rootText')returned.text='Untrusted provider prose';if(mode==='rootClaims')returned.claimIds=[];if(mode==='rootExtra')returned.extra=true;if(mode==='selectionExtra')selection.text='Untrusted provider prose';
+   if(mode==='crossedVariant')selection.variantId=part.selections[1].variantId;if(mode==='alteredId')selection.presentationId+='x';if(mode==='missingFinding')part.selections.pop();
+   if(mode==='duplicateAcrossParagraphs')returned.paragraphs.push({selections:[selection]});if(mode==='emptyParagraph')returned.paragraphs.push({selections:[]});if(mode==='tooManyParagraphs')returned.paragraphs=[part,part,part];if(mode==='tooManySelections')part.selections=Array.from({length:11},()=>selection);if(mode==='wrongSelections')part.selections={};if(mode==='wrongIdType')selection.presentationId=1;
+   if(mode==='nestedDuplicateKey')return '{"presentationVersion":"1","paragraphs":[{"selections":[{"presentationId":"'+selection.presentationId+'","variantId":"'+selection.variantId+'","variantId":"'+selection.variantId+'"}]}]}';
+   return JSON.stringify(returned);
+  });vi.stubGlobal('fetch',fetch);
+  const response=await evaluate(request());expect(response.status).toBe(baseline.status);expect(await response.text()).toBe(original);expect(response.headers.get('X-Endo-Watson')).toBe('reviewed-fallback');expect(response.headers.get('X-Endo-Watson-Reason')).toBe('presentation-validation');expect(fetch.mock.calls.length).toBeLessThanOrEqual(2);
+ });
+ it('keeps reviewed instructions selection-only and IBM JSON mode unchanged',async()=>{
+  const fetch=transport();expect(await createShadowAdapter(fetch)(module1(),Packages,new AbortController().signal,undefined,Environment)).toBe('reviewed-success');const body=JSON.parse(fetch.mock.calls[1][1].body as string);
+  expect(body.messages[0].content).toContain('opaque IDs only');expect(body.messages[0].content).toContain('Do not return text, claimIds');expect(body.messages[0].content).not.toContain('Each paragraph text must be');expect(body.response_format).toEqual({type:'json_object'});
  });
 });
 
