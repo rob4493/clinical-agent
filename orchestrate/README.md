@@ -1,9 +1,9 @@
-# Clarity Clinical Evidence — watsonx Orchestrate Integration
+# Endo Clinical Evidence — watsonx Orchestrate Integration
 
 ## SYNTHETIC DEMONSTRATION ONLY
 
-This integration calls the **publicly accessible** Clarity Clinical Evidence
-API at **https://clinicalagent.netlify.app**. That endpoint has no caller
+This integration calls the **publicly accessible** Endo Clinical Evidence API
+at **https://clinicalagent.netlify.app**. That endpoint has no caller
 authentication. Every request sent to it is accepted from any source.
 
 **Do not submit patient-identifiable information through Orchestrate or any

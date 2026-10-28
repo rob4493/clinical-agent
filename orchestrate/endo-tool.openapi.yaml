@@ -1,10 +1,10 @@
 openapi: "3.0.3"
 info:
-  title: "Clarity Clinical Evidence Tool — Synthetic Demonstration"
+  title: "Endo Clinical Evidence Tool — Synthetic Demonstration"
   version: "1.0.0"
   description: |
     SYNTHETIC DEMONSTRATION ONLY. This tool calls the publicly accessible
-    Clarity Clinical Evidence API at https://clinicalagent.netlify.app.
+    Endo Clinical Evidence API at https://clinicalagent.netlify.app.
 
     Authorised use: de-identified synthetic test cases only.
     This endpoint must not receive patient-identifiable information through
@@ -27,7 +27,7 @@ info:
 servers:
   - url: "https://clinicalagent.netlify.app"
     description: >
-      Publicly accessible Clarity Clinical Evidence API.
+      Publicly accessible Endo Clinical Evidence API.
       SYNTHETIC DEMONSTRATION ONLY — no caller authentication.
       Do not submit patient-identifiable information.
 
@@ -396,17 +396,27 @@ paths:
         - Do not send uploaded document text or file names.
         - pregnancyPossible and pidDiagnosedOrPresumed accept only true/false/null.
 
-        Response handling:
-        - Inspect responseType before presenting output.
-        - Present warnings[] first when non-empty.
-        - Return renderedText exactly.
-        - Present sources[] at the bottom without modification.
-        - 404 = module unavailable; tell the clinician and stop.
-        - 422 = rejected input; tell the clinician to check fields and remove
-          identifiers; do not retry with modified clinical content.
-        - 503 = dependency failure; tell the clinician the service is unavailable
-          and do not substitute model knowledge.
-        - Any other status = fail closed; do not generate a clinical response.
+        Response handling — renderedText is the sole clinical output:
+        - renderedText is the only field displayed to the user. Return it exactly
+          and verbatim; do not summarise, paraphrase, reorder, or expand it.
+        - Do not independently display, append, or reconstruct warnings[],
+          response, or sources[]. Those fields must not appear in the user-facing
+          output separately.
+        - responseType and warnings[] may be inspected only for control-flow
+          and validation (e.g. confirming the call succeeded, deciding which
+          neutral error message to show when renderedText is absent).
+        - sources[] may be inspected only to verify that sources exist. Do not
+          append it separately — renderedText already contains the approved
+          citation presentation, including source lines and URLs.
+        - Preserve the API-provided urgent-warning order inside renderedText.
+          Urgent warnings are already first in renderedText; do not reorder them.
+        - If renderedText is absent or empty, output only the matching neutral
+          operational failure message; do not reconstruct output from other fields.
+        - 404 = module unavailable; output the neutral 404 message and stop.
+        - 422 = rejected input; output the neutral 422 message and stop.
+        - 503 = dependency failure; output the neutral 503 message and stop.
+        - Any other status or unrecognised shape = fail closed; output the
+          neutral failure message; do not generate a clinical response.
       security: []
       tags:
         - "Clinical Analysis"
