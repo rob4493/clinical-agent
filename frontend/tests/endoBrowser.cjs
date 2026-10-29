@@ -1,3 +1,8 @@
+async function selectModule(page, moduleId) {
+ await page.locator(`input[name=clinicalModule][value="${moduleId}"]`).check();
+ const context = page.locator('.additionalContext');
+ if (!(await context.getAttribute('open') !== null)) await context.locator('summary').first().click();
+}
 // Real local routes and synthetic cases only. Reports never contain submitted text.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -68,7 +73,7 @@ async function run() {
    const context = await browser.newContext({ viewport, serviceWorkers: 'block' });
    await context.route('**/*', route => { if (new URL(route.request().url()).origin !== Origin) { report.externalRequests++; return route.abort(); } return route.continue(); });
    const page = await context.newPage(); page.on('pageerror', () => report.pageErrors++);
-   await page.goto(Origin + '/review'); await page.getByText('Ready for evidence review.', { exact: true }).waitFor();
+   await page.goto(Origin + '/review'); await page.getByText('Select a clinical module to begin', { exact: true }).waitFor();
    assert.equal(await page.title(), 'Endo | Clinical Evidence Assistant');
    assert.equal(await page.locator('.evidenceRail').count(), 0);
    assert.equal(await page.getByText('In-memory only', { exact: true }).isVisible(), true);
@@ -78,14 +83,28 @@ async function run() {
    assert.ok(Math.abs((bounds.x + bounds.width / 2) - (shell.x + shell.width / 2)) < 2);
    await page.keyboard.press('Tab'); assert.equal(await page.getByRole('link', { name: 'Skip to case entry' }).evaluate(element => element === document.activeElement), true);
    await page.keyboard.press('Enter'); assert.equal(await page.evaluate(() => document.activeElement.id), 'caseForm');
+   await page.getByRole('navigation', { name: 'Review sections' }).getByRole('link', { name: 'Scope & safety' }).click();
+   assert.equal(await page.locator('#scopeTitle').evaluate(control => control === document.activeElement), true);
+   await page.keyboard.press('Enter'); assert.equal(await page.locator('.scopePanel').getAttribute('open'), '');
+   await page.keyboard.press('Enter'); assert.equal(await page.locator('.scopePanel').getAttribute('open'), null);
    await page.getByRole('navigation', { name: 'Review sections' }).getByRole('link', { name: 'Documents' }).click();
    assert.equal(await page.evaluate(() => document.activeElement.id), 'uploadTitle');
-   await page.locator('#module').selectOption('module_01_endo');
+   assert.equal(await page.locator('input[name=clinicalModule]:checked').count(), 0);
+   const moduleCard = page.getByRole('radio', { name: 'Endometriosis & Chronic Pelvic Pain' });
+   await moduleCard.focus(); await page.keyboard.press('Space');
+   assert.equal(await moduleCard.isChecked(), true);
+   assert.equal(await page.locator('.additionalContext').getAttribute('open'), null);
+   await page.getByText('Additional clinical context', { exact: true }).click();
+   assert.equal(await page.locator('.additionalContext').getAttribute('open'), '');
+   await page.getByText('Additional clinical context', { exact: true }).click();
+   assert.equal(await page.locator('.additionalContext').getAttribute('open'), null);
+   assert.equal(await page.getByLabel('Choose files or drag and drop').isEnabled(), true);
+   assert.equal(await page.getByText('File requirements and privacy').evaluate(control => control.parentElement.open), false);
    await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
    await page.screenshot({ path: path.join(pictures, viewport.name === 'Tablet' ? 'EndoTabletLayout.png' : `Endo${viewport.name}CaseBuilder.png`), fullPage: true });
-   await page.getByLabel('I confirm these documents are de-identified and minimum necessary.').check();
+
    await page.locator('#documentFiles').setInputFiles({ name: 'review.txt', mimeType: 'text/plain', buffer: Buffer.from('Normal MRI. Does this exclude endometriosis?') });
-   await page.getByText('Ready for review', { exact: true }).waitFor(); assert.equal(await page.getByRole('button', { name: 'Analyze', exact: true }).isDisabled(), true);
+   await page.getByText('Ready for review', { exact: true }).waitFor(); await page.getByLabel('I confirm these files are de-identified and necessary for this review.').check(); assert.equal(await page.getByRole('button', { name: 'Analyze case', exact: true }).isDisabled(), true);
    const viewButton = page.getByRole('button', { name: 'View uploaded file', exact: true }); await viewButton.click();
    const dialog = page.getByRole('dialog'); await dialog.waitFor();
    if (viewport.name === 'Mobile') await page.screenshot({ path: path.join(pictures, 'EndoMobileUploadPreview.png') });
@@ -94,14 +113,14 @@ async function run() {
    await page.getByRole('button', { name: 'Review extracted information', exact: true }).click();
    if (viewport.name === 'Desktop') { await page.evaluate(() => window.scrollTo(0, 0)); await page.screenshot({ path: path.join(pictures, 'EndoDesktopUploadReview.png'), fullPage: true }); }
    await page.getByLabel('I reviewed the uploaded document and verified the extracted information').check(); await page.getByRole('button', { name: 'Confirm reviewed information', exact: true }).click();
-   const received = page.waitForResponse(response => response.url().endsWith('/api/v1/analyze')); await page.getByRole('button', { name: 'Analyze', exact: true }).click();
+   const received = page.waitForResponse(response => response.url().endsWith('/api/v1/analyze')); await page.getByRole('button', { name: 'Analyze case', exact: true }).click();
    const response = await received; assert.equal(response.status(), 200); const result = await response.json(); assert.equal(result.response.responseType, 'AgentResponse');
    await page.locator('.decisionNotice').waitFor();
    if (viewport.name !== 'Tablet') await page.locator('.responseCard').screenshot({ path: path.join(pictures, `Endo${viewport.name}EvidenceResponse.png`) });
    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
    await page.getByRole('button', { name: 'Clear case', exact: true }).click(); assert.equal(await page.locator('.uploadItem').count(), 0);
-   await page.locator('#module').selectOption('module_01_endo'); await page.locator('#pregnancy').selectOption('yes'); await page.locator('#narrative').fill('Shoulder pain and weakness.');
-   const urgent = page.waitForResponse(response => response.url().endsWith('/api/v1/analyze')); await page.getByRole('button', { name: 'Analyze', exact: true }).click(); const urgentResult = await (await urgent).json(); assert.ok(urgentResult.warnings.length);
+   await selectModule(page, 'module_01_endo'); await page.locator('#pregnancy').selectOption('yes'); await page.locator('#narrative').fill('Shoulder pain and weakness.');
+   const urgent = page.waitForResponse(response => response.url().endsWith('/api/v1/analyze')); await page.getByRole('button', { name: 'Analyze case', exact: true }).click(); const urgentResult = await (await urgent).json(); assert.ok(urgentResult.warnings.length);
    await page.locator('.urgentPanel').waitFor(); assert.equal(await page.locator('.responseCard').evaluate(element => element.firstElementChild.classList.contains('urgentPanel')), true);
    if (viewport.name === 'Desktop') await page.locator('.responseCard').screenshot({ path: path.join(pictures, 'EndoUrgentWarning.png') });
    assert.equal(await page.locator('.formActions').evaluate(element => getComputedStyle(element).position), 'static');

@@ -73,7 +73,7 @@ $env:VITE_BACKEND_URL = 'http://127.0.0.1:8000'
 npm run dev
 ```
 
-Open **[http://127.0.0.1:5173/](http://127.0.0.1:5173/)** on the same computer. Confirm the persistent synthetic banner. Select the synthetic topic, load an example, review the dropdowns and select **Analyze**. The fictional evidence demonstrates workflow, not medical guidance. **Clear case** removes the case and response and cancels an active request. Missing information stays Unknown; a conflict or evidence limitation may be the intended outcome.
+Open **[http://127.0.0.1:5173/](http://127.0.0.1:5173/)** on the same computer. Confirm the persistent synthetic banner. Select the synthetic topic, load an example, review the case and select **Analyze case**. The fictional evidence demonstrates workflow, not medical guidance. **Clear case** removes the case and response and cancels an active request. Missing information stays Unknown; a conflict or evidence limitation may be the intended outcome.
 
 The launcher explicitly selects an inactive, source-free authentic registry and an isolated fictional graph. No protected documents, IBM account or external provider are needed. `--mode standard` instead keeps discovery empty and readiness at 503. Do not point a default `uvicorn backend.app.main:app` command at missing private source configurations.
 
@@ -85,9 +85,9 @@ No source download or private installation is needed for the public evaluation p
 .\.venvMilvus\Scripts\python.exe -B -m tools.runDemo --mode competition
 ```
 
-Use the same frontend command above. Confirm **Reviewed with healthcare professionals for evaluation and feedback. Not validated or approved for patient care.** and explicitly select **Endometriosis and Chronic Pelvic Pain** or **Early Pregnancy Pain and Bleeding**. Responses are composed deterministically from the reviewed public summaries; no live model is connected. Authentic sources remain pending review and authentic modules inactive. Missing or altered public packages or safety code invalidate evaluation readiness. Do not edit hashes to bypass review.
+Use the same frontend command above. Confirm the evaluation/privacy banner. Load a demonstration case, or explicitly select **Endometriosis & Chronic Pelvic Pain** or **Early Pregnancy Pain & Bleeding** for manual entry. The professional-review statement and detailed limits remain under **Scope & safety** below the workspace. Responses are composed deterministically from the reviewed public summaries; no live model is connected. Authentic sources remain pending review and authentic modules inactive. Missing or altered public packages or safety code invalidate evaluation readiness. Do not edit hashes to bypass review.
 
-Keep age range and case type in dropdowns rather than repeating them in the narrative. Pregnancy and PID have Yes, No and Unknown states; PID means pelvic inflammatory disease, and this field records a clinician-reported diagnosis rather than one made by the app. Module 2 has additional pregnancy-test and ultrasound context. Results start with a short Summary when an exact reviewed mapping is available. Key points, full clinical details and Sources expand on request. Click a numbered citation to open its source list; urgent warnings and prescribing boundaries stay visible. Absence of a warning does not prove safety.
+Keep age range and case type in dropdowns rather than repeating them in the narrative. Pregnancy and PID have Yes, No and Unknown states; PID means pelvic inflammatory disease, and this field records a clinician-reported diagnosis rather than one made by the app. Module 2 has additional pregnancy-test and ultrasound context. Results start with a short Evidence summary when an exact reviewed mapping is available. Clinical considerations, full clinical details and Sources expand on request. Click a numbered citation to open its source list; urgent warnings and prescribing boundaries stay visible. Absence of a warning does not prove safety.
 
 Both commands bind only to localhost and disable access logs. They are offline local evaluation launchers, not public deployment commands. No live model or vector client is created.
 
@@ -158,9 +158,9 @@ Modules 1 and 2 use the repository's original evaluation summaries and determini
 
 ## Optional document review
 
-You can add a de-identified PDF, DOCX or TXT note using **Upload de-identified note or report**. Read the privacy warning first. Files stay in browser memory; original files are not sent to the server or saved by the application.
+You can add a de-identified PDF, DOCX or TXT note using **Add notes or reports (optional)**. Read the privacy warning first. Files stay in browser memory; original files are not sent to the server or saved by the application.
 
-View the extracted text, review and correct every item, then select **Confirm reviewed information** before Analyze. This does not verify the medical accuracy of the document. Remove names, birth dates, contact details and record numbers yourself; automated screening can miss identifiers.
+View the extracted text, review and correct every item, then select **Confirm reviewed information** before **Analyze case**. This does not verify the medical accuracy of the document. Remove names, birth dates, contact details and record numbers yourself; automated screening can miss identifiers.
 
 Use short text documents: up to 1 MB each, three files and 2 MB total. Scans and medical images are unsupported. PDF previews show text and page numbers, not original page layout. Your manual notes plus confirmed text must fit the existing 2,000-character analysis limit. Clear case or refresh removes the upload session.
 
@@ -184,3 +184,9 @@ See [shadow-mode configuration, safeguards and limitations](shared/WatsonShadow.
 ### Optional reviewed Watson presentation
 
 The Netlify evaluation runtime works without IBM. Watson stays disabled by default. An administrator may test `shadow` (validated output is discarded) or `reviewed` (only exact repository-approved display variants may appear in the existing Summary). Neither mode changes the clinical analysis or approves clinical use. See [the protected-preview and rollback instructions](shared/WatsonReviewed.md). No credentials belong in browser settings.
+
+### Simplified clinician workspace
+
+For a manual case, choose a clinical-module card. Alternatively, a demonstration case loads its reviewed fixture-assigned module and exact fields without submitting. Neither a case nor a module is preselected; Clear case removes the selection. Cards are populated from server discovery, so unavailable modules are never selectable. Workflow order is demonstration selector, module cards, Case narrative, Additional clinical context, optional upload, then Analyze case. Case narrative is the main input. Optional age range, case type, pregnancy/PID status and module-specific findings remain editable under **Additional clinical context**, initially collapsed. Unanswered findings remain unknown. Switching modules clears pregnancy/PID and early-pregnancy context and discards uploads that would need review for the new module; manual narrative is retained for clinician review.
+
+The compact upload control accepts PDF, DOCX or TXT. **File requirements and privacy** explains the limits. After selecting files, confirm they are de-identified, view each file, review its extracted information and explicitly confirm before analysis. The original files and filenames stay in browser memory. Result headings are **Evidence summary**, **Clinical considerations** and **Clinical details and sources**; urgent warnings and prescribing boundaries remain visible first.

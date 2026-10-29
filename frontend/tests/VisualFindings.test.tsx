@@ -66,14 +66,14 @@ describe('case-specific visual findings', () => {
     result.sources[0].source.sourceId = claim.sourceId;
     result.renderedText = [claim.supportedStatement + ' [1]', 'Sources', '[1] Evaluation reference', CompetitionNotice].join('\n\n');
     vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify(url.endsWith('/ready') ? Ready : url.endsWith('/v1/modules') ? { modules: [{ moduleId: 'module_01_endo', displayName: 'Evaluation module', supportedCaseTypes: ['brief', 'detailed'] }] } : result), { headers: { 'Content-Type': 'application/json', 'X-Clinical-Mode': 'competition' } })));
-    render(<App />); await screen.findByRole('option', { name: 'Evaluation module' });
-    fireEvent.change(screen.getByLabelText(/Clinical module/), { target: { value: 'module_01_endo' } });
-    fireEvent.change(screen.getByLabelText('Additional clinical information'), { target: { value: 'Recurrent pelvic discomfort.' } });
+    render(<App />); await screen.findByRole('radio', { name: 'Endometriosis & Chronic Pelvic Pain' });
+    fireEvent.click(screen.getByDisplayValue('module_01_endo'));
+    fireEvent.change(screen.getByLabelText('Case narrative'), { target: { value: 'Recurrent pelvic discomfort.' } });
     fireEvent.submit(document.getElementById('caseForm')!); await waitFor(() => expect(finishDigest).toBeDefined());
     fireEvent.click(screen.getByRole('button', { name: 'Clear case' }));
     const digest = await webcrypto.subtle.digest('SHA-256', new TextEncoder().encode(claim.supportedStatement));
     await act(async () => { finishDigest!(digest); });
-    expect(screen.getByLabelText('Additional clinical information')).toHaveValue('');
+    expect(screen.getByLabelText('Case narrative')).toHaveValue('');
     expect(screen.queryByText(CompetitionNotice)).not.toBeInTheDocument(); expect(document.querySelector('.visualSummary')).toBeNull();
   });
   it('activates through the existing narrative form contract, without separate symptom fields', () => {
@@ -151,7 +151,7 @@ describe('case-specific visual findings', () => {
     const citation = within(summary as HTMLElement).getAllByRole('button', { name: 'View cited sources 1,2' })[0];
     citation.focus(); await userEvent.keyboard('{Enter}');
     expect(screen.getByRole('button', { name: 'Sources (2)' })).toHaveAttribute('aria-expanded', 'true');
-    await userEvent.click(screen.getByRole('button', { name: 'View clinical and educational details' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Clinical details and sources' }));
     expect(screen.getByText(Pattern.original)).toBeVisible();
     expect(screen.getAllByText(CompetitionNotice)).toHaveLength(1);
   });

@@ -1,6 +1,10 @@
+import { CompetitionBanner } from './api';
+
 export default function ScopePanel({ synthetic, competition = false, pregnancyAvailable = false }: { synthetic: boolean; competition?: boolean; pregnancyAvailable?: boolean }) {
-  return <section className="scopePanel" aria-labelledby="scopeTitle">
-    <h2 id="scopeTitle" tabIndex={-1}>{synthetic ? 'Current coverage' : 'What this version can review'}</h2>
+  return <details className="scopePanel" aria-labelledby="scopeTitle">
+    <summary id="scopeTitle" tabIndex={0}>Scope &amp; safety</summary>
+    <h2>{synthetic ? 'Current coverage' : 'What this version can review'}</h2>
+    {competition && <p>{CompetitionBanner}</p>}
     <div className="scopeCoverage"><span className="coverageFocus">Endometriosis and chronic pelvic pain workflow</span>{competition && pregnancyAvailable && <span className="coverageFocus">Early Pregnancy Pain and Bleeding · competition evaluation</span>}</div>
     <div className="futureModules" aria-label="Inactive future modules">{!pregnancyAvailable && <span>Early pregnancy pain and bleeding <small>In development</small></span>}<span>Pelvic inflammatory disease <small>In development</small></span><span>Polycystic ovary syndrome <small>In development</small></span></div>
     <p>{competition ? 'The separate competition package is available for controlled evaluation. Production clinical modules remain inactive pending expert review.' : 'Authentic clinical modules remain inactive and unavailable pending expert review.'}</p>
@@ -17,5 +21,5 @@ export default function ScopePanel({ synthetic, competition = false, pregnancyAv
       <p>Expected safe behavior includes necessary clarification, refusing unsupported analysis, preserving urgent warnings, avoiding diagnosis and prescribing, using only available evidence, and not exposing internal instructions or data.</p>
       {synthetic && <p>Supported forms receive bounded case-specific reviews. Other wording receives an explicit scope or evidence limitation, with no unrestricted medical answer.</p>}
     </details>
-  </section>;
+  </details>;
 }

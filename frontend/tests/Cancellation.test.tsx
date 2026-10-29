@@ -14,9 +14,9 @@ async function startForm() {
     return new Promise<Response>(resolve => requests.push({ signal: options.signal as AbortSignal, resolve }));
   }));
   const view = render(<App />);
-  await screen.findByRole('option', { name: 'Fictional review module' });
-  fireEvent.change(screen.getByLabelText(/Clinical module/), { target: { value: 'FictionalModule' } });
-  fireEvent.change(screen.getByLabelText('Additional clinical information'), { target: { value: 'Fictional cancellation marker' } });
+  await screen.findByRole('radio', { name: 'Fictional review module' });
+  fireEvent.click(screen.getByDisplayValue('FictionalModule'));
+  fireEvent.change(screen.getByLabelText('Case narrative'), { target: { value: 'Fictional cancellation marker' } });
   return { requests, view };
 }
 function submitForm() { fireEvent.submit(document.getElementById('caseForm')!); }
@@ -44,8 +44,8 @@ describe('request cancellation without network or persistence', () => {
     const { requests } = await startForm(); submitForm();
     fireEvent.click(screen.getByRole('button', { name: 'Clear case' }));
     expect(requests[0].signal.aborted).toBe(true);
-    expect(screen.getByLabelText('Additional clinical information')).toHaveValue('');
-    expect(screen.getByLabelText(/Clinical module/)).toHaveValue('');
+    expect(screen.getByLabelText('Case narrative')).toHaveValue('');
+    expect(document.querySelector('input[name=clinicalModule]:checked')).toBeNull();
     expect(screen.getByRole('region', { name: 'Evidence review' })).toHaveAttribute('aria-busy', 'false');
     await complete(requests[0]);
     expect(screen.queryByText(DecisionNotice)).not.toBeInTheDocument();
@@ -64,8 +64,8 @@ describe('request cancellation without network or persistence', () => {
     await act(async () => vi.advanceTimersByTimeAsync(20000));
     expect(requests[0].signal.aborted).toBe(true);
     expect(screen.getByText('Request cancelled after the time limit. You may try again.')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Analyze' })).toBeEnabled();
-    expect(screen.getByLabelText('Additional clinical information')).toHaveValue('Fictional cancellation marker');
+    expect(screen.getByRole('button', { name: 'Analyze case' })).toBeEnabled();
+    expect(screen.getByLabelText('Case narrative')).toHaveValue('Fictional cancellation marker');
     await complete(requests[0]);
     expect(screen.queryByText(DecisionNotice)).not.toBeInTheDocument();
     expect(screen.queryByText(UnexpectedMessage)).not.toBeInTheDocument();
@@ -73,7 +73,7 @@ describe('request cancellation without network or persistence', () => {
   it('a permitted replacement after Clear cannot be overwritten by its predecessor', async () => {
     const { requests } = await startForm(); submitForm();
     fireEvent.click(screen.getByRole('button', { name: 'Clear case' }));
-    fireEvent.change(screen.getByLabelText(/Clinical module/), { target: { value: 'FictionalModule' } });
+    fireEvent.click(screen.getByDisplayValue('FictionalModule'));
     submitForm(); expect(requests).toHaveLength(2);
     expect(requests[0].signal.aborted).toBe(true); expect(requests[1].signal.aborted).toBe(false);
     await complete(requests[0]); expect(screen.queryByText(DecisionNotice)).not.toBeInTheDocument();

@@ -51,10 +51,10 @@ describe('reviewed response presentation', () => {
   });
   it('shows short summary and compact sources; preserves original wording, terms and keyboard disclosure', async () => {
     const review = reviewFor(); render(<ResponsePanel review={review} competition />);
-    expect(screen.getByRole('heading', { name: 'Summary' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Evidence summary' })).toBeVisible();
     expect(screen.getByText(Wording.entries[0].summary)).toBeVisible();
     expect(screen.queryByText(Wording.entries[0].original)).not.toBeInTheDocument();
-    const button = screen.getByRole('button', { name: 'View clinical and educational details' });
+    const button = screen.getByRole('button', { name: 'Clinical details and sources' });
     expect(button).toHaveAttribute('aria-expanded', 'false'); button.focus(); await userEvent.keyboard(' ');
     expect(button).toHaveAttribute('aria-expanded', 'true'); expect(document.getElementById(button.getAttribute('aria-controls')!)).toBeVisible();
     expect(screen.getByText(Wording.entries[0].original)).toBeVisible();
@@ -68,13 +68,13 @@ describe('reviewed response presentation', () => {
   it('limits initial key points and questions and keeps remaining details accessible', async () => {
     const review = reviewFor(); review.considerations = Array.from(Array(6).keys(), index => ({ text: `Unchanged reviewed point ${index}.`, numbers: [1] })); review.question = 'Which symptom is current?';
     render(<ResponsePanel review={review} />);
-    const keyButton = screen.getByRole('button', { name: 'Key points (3)' });
+    const keyButton = screen.getByRole('button', { name: 'Clinical considerations (3)' });
     expect(keyButton).toHaveAttribute('aria-expanded', 'false');
     expect(document.querySelectorAll('.keyPoints li')).toHaveLength(0);
     keyButton.focus(); await userEvent.keyboard(' ');
     expect(document.querySelectorAll('.keyPoints li')).toHaveLength(3);
     expect(screen.getByRole('heading', { name: 'Questions to clarify' })).toBeVisible();
-    await userEvent.click(screen.getByRole('button', { name: 'View clinical and educational details' })); expect(screen.getByText('Unchanged reviewed point 5.')).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: 'Clinical details and sources' })); expect(screen.getByText('Unchanged reviewed point 5.')).toBeVisible();
   });
   it('keeps complete urgent and prescribing language first, and resets details on a new review', async () => {
     const review = reviewFor(); review.warnings = [{ text: 'Immediate emergency assessment is required. Keep this full safety qualification.', numbers: [1] }]; review.scopeNotice = PrescribingNotice;
@@ -82,9 +82,9 @@ describe('reviewed response presentation', () => {
     const panel = screen.getByRole('region', { name: 'Clinical evidence review' });
     expect(panel.firstElementChild).toHaveClass('urgentPanel'); expect(panel.children[1]).toHaveTextContent(PrescribingNotice);
     expect(screen.getByRole('alert')).toHaveTextContent(review.warnings[0].text);
-    await userEvent.click(screen.getByRole('button', { name: 'View clinical and educational details' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Clinical details and sources' }));
     rerender(<ResponsePanel review={reviewFor()} />);
-    expect(screen.getByRole('button', { name: 'View clinical and educational details' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: 'Clinical details and sources' })).toHaveAttribute('aria-expanded', 'false');
   });
 });
 
@@ -109,7 +109,7 @@ describe('exact compact summary variants', () => {
     const compact = await compactSummary(review); expect(compact?.text).toBe(entry.summary);
     render(<ResponsePanel review={{ ...review, displaySummary: compact }} />);
     expect(screen.getByText(entry.summary)).toBeVisible();
-    await userEvent.click(screen.getByRole('button', { name: 'View clinical and educational details' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Clinical details and sources' }));
     expect(screen.getByText(originals[entry.id])).toBeVisible();
     review.considerations[0].text += ' Changed clinical meaning.'; expect(await compactSummary(review)).toBeUndefined();
     review.considerations[0].text = originals[entry.id]; review.sources[0].sourceId = 'WrongSource'; expect(await compactSummary(review)).toBeUndefined();
@@ -136,7 +136,7 @@ describe('substantive visual explanation', () => {
     expect(visible).not.toHaveTextContent('Reported symptom');
     expect(visible).not.toHaveTextContent('school');
     expect(visible).not.toHaveTextContent('declined');
-    expect(screen.getByRole('button', { name: 'View clinical and educational details' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: 'Clinical details and sources' })).toHaveAttribute('aria-expanded', 'false');
     expect(visible.querySelectorAll('.findingExplanation p')).toHaveLength(2);
   });
   it('keeps the fully supported detailed example within 80–120 words without borrowing citations', async () => {

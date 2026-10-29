@@ -1,3 +1,8 @@
+async function selectModule(page, moduleId) {
+ await page.locator(`input[name=clinicalModule][value="${moduleId}"]`).check();
+ const context = page.locator('.additionalContext');
+ if (!(await context.getAttribute('open') !== null)) await context.locator('summary').first().click();
+}
 // Actual normal-form integration: no injected symptom fields, mocked responses or client state.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -14,12 +19,12 @@ async function run() {
    const context = await browser.newContext({ viewport: { width, height: 1000 }, serviceWorkers: 'block', hasTouch: width < 1000 });
    await context.route('**/*', route => { if (new URL(route.request().url()).origin !== Origin) { report.externalRequests++; return route.abort(); } return route.continue(); });
    const page = await context.newPage(); page.on('pageerror', () => report.pageErrors++);
-   await page.goto(Origin); await page.getByText('Ready for evidence review.', { exact: true }).waitFor();
+   await page.goto(Origin); await page.getByText('Select a clinical module to begin', { exact: true }).waitFor();
    async function analyze(narrative, pregnancy = 'no') {
     await page.getByRole('button', { name: 'Clear case', exact: true }).click();
-    await page.locator('#module').selectOption('module_01_endo'); await page.locator('#pregnancy').selectOption(pregnancy); await page.locator('#pid').selectOption('no'); await page.locator('#narrative').fill(narrative);
+    await selectModule(page, 'module_01_endo'); await page.locator('#pregnancy').selectOption(pregnancy); await page.locator('#pid').selectOption('no'); await page.locator('#narrative').fill(narrative);
     const received = page.waitForResponse(response => response.url().endsWith('/api/v1/analyze'));
-    await page.getByRole('button', { name: 'Analyze', exact: true }).click();
+    await page.getByRole('button', { name: 'Analyze case', exact: true }).click();
     const response = await received; assert.equal(response.status(), 200);
     const result = await response.json(); await page.locator('.decisionNotice').waitFor(); report.scenarios++; return result;
    }
@@ -37,7 +42,7 @@ async function run() {
    await page.locator('.responseCard').screenshot({ path: path.join(__dirname, `../screenshots/VisualFindings${width}.png`) });
    const citation = page.locator('.visualSummary .citationButton').first(); await citation.focus(); await page.keyboard.press('Enter');
    assert.equal(await page.locator('#sourcesTitle').getAttribute('aria-expanded'), 'true');
-   const details = page.getByRole('button', { name: 'View clinical and educational details', exact: true });
+   const details = page.getByRole('button', { name: 'Clinical details and sources', exact: true });
    if (width < 1000) await details.tap(); else await details.click();
    assert.equal(await details.getAttribute('aria-expanded'), 'true');
    await page.emulateMedia({ reducedMotion: 'reduce' }); assert.equal(await page.locator('.summaryIcons').first().evaluate(element => getComputedStyle(element).animationName), 'none');
@@ -57,9 +62,10 @@ async function run() {
    for (const label of ['Brief', 'Mild/nonurgent', 'Detailed']) {
     stage = `preset ${label} width ${width}`;
     await page.getByRole('button', { name: 'Clear case', exact: true }).click();
+    await selectModule(page, 'module_01_endo');
     await page.locator('#demoCase').selectOption({ label });
     const received = page.waitForResponse(response => response.url().endsWith('/api/v1/analyze'));
-    await page.getByRole('button', { name: 'Analyze', exact: true }).click();
+    await page.getByRole('button', { name: 'Analyze case', exact: true }).click();
     const result = await (await received).json(); assert.equal(result.response.responseType, 'AgentResponse');
     await page.locator('#findingpelvicPain').waitFor();
     const summaryText = await page.locator('#findingpelvicPain').innerText();

@@ -1,12 +1,17 @@
+async function selectModule(page, moduleId) {
+ await page.locator(`input[name=clinicalModule][value="${moduleId}"]`).check();
+ const context = page.locator('.additionalContext');
+ if (!(await context.getAttribute('open') !== null)) await context.locator('summary').first().click();
+}
 // Test-only loopback harness; final reasoning is never embedded in application code.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require(process.env.DEMO_PLAYWRIGHT_MODULE);
 const Report = { checks: [], externalRequests: 0, pageErrors: 0 };
-const Banner = 'Reviewed with healthcare professionals for evaluation and feedback. Not validated or approved for patient care.';
+const Banner = 'Evaluation system — clinician-facing decision support only. Use de-identified, minimum-necessary information.';
 const Notice = 'Decision-support notice: Evidence support only; not a diagnosis, treatment selection, or substitute for clinical judgment.';
-const Supported = 'Summary';
+const Supported = 'Evidence summary';
 const Origin = process.env.EVALUATION_ORIGIN || 'http://127.0.0.1:8892';
 assert.equal(new URL(Origin).hostname, '127.0.0.1');
 const Originals = [
@@ -48,10 +53,11 @@ async function runChecks() {
       for (const scenario of scenarios) {
         stage = viewport.name + ':preset:' + scenario.label;
         await page.getByRole('button',{name:'Clear case',exact:true}).click();
+        await selectModule(page, 'module_01_endo');
         await page.getByLabel('Try a demonstration case').selectOption({label:scenario.label});
-        assert.equal(await page.locator('#module').inputValue(),'module_01_endo');
+        assert.equal(await page.locator('input[name=clinicalModule]:checked').evaluateAll(radios => radios[0]?.value || ''),'module_01_endo');
         assert.equal(await page.locator('.decisionNotice').count(),0);
-        await page.getByRole('button',{name:'Analyze',exact:true}).click();
+        await page.getByRole('button',{name:'Analyze case',exact:true}).click();
         await page.getByRole('heading',{name:scenario.heading,exact:true}).waitFor();
         await page.waitForFunction(urgent => document.activeElement.id === (urgent ? 'urgentTitle':'reviewTitle'),!!scenario.urgent);
         assert.equal(await page.locator('.urgentPanel').count(),scenario.urgent ? 1:0);
@@ -71,11 +77,11 @@ async function runChecks() {
         }
       }
       await page.getByRole('button',{name:'Clear case',exact:true}).click();
-      await page.locator('#module').selectOption('module_01_endo');
+      await selectModule(page, 'module_01_endo');
       await page.locator('#pregnancy').selectOption('yes');
       stage = viewport.name + ':emergency';
       await page.locator('#narrative').fill('Shoulder pain and dizziness. Chronic pelvic pain affects work.');
-      await page.getByRole('button',{name:'Analyze',exact:true}).click();
+      await page.getByRole('button',{name:'Analyze case',exact:true}).click();
       await page.getByRole('heading',{name:'Urgent assessment',exact:true}).waitFor();
       assert.match(await page.locator('.urgentPanel').textContent(), /Immediate emergency assessment.*shoulder pain and dizziness requires urgent evaluation/);
       assert.equal(await page.locator('.considerations').count(),0);
@@ -85,10 +91,10 @@ async function runChecks() {
       assert.equal(await page.locator('.decisionNotice').textContent(),Notice);
       Report.checks.push({viewport:viewport.name,scenario:'Immediate emergency only',passed:true});
       await page.getByRole('button',{name:'Clear case',exact:true}).click();
-      await page.locator('#module').selectOption('module_01_endo');
+      await selectModule(page, 'module_01_endo');
       await page.locator('#caseType').selectOption('detailed');
       await page.locator('#narrative').fill('Persistent pelvic pain with cycle-related worsening and deep dyspareunia. Heavy abnormal bleeding, pelvic pressure, urinary frequency and cyclical bowel symptoms affect work and daily activities. Future fertility is a priority. Her sister has endometriosis. Pelvic examination identifies an enlarged, mildly tender uterus. Transvaginal ultrasound shows a 4.5 cm intramural uterine fibroid, normal-appearing ovaries, and no reported endometrioma or deep endometriosis. Provide a concise review explaining what the fibroid may account for, whether endometriosis remains a consideration, what ultrasound does and does not establish, and factors guiding further review. Do not select treatment.');
-      await page.getByRole('button',{name:'Analyze',exact:true}).click();
+      await page.getByRole('button',{name:'Analyze case',exact:true}).click();
       await page.getByRole('heading',{name:Supported,exact:true}).waitFor();
       stage = viewport.name + ':structural';
       const structuralBody = await page.locator('.directAnswer, .considerations').innerText();
@@ -101,13 +107,13 @@ async function runChecks() {
       for (const [originalIndex,[narrative,heading,fragment]] of Originals.entries()) {
         stage = viewport.name + ':original:' + originalIndex;
         await page.getByRole('button',{name:'Clear case',exact:true}).click();
-        await page.locator('#module').selectOption('module_01_endo');
+        await selectModule(page, 'module_01_endo');
         await page.locator('#ageRange').selectOption('25-34');
         await page.locator('#caseType').selectOption('brief');
         await page.locator('#narrative').fill(narrative);
-        await page.getByRole('button',{name:'Analyze',exact:true}).click();
+        await page.getByRole('button',{name:'Analyze case',exact:true}).click();
         await page.getByRole('heading',{name:heading,exact:true}).waitFor();
-        const clinicalDetails = page.getByRole('button',{name:'View clinical and educational details'});
+        const clinicalDetails = page.getByRole('button',{name:'Clinical details and sources'});
         if(await clinicalDetails.count())await clinicalDetails.click();
         const sources = page.getByRole('button',{name:/^Sources \(/});
         if(await sources.count())await sources.click();
@@ -129,8 +135,9 @@ async function runChecks() {
         try { await route.fulfill({response}); } catch { /* Browser abort may close the held request. */ }
       });
       await page.getByRole('button',{name:'Clear case',exact:true}).click();
+      await selectModule(page, 'module_01_endo');
       await page.getByLabel('Try a demonstration case').selectOption('brief');
-      await page.getByRole('button',{name:'Analyze',exact:true}).click();
+      await page.getByRole('button',{name:'Analyze case',exact:true}).click();
       await receivedResponse;
       await page.getByRole('button',{name:'Clear case',exact:true}).click(); releaseResponse();
       await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
@@ -145,10 +152,16 @@ async function runChecks() {
       }
       await page.getByRole('button',{name:'Clear case',exact:true}).click();
       assert.equal(await page.locator('#narrative').inputValue(),'');
-      assert.equal(await page.locator('#module').evaluate(control=>control===document.activeElement),true);
+      // Clear restores focus after React re-enables controls on the next animation frame.
+      await page.waitForFunction(()=>document.querySelector('input[name=clinicalModule]')===document.activeElement,undefined,{timeout:1000});
+      assert.equal(await page.locator('input[name=clinicalModule]').first().evaluate(control=>control===document.activeElement),true);
+      await page.keyboard.press('Space');
+      await page.keyboard.press('Tab'); assert.equal(await page.locator('#narrative').evaluate(control=>control===document.activeElement),true);
+      await page.keyboard.press('Tab'); assert.equal(await page.locator('.additionalContext > summary').evaluate(control=>control===document.activeElement),true);
+      await page.keyboard.press('Enter');
       await page.keyboard.press('Tab'); assert.equal(await page.locator('#ageRange').evaluate(control=>control===document.activeElement),true);
       await page.reload(); await page.getByText(Banner,{exact:true}).waitFor();
-      assert.equal(await page.locator('#module').inputValue(),''); assert.equal(await page.locator('#narrative').inputValue(),'');
+      assert.equal(await page.locator('input[name=clinicalModule]:checked').evaluateAll(radios => radios[0]?.value || ''),''); assert.equal(await page.locator('#narrative').inputValue(),'');
       assert.deepEqual(await page.evaluate(()=>[localStorage.length,sessionStorage.length]),[0,0]);
       await context.close();
     }
@@ -157,4 +170,4 @@ async function runChecks() {
     console.log(Report.checks.length+' competition scenario checks passed; focus, source safety, clear, refresh, reduced motion and zoom reflow passed; zero external requests.');
   } finally { await browser.close(); }
 }
-runChecks().catch(()=>{console.error('Competition browser check failed at ' + stage + '; no case content recorded.');process.exitCode=1;});
+runChecks().catch(failure=>{const location = failure.stack?.match(/competitionBrowser\.cjs:\d+:\d+/)?.[0] || failure.name; console.error('Competition browser check failed at ' + stage + '; ' + location + '; no case content recorded.');process.exitCode=1;});

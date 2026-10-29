@@ -1,3 +1,8 @@
+async function selectModule(page, moduleId) {
+ await page.locator(`input[name=clinicalModule][value="${moduleId}"]`).check();
+ const context = page.locator('.additionalContext');
+ if (!(await context.getAttribute('open') !== null)) await context.locator('summary').first().click();
+}
 // Local browser checks use only original synthetic bytes. Reports exclude file names and content.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -38,12 +43,12 @@ async function run() {
     ['pdf', 'application/pdf', pdf('Normal MRI. Does this exclude endometriosis?')],
    ]) {
     await page.getByRole('button', { name: 'Clear case', exact: true }).click();
-    await page.locator('#module').selectOption('module_01_endo');
-    await page.getByLabel('I confirm these documents are de-identified and minimum necessary.').check();
+    await selectModule(page, 'module_01_endo');
+
     report.stage = viewport.name + ':' + format + ':parse';
     await page.locator('#documentFiles').setInputFiles({ name: 'report.' + format, mimeType: mime, buffer });
-    await page.getByText('Ready for review', { exact: true }).waitFor({ timeout: 15000 }); report.stage = viewport.name + ':' + format + ':review';
-    assert.equal(await page.getByRole('button', { name: 'Analyze', exact: true }).isDisabled(), true);
+    await page.getByText('Ready for review', { exact: true }).waitFor({ timeout: 15000 }); await page.getByLabel('I confirm these files are de-identified and necessary for this review.').check(); report.stage = viewport.name + ':' + format + ':review';
+    assert.equal(await page.getByRole('button', { name: 'Analyze case', exact: true }).isDisabled(), true);
     await page.getByRole('button', { name: 'View uploaded file', exact: true }).click();
     await page.getByRole('dialog').waitFor(); assert.ok((await page.getByRole('dialog').innerText()).includes('Normal MRI.'));
     await page.keyboard.press('Escape'); await page.getByRole('button', { name: 'Review extracted information', exact: true }).click();
@@ -51,7 +56,7 @@ async function run() {
     await page.getByRole('button', { name: 'Confirm reviewed information', exact: true }).click();
     report.stage = viewport.name + ':' + format + ':analyze';
     const responsePromise = page.waitForResponse(response => response.url().endsWith('/api/v1/analyze'));
-    await page.getByRole('button', { name: 'Analyze', exact: true }).click();
+    await page.getByRole('button', { name: 'Analyze case', exact: true }).click();
     const response = await responsePromise; assert.equal(response.status(), 200); const result = await response.json(); assert.equal(result.response.responseType, 'AgentResponse'); assert.ok(result.renderedText.includes('does not establish'));
     const request = response.request().postDataJSON(); assert.equal(request.schemaVersion, '1.0.0'); assert.ok(!JSON.stringify(request).includes('report.' + format));
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
@@ -65,7 +70,7 @@ async function run() {
     ['malformed', Buffer.from('%PDF-1.7\nSyntheticSecretMarker\n%%EOF'), 'Unable to read this document safely. Check the supported format and processing limits.'],
    ]) {
     await page.getByRole('button', { name: 'Clear case', exact: true }).click();
-    await page.getByLabel('I confirm these documents are de-identified and minimum necessary.').check();
+
     await page.locator('#documentFiles').setInputFiles({ name: 'report.pdf', mimeType: 'application/pdf', buffer });
     await page.getByText(expected, { exact: true }).waitFor({ timeout: 15000 });
     await page.getByRole('button', { name: 'View uploaded file', exact: true }).click();

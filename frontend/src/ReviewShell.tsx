@@ -18,6 +18,5 @@ export function WorkflowBar({ pending, hasResponse }: { pending: boolean; hasRes
   const active = pending ? 1 : hasResponse ? 2 : 0;
   return <header className="workflowBar"><span className="workflowLabel">New review</span>
     <ol aria-label="Review workflow">{['Case details', 'Analyze', 'Evidence review'].map((step, index) => <li key={step} aria-current={active === index ? 'step' : undefined}><span aria-hidden="true">{index + 1}</span>{step}</li>)}</ol>
-    <p>De-identified information only<br /><span>Not a diagnostic or prescribing system.</span></p>
   </header>;
 }

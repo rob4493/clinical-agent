@@ -12,7 +12,8 @@ import Content from '../.evaluationBundle/content.json';
 function request(path:string,payload?:unknown,signal?:AbortSignal) { return evaluate(new Request('http://localhost/api'+path,{method:payload===undefined?'GET':'POST',headers:payload===undefined?{}:{'Content-Type':'application/json'},...(payload===undefined?{}:{body:JSON.stringify(payload)}),signal})); }
 function presetCase(example:typeof PregnancyCases[number]) {return {moduleHint:example.moduleId,caseType:example.caseType,ageRange:example.ageRange,pregnancyPossible:example.pregnancy==='yes'?true:example.pregnancy==='no'?false:null,pidDiagnosedOrPresumed:null,earlyPregnancy:example.earlyPregnancy,additionalNotes:example.narrative};}
 describe('Actual offline Netlify function',()=>{
- for(const example of DemoCases.filter(example=>!example.moduleId))it('preserves input preset '+example.id,async()=>{
+ for(const example of DemoCases.filter(example=>example.moduleId===Module1))it('preserves input preset '+example.id,async()=>{
+  expect(example.moduleId).toBe(Module1);
   const response=await request('/v1/analyze',{moduleHint:Module1,caseType:example.caseType,ageRange:example.ageRange,pregnancyPossible:example.pregnancy==='yes'?true:example.pregnancy==='no'?false:null,pidDiagnosedOrPresumed:null,additionalNotes:example.narrative});
   const result=await response.json();
   expect(result.response.responseType).toBe(({conflict:'DataConflict',clarification:'ClarificationRequired',unsupported:'OutsideScope'} as Record<string,string>)[example.id]||'AgentResponse');

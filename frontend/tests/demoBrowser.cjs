@@ -1,3 +1,8 @@
+async function selectModule(page, moduleId) {
+ await page.locator(`input[name=clinicalModule][value="${moduleId}"]`).check();
+ const context = page.locator('.additionalContext');
+ if (!(await context.getAttribute('open') !== null)) await context.locator('summary').first().click();
+}
 // Real local HTTP smoke checks. No clinical fixtures are bundled into application code.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -33,21 +38,21 @@ async function runSmoke() {
       await page.goto('http://127.0.0.1:5173');
       stage = viewport.name + ' availability';
       await page.getByText(DemoNotice, { exact: true }).waitFor();
-      assert.equal(await page.locator('#module').inputValue(), '');
-      assert.equal(await page.getByRole('button', { name: 'Analyze' }).isDisabled(), true);
+      assert.equal(await page.locator('input[name=clinicalModule]:checked').evaluateAll(radios => radios[0]?.value || ''), '');
+      assert.equal(await page.getByRole('button', { name: 'Analyze case' }).isDisabled(), true);
       const scenarios = [
-        { name: 'ordinary', notes: 'Recurrent pelvic discomfort. Timing, examination and test findings are not provided. Please review the reported pattern and uncertainty.', pregnancy: 'unknown', heading: 'Summary', urgent: false },
-        { name: 'urgent', notes: 'sudden acute pelvic pain', pregnancy: 'unknown', heading: 'Summary', urgent: true },
+        { name: 'ordinary', notes: 'Recurrent pelvic discomfort. Timing, examination and test findings are not provided. Please review the reported pattern and uncertainty.', pregnancy: 'unknown', heading: 'Evidence summary', urgent: false },
+        { name: 'urgent', notes: 'sudden acute pelvic pain', pregnancy: 'unknown', heading: 'Evidence summary', urgent: true },
         { name: 'conflict', notes: 'pregnancy confirmed', pregnancy: 'no', heading: 'Resolve conflicting information', urgent: false },
         { name: 'clarification', notes: 'pregnancy confirmed', pregnancy: 'unknown', heading: 'Clarification required', urgent: false },
         { name: 'insufficient', notes: 'demo evidence unavailable', pregnancy: 'unknown', heading: 'Evidence insufficient or unavailable', urgent: false },
       ];
       for (const scenario of scenarios) {
         stage = viewport.name + ' ' + scenario.name;
-        await page.locator('#module').selectOption('SyntheticDemo');
+        await selectModule(page, 'SyntheticDemo');
         await page.locator('#pregnancy').selectOption(scenario.pregnancy);
         await page.locator('#narrative').fill(scenario.notes);
-        await page.getByRole('button', { name: 'Analyze' }).click();
+        await page.getByRole('button', { name: 'Analyze case' }).click();
         stage = viewport.name + ' ' + scenario.name + ' response heading';
         await page.getByRole('heading', { name: scenario.heading, exact: true }).waitFor();
         stage = viewport.name + ' ' + scenario.name + ' response assertions';
@@ -71,24 +76,24 @@ async function runSmoke() {
         }
         await page.getByRole('button', { name: 'Clear case' }).click();
         assert.equal(await page.locator('#narrative').inputValue(), '');
-        assert.equal(await page.locator('#module').inputValue(), '');
+        assert.equal(await page.locator('input[name=clinicalModule]:checked').evaluateAll(radios => radios[0]?.value || ''), '');
         assert.equal(await page.locator('.decisionNotice').count(), 0);
         assert.equal(await page.getByText(DemoNotice, { exact: true }).isVisible(), true);
         report.scenarios.push({ viewport: viewport.name, scenario: scenario.name, passed: true });
       }
-      await page.locator('#module').selectOption('SyntheticDemo');
+      await selectModule(page, 'SyntheticDemo');
       await page.locator('#narrative').fill('fictional refresh privacy marker');
       await page.reload();
       await page.getByText(DemoNotice, { exact: true }).waitFor();
       assert.equal(await page.locator('#narrative').inputValue(), '');
-      assert.equal(await page.locator('#module').inputValue(), '');
+      assert.equal(await page.locator('input[name=clinicalModule]:checked').evaluateAll(radios => radios[0]?.value || ''), '');
       assert.deepEqual(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length, cookies: document.cookie })), { local: 0, session: 0, cookies: '' });
       if (viewport.name === 'Desktop') {
         await page.goto('http://127.0.0.1:5174');
         await page.getByText(/No approved clinical modules are available/).waitFor();
         assert.equal(await page.getByText(DemoNotice, { exact: true }).count(), 0);
-        assert.equal(await page.locator('#module option').count(), 1);
-        assert.equal(await page.getByRole('button', { name: 'Analyze' }).isDisabled(), true);
+        assert.equal(await page.locator('input[name=clinicalModule]').count(), 0);
+        assert.equal(await page.getByRole('button', { name: 'Analyze case' }).isDisabled(), true);
         report.disabledMode = true;
       }
       await context.close();

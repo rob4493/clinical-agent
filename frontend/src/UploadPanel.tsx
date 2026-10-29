@@ -43,10 +43,11 @@ export default function UploadPanel({ onChange, disabled = false }: { onChange: 
 
   async function addFiles(files: File[]) {
     if (disabled) return;
-    if (!acknowledged || busy.current) { setMessage('Acknowledge de-identification before selecting documents.'); return; }
+    if (busy.current) return;
     if (files.length + current.current.length > UploadLimits.files || files.reduce((size, file) => size + file.size, 0) + current.current.reduce((size, upload) => size + upload.file.size, 0) > UploadLimits.totalBytes) { setMessage('Upload limit: three files and 2 MB total.'); return; }
     try { files.forEach(file => checkUpload(file.name, file.type, file.size)); } catch { setMessage(UploadMessage); return; }
     const added = files.map(file => ({ id: 'Document' + crypto.randomUUID().replaceAll('-', ''), file, status: 'Uploaded', candidates: [], viewed: false, confirmed: false } as Upload));
+    setAcknowledged(false);
     invalidate([...current.current, ...added]); setMessage(''); busy.current = true;
     const activeGeneration = generation.current;
     try {
@@ -85,13 +86,17 @@ export default function UploadPanel({ onChange, disabled = false }: { onChange: 
   const visibleParts = preview?.parsed?.parts.filter(part => !part.page || part.page === page) ?? [];
   const previewText = visibleParts.map(part => part.text).join('\n');
   return <section className="uploadPanel" aria-labelledby="uploadTitle">
-    <h3 id="uploadTitle" tabIndex={-1}>Upload de-identified note or report</h3>
-    <p className="fieldHint" id="uploadPrivacy">PDF (readable text), DOCX or UTF-8 TXT only. Up to 1 MB per file, 3 files and 2 MB total; 20 PDF pages. No scans, OCR or medical images.</p>
-    <p className="fieldHint">Remove patient names, birth dates, addresses, phone/email details, record, insurance and account identifiers. Automated screening cannot guarantee de-identification; you are responsible for reviewing the document.</p>
-    <label className="uploadCheck"><input type="checkbox" checked={acknowledged} onChange={event => { setAcknowledged(event.target.checked); invalidate(); }} />I confirm these documents are de-identified and minimum necessary.</label>
+    <h3 id="uploadTitle" tabIndex={-1}>Add notes or reports (optional)</h3>
+    <p className="fieldHint" id="uploadPrivacy">PDF, DOCX or TXT · Up to 3 files · 1 MB each</p>
     <div className="uploadDrop" onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); void addFiles(Array.from(event.dataTransfer.files)); }}>
-      <label htmlFor="documentFiles">Choose documents or drop them here</label><input id="documentFiles" type="file" multiple accept=".pdf,.docx,.txt" disabled={!acknowledged || uploads.some(upload => upload.status === 'Extracting')} aria-describedby="uploadPrivacy" onChange={event => { void addFiles(Array.from(event.target.files ?? [])); event.target.value = ''; }} />
+      <label htmlFor="documentFiles">Choose files or drag and drop</label><input className="uploadInput" id="documentFiles" type="file" multiple accept=".pdf,.docx,.txt" disabled={disabled || uploads.some(upload => upload.status === 'Extracting')} aria-describedby="uploadPrivacy" onChange={event => { void addFiles(Array.from(event.target.files ?? [])); event.target.value = ''; }} />
     </div>
+    <details className="uploadRequirements"><summary>File requirements and privacy</summary>
+      <p>Up to three files, 1 MB each and 2 MB total. PDFs must contain readable text and no more than twenty pages. DOCX and UTF-8 TXT are also supported. No scans, OCR or medical-image interpretation.</p>
+      <p>Remove patient names, birth dates, addresses, phone/email details, medical-record, insurance and account identifiers. Automated screening cannot guarantee de-identification; you are responsible for confirming it.</p>
+      <p>Files and previews stay in browser memory. View each file, review the extracted text and explicitly confirm it before analysis. Original files and filenames are not submitted.</p>
+    </details>
+    {!!uploads.length && <label className="uploadCheck"><input type="checkbox" checked={acknowledged} onChange={event => { setAcknowledged(event.target.checked); invalidate(); }} />I confirm these files are de-identified and necessary for this review.</label>}
     <p role="status" aria-live="polite">{message}</p>
     {uploads.map(upload => <article className="uploadItem" key={upload.id}><strong>{upload.file.name}</strong><p>{upload.file.type || 'Type checked from content'} · {upload.file.size.toLocaleString()} bytes{upload.parsed?.pageCount ? ` · ${upload.parsed.pageCount} pages` : ''} · <span role="status">{upload.status}</span></p>
       <div className="uploadActions"><button type="button" onClick={event => openPreview(upload, event.currentTarget)}>View uploaded file</button><button type="button" disabled={!upload.parsed} onClick={() => { setReviewId(upload.id); update(current.current.map(record => record.id === upload.id ? { ...record, reviewed: true } : record)); }}>Review extracted information</button><button type="button" onClick={() => remove(upload.id)}>Remove file</button></div>

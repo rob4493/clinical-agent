@@ -1,3 +1,8 @@
+async function selectModule(page, moduleId) {
+ await page.locator(`input[name=clinicalModule][value="${moduleId}"]`).check();
+ const context = page.locator('.additionalContext');
+ if (!(await context.getAttribute('open') !== null)) await context.locator('summary').first().click();
+}
 // Actual local HTTP/browser checks. Reports contain outcomes/counts, never case text.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -5,7 +10,7 @@ const path = require('node:path');
 const { chromium } = require(process.env.DEMO_PLAYWRIGHT_MODULE);
 const Origin = process.env.EVALUATION_ORIGIN || 'http://127.0.0.1:5191';
 assert.equal(new URL(Origin).hostname, '127.0.0.1');
-const Banner = 'Reviewed with healthcare professionals for evaluation and feedback. Not validated or approved for patient care.';
+const Banner = 'Evaluation system — clinician-facing decision support only. Use de-identified, minimum-necessary information.';
 const PregnancyCases = require('../src/PregnancyCases.json');
 const SchemaCases = require('../../tests/fixtures/clinicalDataCases.json');
 const Expected = { pregBrief:[200,'AgentResponse'], pregDetailed:[200,'AgentResponse'], pregEmergency:[200,'AgentResponse'], pregDizziness:[200,'AgentResponse'], pregUnsupported:[503,'EvidenceInsufficient'], pregConflict:[200,'DataConflict'], pregTesting:[200,'EvidenceInsufficient'], pregSerial:[200,'AgentResponse'], pregOutside:[200,'OutsideScope'], pregInjection:[200,'EvidenceInsufficient'] };
@@ -33,10 +38,13 @@ async function run() {
    await page.getByText(Banner,{exact:true}).waitFor();
    for (const scenario of [...Module1Cases.map(([label,outcome])=>({id:label,label,moduleId:'module_01_endo',status:200,outcome})),...PregnancyCases.map(preset=>({id:preset.id,label:preset.label,moduleId:preset.moduleId,status:Expected[preset.id][0],outcome:Expected[preset.id][1]}))]) {
     await page.getByRole('button',{name:'Clear case',exact:true}).click();
-    await page.locator('#module').selectOption(scenario.moduleId);
+    assert.equal(await page.locator('input[name=clinicalModule]:checked').count(),0);
     await page.getByLabel('Try a demonstration case').selectOption({label:scenario.label});
+    assert.equal(await page.locator('input[name=clinicalModule]:checked').inputValue(),scenario.moduleId);
+    assert.equal(await page.locator('.additionalContext').getAttribute('open'),null);
+    await page.getByText('Demonstration case loaded — verify the selected module and case information before analyzing',{exact:true}).waitFor();
     const received = page.waitForResponse(response=>response.url().endsWith('/api/v1/analyze') && response.request().method()==='POST');
-    await page.getByRole('button',{name:'Analyze',exact:true}).click();
+    await page.getByRole('button',{name:'Analyze case',exact:true}).click();
     const response = await received;
     assert.equal(response.status(),scenario.status,scenario.id);
     const result = await response.json();
@@ -66,10 +74,10 @@ async function run() {
     ['mixedPrescribing','Normal transvaginal ultrasound. Does this exclude endometriosis? Select the best medication.','does not exclude'],
    ]) {
     await page.getByRole('button',{name:'Clear case',exact:true}).click();
-    await page.locator('#module').selectOption('module_01_endo');
+    await selectModule(page, 'module_01_endo');
     await page.locator('#narrative').fill(narrative);
     const received = page.waitForResponse(response=>response.url().endsWith('/api/v1/analyze') && response.request().method()==='POST');
-    await page.getByRole('button',{name:'Analyze',exact:true}).click();
+    await page.getByRole('button',{name:'Analyze case',exact:true}).click();
     const response = await received; const result = await response.json();
     assert.equal(response.status(),200); assert.equal(result.response.responseType,outcome);
     assert.ok(result.renderedText.includes(phrase));
@@ -82,13 +90,13 @@ async function run() {
    }
    // Exercise the real form's structured mapping and actual function route.
    await page.getByRole('button',{name:'Clear case',exact:true}).click();
-   await page.locator('#module').selectOption('module_02_early_pregnancy');
+   await selectModule(page, 'module_02_early_pregnancy');
    await page.locator('#pregnancy').selectOption('yes');
    await page.locator('#gestationalWeeks').fill('6');
    for(const [field,selection] of Object.entries({careSetting:'emergencyDepartment',pregnancyTestType:'serum',pregnancyTestResult:'positive',ultrasoundRoute:'transvaginal',ultrasoundFinding:'noPregnancyVisualized',clinicallyStable:'yes',previousIntrauterinePregnancyConfirmed:'no',assistedReproduction:'no',abdominalTrauma:'no'}))await page.locator('#'+field).selectOption(selection);
    await page.locator('#narrative').fill('Mild pelvic discomfort and light spotting. One single serum hCG result is available. Can this exclude ectopic pregnancy after the ultrasound?');
    const receivedHcg=page.waitForResponse(response=>response.url().endsWith('/api/v1/analyze')&&response.request().method()==='POST');
-   await page.getByRole('button',{name:'Analyze',exact:true}).click();
+   await page.getByRole('button',{name:'Analyze case',exact:true}).click();
    const responseHcg=await receivedHcg,resultHcg=await responseHcg.json();
    assert.equal(resultHcg.response.responseType,'AgentResponse');
    assert.deepEqual(resultHcg.sources.map(cited=>cited.source.sourceId),['ACEP-EARLYPREG-2017']);
@@ -101,10 +109,10 @@ async function run() {
    assert.equal(canonicalResult.status,200);assert.equal(canonicalResult.outcome,'AgentResponse');assert.deepEqual(canonicalResult.sourceIds,['ACEP-EARLYPREG-2017']);
    report.checks.push({viewport:viewport.name,id:'canonicalRequest',status:canonicalResult.status,outcome:canonicalResult.outcome});
    await page.getByRole('button',{name:'Clear case',exact:true}).click();
-   await page.locator('#module').selectOption('module_01_endo');
+   await selectModule(page, 'module_01_endo');
    await page.locator('#narrative').fill('Normal MRI. Does this exclude endometriosis?');
    const pending=page.waitForRequest(request=>request.url().endsWith('/api/v1/analyze')&&request.method()==='POST');
-   await page.getByRole('button',{name:'Analyze',exact:true}).click();await pending;
+   await page.getByRole('button',{name:'Analyze case',exact:true}).click();await pending;
    await page.getByRole('button',{name:'Clear case',exact:true}).click();
    await page.waitForTimeout(1200);
    await page.getByText('Your response will appear here after submission.',{exact:true}).waitFor();
@@ -112,7 +120,7 @@ async function run() {
    assert.equal(await page.locator('#narrative').inputValue(),'');
    await page.reload(); await page.getByText(Banner,{exact:true}).waitFor();
    assert.equal(await page.locator('#narrative').inputValue(),'');
-   assert.equal(await page.locator('#module').inputValue(),'');
+   assert.equal(await page.locator('input[name=clinicalModule]:checked').evaluateAll(radios => radios[0]?.value || ''),'');
    await page.emulateMedia({reducedMotion:'reduce'});
    assert.equal(await page.locator('.primaryButton').evaluate(button=>getComputedStyle(button).animationName),'none');
    fs.mkdirSync(path.join(__dirname,'../screenshots'),{recursive:true});

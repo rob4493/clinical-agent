@@ -17,10 +17,10 @@ function mockHttp(payload: unknown = analysisResult(), status = 200, modules: un
   return fetchMock;
 }
 async function chooseModule() {
-  await screen.findByRole('option', { name: 'Fictional review module' });
-  await userEvent.selectOptions(screen.getByLabelText(/Clinical module/), 'FictionalModule');
+  await screen.findByRole('radio', { name: 'Fictional review module' });
+  await userEvent.click(screen.getByDisplayValue('FictionalModule'));
 }
-async function submit() { await chooseModule(); await userEvent.click(screen.getByRole('button', { name: 'Analyze' })); }
+async function submit() { await chooseModule(); await userEvent.click(screen.getByRole('button', { name: 'Analyze case' })); }
 
 describe('clinician workflow with mocked HTTP only', () => {
   it.each(['AgentResponse', 'DataConflict', 'ClarificationRequired', 'EvidenceInsufficient'])('labels the backend synthetic mode and %s outcome persistently', async outcome => {
@@ -42,7 +42,7 @@ describe('clinician workflow with mocked HTTP only', () => {
   });
   it('does not claim demo mode from a synthetic-looking module name alone', async () => {
     mockHttp(analysisResult(), 200, { modules: [{ ...Modules.modules[0], displayName: 'Synthetic module label' }] }); render(<App />);
-    await screen.findByRole('option', { name: 'Synthetic module label' });
+    await screen.findByRole('radio', { name: 'Synthetic module label' });
     expect(screen.queryByText(DemoNotice)).not.toBeInTheDocument();
   });
   it('fails closed when the runtime changes during submission', async () => {
@@ -56,9 +56,9 @@ describe('clinician workflow with mocked HTTP only', () => {
   });
   it('loads modules but requires explicit selection', async () => {
     const fetchMock = mockHttp(); render(<App />);
-    await screen.findByRole('option', { name: 'Fictional review module' });
-    expect(screen.getByLabelText(/Clinical module/)).toHaveValue('');
-    expect(screen.getByRole('button', { name: 'Analyze' })).toBeDisabled();
+    await screen.findByRole('radio', { name: 'Fictional review module' });
+    expect(document.querySelector('input[name=clinicalModule]:checked')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Analyze case' })).toBeDisabled();
     fireEvent.submit(document.getElementById('caseForm')!);
     expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/v1/analyze'))).toHaveLength(0);
     expect(screen.queryByText(/No.*urgent/i)).not.toBeInTheDocument();
@@ -66,15 +66,15 @@ describe('clinician workflow with mocked HTTP only', () => {
   it('shows the empty module and not-ready state without fabricated options', async () => {
     mockHttp(undefined, 200, { modules: [] }, { status: 'notReady', reasonCode: 'noAvailableModules' }); render(<App />);
     expect(await screen.findByText(/No approved clinical modules are available/)).toBeVisible();
-    expect(screen.getByLabelText(/Clinical module/)).toBeDisabled();
-    expect(screen.getAllByRole('option').filter(option => option.textContent?.includes('Fictional'))).toHaveLength(0);
-    expect(screen.getByRole('button', { name: 'Analyze' })).toBeDisabled();
+    expect(screen.queryAllByRole('radio')).toHaveLength(0);
+    expect(screen.queryAllByRole('option').filter(option => option.textContent?.includes('Fictional'))).toHaveLength(0);
+    expect(screen.getByRole('button', { name: 'Analyze case' })).toBeDisabled();
   });
   it('handles module transport failure generically', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('private host and credentials'))); render(<App />);
     expect(await screen.findByText('Evaluation services are unavailable. Refresh availability to try again.')).toBeVisible();
     expect(document.body).not.toHaveTextContent('private host');
-    expect(screen.getByRole('button', { name: 'Analyze' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Analyze case' })).toBeDisabled();
   });
   it.each([404, 200])('keeps Analyze visibly closed for a backend-free static site with status %s', async status => {
     const fetchMock = vi.fn(async (url: string) => {
@@ -85,8 +85,8 @@ describe('clinician workflow with mocked HTTP only', () => {
     });
     vi.stubGlobal('fetch', fetchMock); render(<App />);
     expect(await screen.findByText('Evaluation services are unavailable. Refresh availability to try again.')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Analyze' })).toBeDisabled();
-    expect(screen.getByLabelText(/Clinical module/)).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Analyze case' })).toBeDisabled();
+    expect(screen.queryAllByRole('radio')).toHaveLength(0);
     fireEvent.submit(document.getElementById('caseForm')!);
     expect(fetchMock.mock.calls.some(argumentsList => String(argumentsList[0]).endsWith('/v1/analyze'))).toBe(false);
     expect(document.body).not.toHaveTextContent('Static SPA fallback');
@@ -94,7 +94,7 @@ describe('clinician workflow with mocked HTTP only', () => {
   it('keeps unavailable analysis dependencies closed', async () => {
     mockHttp(undefined, 200, Modules, { status: 'notReady', reasonCode: 'analysisUnavailable' }); render(<App />); await chooseModule();
     expect(await screen.findByText(/Analysis services are not ready/)).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Analyze' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Analyze case' })).toBeDisabled();
   });
   it.each([
     ['unknown', 'unknown', null, null], ['yes', 'no', true, false], ['no', 'yes', false, true],
@@ -104,17 +104,18 @@ describe('clinician workflow with mocked HTTP only', () => {
     await userEvent.selectOptions(screen.getByLabelText('Case type'), 'detailed');
     await userEvent.selectOptions(screen.getByLabelText('Pregnancy status'), pregnancy!);
     await userEvent.selectOptions(screen.getByLabelText('PID status'), pid!);
-    await userEvent.type(screen.getByLabelText('Additional clinical information'), 'Fictional additional context only.');
-    expect(screen.getByLabelText('Selected structured context')).toHaveTextContent('Age: 25-34');
-    await userEvent.click(screen.getByRole('button', { name: 'Analyze' }));
-    await screen.findByRole('heading', { name: 'Summary' });
+    await userEvent.type(screen.getByLabelText('Case narrative'), 'Fictional additional context only.');
+    expect(screen.getByLabelText('Age range')).toHaveValue('25-34');
+    expect(screen.queryByLabelText('Selected structured context')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Analyze case' }));
+    await screen.findByRole('heading', { name: 'Evidence summary' });
     const options = fetchMock.mock.calls.find(([url]) => url.endsWith('/v1/analyze'))![1]!;
     expect(JSON.parse(options.body as string)).toEqual({ moduleHint: 'FictionalModule', ageRange: '25-34', caseType: 'detailed', pregnancyPossible: pregnancyJson, pidDiagnosedOrPresumed: pidJson, additionalNotes: 'Fictional additional context only.' });
     expect(options.credentials).toBe('same-origin'); expect(options.cache).toBe('no-store');
   });
   it('renders considerations, numbered citations, exact safe links and the fixed final notice', async () => {
     mockHttp(); render(<App />); await submit();
-    expect(await screen.findByRole('heading', { name: 'Summary' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Evidence summary' })).toBeVisible();
     expect(screen.getByText(ConsiderationText)).toBeVisible();
     expect(screen.queryByRole('link', { name: /Fictional reference.*opens in a new tab/ })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Sources (1)' }));
@@ -162,16 +163,16 @@ describe('clinician workflow with mocked HTTP only', () => {
     const fetchMock = mockHttp();
     fetchMock.mockImplementation(async url => url.endsWith('/v1/analyze') ? pendingResponse : reply(url.endsWith('/ready') ? Ready : Modules));
     render(<App />); await chooseModule();
-    await userEvent.type(screen.getByLabelText('Additional clinical information'), 'Fictional transient narrative');
+    await userEvent.type(screen.getByLabelText('Case narrative'), 'Fictional transient narrative');
     fireEvent.submit(document.getElementById('caseForm')!); fireEvent.submit(document.getElementById('caseForm')!);
     expect(await screen.findByRole('button', { name: 'Analyzing…' })).toBeDisabled();
     expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/v1/analyze'))).toHaveLength(1);
     const signal = fetchMock.mock.calls.find(([url]) => url.endsWith('/v1/analyze'))![1]!.signal!;
     await userEvent.click(screen.getByRole('button', { name: 'Clear case' }));
-    expect(signal.aborted).toBe(true); expect(screen.getByLabelText('Additional clinical information')).toHaveValue('');
-    expect(screen.getByLabelText(/Clinical module/)).toHaveValue('');
+    expect(signal.aborted).toBe(true); expect(screen.getByLabelText('Case narrative')).toHaveValue('');
+    expect(document.querySelector('input[name=clinicalModule]:checked')).toBeNull();
     resolveResponse(reply(analysisResult()));
-    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Summary' })).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Evidence summary' })).not.toBeInTheDocument());
   });
   it('clears all entered fields and the response', async () => {
     mockHttp(); render(<App />); await chooseModule();
@@ -179,22 +180,25 @@ describe('clinician workflow with mocked HTTP only', () => {
     await userEvent.selectOptions(screen.getByLabelText('Case type'), 'detailed');
     await userEvent.selectOptions(screen.getByLabelText('Pregnancy status'), 'yes');
     await userEvent.selectOptions(screen.getByLabelText('PID status'), 'no');
-    await userEvent.type(screen.getByLabelText('Additional clinical information'), 'Fictional context');
-    await userEvent.click(screen.getByRole('button', { name: 'Analyze' }));
+    await userEvent.type(screen.getByLabelText('Case narrative'), 'Fictional context');
+    await userEvent.click(screen.getByRole('button', { name: 'Analyze case' }));
     await screen.findByText(DecisionNotice);
     await userEvent.click(screen.getByRole('button', { name: 'Clear case' }));
+    expect(document.querySelector('input[name=clinicalModule]:checked')).toBeNull();
+    expect(screen.queryByLabelText('Age range')).not.toBeInTheDocument();
+    await chooseModule();
     expect(screen.getByLabelText('Age range')).toHaveValue(''); expect(screen.getByLabelText('Case type')).toHaveValue('brief');
     expect(screen.getByLabelText('Pregnancy status')).toHaveValue('unknown'); expect(screen.getByLabelText('PID status')).toHaveValue('unknown');
-    expect(screen.getByLabelText('Additional clinical information')).toHaveValue(''); expect(screen.queryByText(DecisionNotice)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Case narrative')).toHaveValue(''); expect(screen.queryByText(DecisionNotice)).not.toBeInTheDocument();
   });
   it('retains no case state across remounts or browser page restoration', async () => {
     mockHttp(); const view = render(<App />); await chooseModule();
-    await userEvent.type(screen.getByLabelText('Additional clinical information'), 'Fictional transient context');
+    await userEvent.type(screen.getByLabelText('Case narrative'), 'Fictional transient context');
     fireEvent(window, new Event('pageshow'));
-    expect(screen.getByLabelText('Additional clinical information')).toHaveValue('');
+    expect(screen.getByLabelText('Case narrative')).toHaveValue('');
     view.unmount(); render(<App />);
-    expect(screen.getByLabelText('Additional clinical information')).toHaveValue('');
-    expect(screen.getByLabelText('Pregnancy status')).toHaveValue('unknown');
+    expect(screen.getByLabelText('Case narrative')).toHaveValue('');
+    expect(screen.queryByLabelText('Pregnancy status')).not.toBeInTheDocument();
   });
   it('never persists or logs case information or places it in URLs', async () => {
     const storageWrite = vi.spyOn(Storage.prototype, 'setItem');
@@ -202,35 +206,34 @@ describe('clinician workflow with mocked HTTP only', () => {
     const databaseOpen = vi.fn(); vi.stubGlobal('indexedDB', { open: databaseOpen });
     const logs = [vi.spyOn(console, 'log'), vi.spyOn(console, 'warn'), vi.spyOn(console, 'error')];
     const fetchMock = mockHttp(); render(<App />); await chooseModule();
-    await userEvent.type(screen.getByLabelText('Additional clinical information'), 'Fictional private marker');
-    await userEvent.click(screen.getByRole('button', { name: 'Analyze' })); await screen.findByText(DecisionNotice);
+    await userEvent.type(screen.getByLabelText('Case narrative'), 'Fictional private marker');
+    await userEvent.click(screen.getByRole('button', { name: 'Analyze case' })); await screen.findByText(DecisionNotice);
     expect(storageWrite).not.toHaveBeenCalled(); expect(cookieWrite).not.toHaveBeenCalled(); expect(databaseOpen).not.toHaveBeenCalled();
     logs.forEach(log => expect(log).not.toHaveBeenCalled());
     fetchMock.mock.calls.forEach(([url]) => expect(url).not.toContain('marker'));
     expect(window.location.href).not.toContain('marker');
   });
   it('provides keyboard access, labels, privacy context and narrative bounds', async () => {
-    mockHttp(); render(<App />); await screen.findByRole('option', { name: 'Fictional review module' });
+    mockHttp(); render(<App />); await screen.findByRole('radio', { name: 'Fictional review module' });
     await userEvent.tab(); expect(screen.getByRole('link', { name: 'Skip to case entry' })).toHaveFocus();
     await userEvent.tab(); expect(screen.getByRole('link', { name: 'Endo — case details' })).toHaveFocus();
     for (const label of ['Case details', 'Documents', 'Evidence review', 'Scope & safety']) {
       await userEvent.tab(); expect(screen.getByRole('link', { name: new RegExp(label) })).toHaveFocus();
     }
-    await userEvent.tab(); expect(screen.getByText('Clinical scope, limitations and boundary testing')).toHaveFocus();
-    await userEvent.tab(); expect(screen.getByLabelText(/Clinical module/)).toHaveFocus();
-    expect(screen.getByLabelText('Additional clinical information')).toHaveAttribute('maxlength', '2000');
-    expect(screen.getByLabelText('Additional clinical information')).toHaveAccessibleDescription(/omit names/);
-    expect(screen.getByRole('complementary', { name: 'Clinical and privacy boundaries' })).toHaveTextContent('Not a diagnostic or prescribing system');
+    await userEvent.tab(); expect(screen.getByRole('radio')).toHaveFocus();
+    expect(screen.getByLabelText('Case narrative')).toHaveAttribute('maxlength', '2000');
+    expect(screen.getByLabelText('Case narrative')).toHaveAccessibleDescription(/Do not include patient identifiers/);
+    expect(screen.getByRole('complementary', { name: 'Clinical and privacy boundaries' })).toHaveTextContent('clinician-facing decision support only');
     expect(screen.getByRole('heading', { level: 1 })).toBeVisible();
   });
   it('retains entered context and focuses ordinary results after analysis', async () => {
     mockHttp(); render(<App />); await chooseModule();
     await userEvent.selectOptions(screen.getByLabelText('Age range'), '25-34');
-    await userEvent.type(screen.getByLabelText('Additional clinical information'), 'Fictional context for refinement.');
-    await userEvent.click(screen.getByRole('button', { name: 'Analyze' }));
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Summary' })).toHaveFocus());
+    await userEvent.type(screen.getByLabelText('Case narrative'), 'Fictional context for refinement.');
+    await userEvent.click(screen.getByRole('button', { name: 'Analyze case' }));
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Evidence summary' })).toHaveFocus());
     expect(screen.getByLabelText('Age range')).toHaveValue('25-34');
-    expect(screen.getByLabelText('Additional clinical information')).toHaveValue('Fictional context for refinement.');
+    expect(screen.getByLabelText('Case narrative')).toHaveValue('Fictional context for refinement.');
   });
   it('focuses the urgent heading before ordinary results', async () => {
     mockHttp(analysisResult('AgentResponse', true)); render(<App />); await submit();
@@ -239,26 +242,26 @@ describe('clinician workflow with mocked HTTP only', () => {
   });
   it('focuses and associates sanitized validation feedback without deleting input', async () => {
     mockHttp({ detail: 'Remove direct identifiers before resubmitting.' }, 422); render(<App />); await chooseModule();
-    await userEvent.type(screen.getByLabelText('Additional clinical information'), 'Fictional validation case.');
-    await userEvent.click(screen.getByRole('button', { name: 'Analyze' }));
+    await userEvent.type(screen.getByLabelText('Case narrative'), 'Fictional validation case.');
+    await userEvent.click(screen.getByRole('button', { name: 'Analyze case' }));
     await waitFor(() => expect(screen.getByRole('alert')).toHaveFocus());
-    expect(screen.getByLabelText('Additional clinical information')).toHaveAccessibleDescription(/Remove direct identifiers/);
-    expect(screen.getByLabelText('Additional clinical information')).toHaveValue('Fictional validation case.');
+    expect(screen.getByLabelText('Case narrative')).toHaveAccessibleDescription(/Remove direct identifiers/);
+    expect(screen.getByLabelText('Case narrative')).toHaveValue('Fictional validation case.');
     expect(document.getElementById('caseForm')).toHaveAttribute('aria-describedby', 'requestError');
   });
   it('returns Clear focus to the required explicit module selection', async () => {
     mockHttp(); render(<App />); await submit();
     await screen.findByText(DecisionNotice);
     await userEvent.click(screen.getByRole('button', { name: 'Clear case' }));
-    await waitFor(() => expect(screen.getByLabelText(/Clinical module/)).toHaveFocus());
-    expect(screen.getByLabelText(/Clinical module/)).toHaveValue('');
-    expect(screen.getByRole('button', { name: 'Analyze' })).toBeDisabled();
+    await waitFor(() => expect(screen.getByRole('radio')).toHaveFocus());
+    expect(document.querySelector('input[name=clinicalModule]:checked')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Analyze case' })).toBeDisabled();
   });
   it('exposes a stable busy workspace and secondary Clear while analysis is pending', async () => {
     const fetchMock = mockHttp();
     fetchMock.mockImplementation(async url => url.endsWith('/v1/analyze') ? new Promise<Response>(() => {}) : reply(url.endsWith('/ready') ? Ready : Modules));
     render(<App />); await chooseModule();
-    await userEvent.click(screen.getByRole('button', { name: 'Analyze' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Analyze case' }));
     expect(screen.getByRole('region', { name: 'Evidence review' })).toHaveAttribute('aria-busy', 'true');
     expect(screen.getByText('Analysis in progress')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Analyzing…' })).toBeDisabled();

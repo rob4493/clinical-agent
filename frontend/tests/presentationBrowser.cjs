@@ -1,3 +1,8 @@
+async function selectModule(page, moduleId) {
+ await page.locator(`input[name=clinicalModule][value="${moduleId}"]`).check();
+ const context = page.locator('.additionalContext');
+ if (!(await context.getAttribute('open') !== null)) await context.locator('summary').first().click();
+}
 // Local real-route checks; reports contain counts only, never submitted content.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -14,14 +19,14 @@ async function run() {
    const context = await browser.newContext({ viewport: { width, height: 1100 }, serviceWorkers: 'block' });
    await context.route('**/*', route => { if (new URL(route.request().url()).origin !== Origin) { report.externalRequests++; return route.abort(); } return route.continue(); });
    const page = await context.newPage(); page.on('pageerror', () => report.pageErrors++);
-   await page.goto(Origin); await page.getByText('Ready for evidence review.', { exact: true }).waitFor();
-   await page.locator('#module').selectOption('module_01_endo');
+   await page.goto(Origin); await page.getByText('Select a clinical module to begin', { exact: true }).waitFor();
+   await selectModule(page, 'module_01_endo');
    await page.locator('#narrative').fill('Normal transvaginal ultrasound. Does this exclude endometriosis?');
-   await page.getByRole('button', { name: 'Analyze', exact: true }).click();
+   await page.getByRole('button', { name: 'Analyze case', exact: true }).click();
    const summary = page.locator('.directAnswer'); await summary.waitFor();
    const text = await summary.innerText(); assert.ok(text.includes('internal pelvic ultrasound')); assert.ok(text.includes('cannot rule out'));
    assert.ok(text.split(/\s+/).length <= 40); assert.ok((text.match(/[.!?](?:\s|$)/g) || []).length <= 2);
-   const details = page.getByRole('button', { name: 'View clinical and educational details' });
+   const details = page.getByRole('button', { name: 'Clinical details and sources' });
    assert.equal(await details.getAttribute('aria-expanded'), 'false'); await details.focus(); await page.keyboard.press('Space');
    assert.equal(await details.getAttribute('aria-expanded'), 'true');
    await page.getByRole('heading', { name: 'Medical terms explained' }).waitFor();
@@ -39,21 +44,21 @@ async function run() {
     stage = width + ':' + presetId + ':submit';
     await page.getByRole('button', { name: 'Clear case', exact: true }).click();
     if (presetId === 'pregBrief') {
-     await page.locator('#module').selectOption('module_02_early_pregnancy');
+     await selectModule(page, 'module_02_early_pregnancy');
      await page.getByLabel('Try a demonstration case').selectOption(presetId);
     } else {
-     await page.locator('#module').selectOption('module_01_endo');
+     await selectModule(page, 'module_01_endo');
      await page.locator('#caseType').selectOption('detailed');
      await page.locator('#pregnancy').selectOption('no');
      await page.locator('#pid').selectOption('no');
      await page.locator('#narrative').fill('Pelvic pain worsens with menstruation and pain during sex. Urinary and bowel symptoms are reported. Please review possible overlapping contributors.');
     }
-    await page.getByRole('button', { name: 'Analyze', exact: true }).click();
+    await page.getByRole('button', { name: 'Analyze case', exact: true }).click();
     await page.locator('.directAnswer').waitFor();
     stage = width + ':' + presetId + ':presentation';
     if (presetId === 'pregBrief') await page.getByRole('heading', { name: 'Next consideration' }).waitFor();
     else {
-     const points = page.getByRole('button', { name: /^Key points \(/ }); await points.waitFor();
+     const points = page.getByRole('button', { name: /^Clinical considerations \(/ }); await points.waitFor();
      assert.equal(await points.getAttribute('aria-expanded'), 'false');
      assert.equal(await page.locator('.keyPoints li').count(), 0);
      await points.focus(); await page.keyboard.press('Space');

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { ClinicalModule, Review, RuntimeMode, PregnancyContext } from './api';
-import { CompetitionBanner, DemoNotice, isReady, readError, readModules, readReview, requestJson, UnexpectedMessage } from './api';
+import { EvaluationBanner, DemoNotice, isReady, readError, readModules, readReview, requestJson, UnexpectedMessage } from './api';
 import ResponsePanel from './ResponsePanel';
 import { compactSummary, explainFindings } from './responsePresentation';
 import { resolveVisualFindings } from './findingRules';
@@ -33,6 +33,7 @@ export default function App() {
   const [narrative, setNarrative] = useState('');
   const [earlyPregnancy, setEarlyPregnancy] = useState<PregnancyContext>({});
   const [demoCaseId, setDemoCaseId] = useState('');
+  const [demoLoaded, setDemoLoaded] = useState(false);
   const [review, setReview] = useState<Review | null>(null);
   const [findings, setFindings] = useState<FindingCard[]>([]);
   const [error, setError] = useState('');
@@ -45,7 +46,8 @@ export default function App() {
   const [pending, setPending] = useState(false);
   const [uploads, setUploads] = useState<UploadSession>(EmptySession);
   const [uploadGeneration, setUploadGeneration] = useState(0);
-  const updateUploads = useCallback((session: UploadSession) => { setUploads(session); setReview(null); setFindings([]); setError(''); }, []);
+  const [contextOpen, setContextOpen] = useState(false);
+  const updateUploads = useCallback((session: UploadSession) => { setUploads(session); setReview(null); setFindings([]); setError(''); if (session.documents.length) setDemoLoaded(false); }, []);
   const [cancellationMessage, setCancellationMessage] = useState('');
   const requestController = useRef<AbortController | null>(null);
   const requestTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -54,7 +56,7 @@ export default function App() {
   const pendingRequest = useRef(false);
   const mounted = useRef(true);
   const narrativeRef = useRef<HTMLTextAreaElement>(null);
-  const moduleRef = useRef<HTMLSelectElement>(null);
+  const moduleRef = useRef<HTMLInputElement>(null);
 
   const clearCase = useCallback(() => {
     // Invalidate even a transport that ignores abort: a late result cannot restore cleared case data.
@@ -66,8 +68,8 @@ export default function App() {
     setPending(false); setReview(null); setFindings([]); setError(''); setCancellationMessage('');
     requestController.current = null;
     setModuleId(''); setAgeRange(''); setCaseType('brief');
-    setPregnancy('unknown'); setPid('unknown'); setNarrative(''); setDemoCaseId('');
-    setEarlyPregnancy({});
+    setPregnancy('unknown'); setPid('unknown'); setNarrative(''); setDemoCaseId(''); setDemoLoaded(false);
+    setEarlyPregnancy({}); setContextOpen(false);
     setUploads(EmptySession); setUploadGeneration(generation => generation + 1);
   }, []);
 
@@ -119,22 +121,23 @@ export default function App() {
     };
   }, [clearCase, loadAvailability]);
 
-  function discardReview() { setReview(null); setFindings([]); setError(''); setCancellationMessage(''); }
+  function discardReview() { setReview(null); setFindings([]); setError(''); setCancellationMessage(''); setDemoLoaded(false); }
 
   function chooseDemo(caseId: string) {
     if (!(synthetic || runtimeMode === 'competition') || pendingRequest.current) return;
-    const example = [...DemoCases, ...PregnancyCases].find(example => example.id === caseId);
-    setDemoCaseId(caseId);
+    if (!caseId) { setDemoCaseId(''); setDemoLoaded(false); return; }
+    const example = examples.find(example => example.id === caseId);
     if (!example) return;
+    const assignedId = synthetic ? example.syntheticModuleId : example.moduleId;
+    const assignedModule = modules.find(module => module.moduleId === assignedId);
+    if (!assignedModule?.supportedCaseTypes.includes(example.caseType)) return;
     discardReview();
     setUploads(EmptySession); setUploadGeneration(generation => generation + 1);
+    // The fixture's reviewed assignment is an explicit choice, not symptom routing.
+    setModuleId(assignedModule.moduleId); setDemoCaseId(caseId);
     setAgeRange(example.ageRange); setCaseType(example.caseType);
     setPregnancy(example.pregnancy); setPid(example.pid); setNarrative(example.narrative);
-    setEarlyPregnancy({ ...example.earlyPregnancy });
-    // Choosing an example explicitly selects its sole backend-provided demo context.
-    // Ambiguous or unavailable modules remain unselected; symptoms never choose one.
-    const requestedModule = example.moduleId || (modules.length === 1 ? modules[0].moduleId : runtimeMode === 'competition' ? 'module_01_endo' : '');
-    if (modules.some(module => module.moduleId === requestedModule && module.supportedCaseTypes.includes(example.caseType))) setModuleId(requestedModule);
+    setEarlyPregnancy({ ...example.earlyPregnancy }); setContextOpen(false); setDemoLoaded(true);
   }
 
   useEffect(() => {
@@ -147,7 +150,8 @@ export default function App() {
   async function submitCase(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const selected = modules.find(module => module.moduleId === moduleId);
-    if (pendingRequest.current || loading || uploads.blocked || !canRequest || !selected || !selected.supportedCaseTypes.includes(caseType)) return;
+    if (!selected) { setError('Select the clinical module before analyzing this case.'); moduleRef.current?.focus(); return; }
+    if (pendingRequest.current || loading || uploads.blocked || !validContext || !canRequest || !selected || !selected.supportedCaseTypes.includes(caseType)) return;
     // This ref closes the duplicate-click window before React applies state updates.
     pendingRequest.current = true; setPending(true); discardReview();
     const generation = ++requestGeneration.current;
@@ -173,7 +177,7 @@ export default function App() {
       const result = await requestJson('/v1/analyze', controller.signal, payload);
       if (!mounted.current || controller.signal.aborted || requestGeneration.current !== generation) return;
       if (result.runtimeMode !== runtimeMode) throw new Error(UnexpectedMessage);
-      if (result.status === 422) setError(readError(result.payload));
+      if (result.status === 422) { setContextOpen(true); setError(readError(result.payload)); }
       else if ([200, 404, 503].includes(result.status)) {
         const completed = readReview(result.payload, synthetic, runtimeMode);
         const visuals = await resolveVisualFindings(payload, completed);
@@ -198,8 +202,19 @@ export default function App() {
 
   const selected = modules.find(module => module.moduleId === moduleId);
   const supported = selected?.supportedCaseTypes.includes(caseType) ?? false;
-  const canSubmit = Boolean(selected) && canRequest && !pending && !loading && supported && !uploads.blocked;
-  const examples = runtimeMode === 'competition' && moduleId === 'module_02_early_pregnancy' ? PregnancyCases : DemoCases;
+  const validContext = earlyPregnancy.gestationalWeeks == null || Number.isFinite(earlyPregnancy.gestationalWeeks) && earlyPregnancy.gestationalWeeks >= 0 && earlyPregnancy.gestationalWeeks <= 45 && Math.abs(earlyPregnancy.gestationalWeeks * 10 - Math.round(earlyPregnancy.gestationalWeeks * 10)) < 0.000001;
+  const canSubmit = validContext && Boolean(selected) && canRequest && !pending && !loading && supported && !uploads.blocked;
+  const examples = (synthetic ? DemoCases : runtimeMode === 'competition' ? [...DemoCases, ...PregnancyCases] : []).filter(example => modules.some(module => module.moduleId === (synthetic ? example.syntheticModuleId : example.moduleId) && module.supportedCaseTypes.includes(example.caseType)));
+  const caseStatus = !selected ? 'Select a clinical module to begin' : demoLoaded ? 'Demonstration case loaded — verify the selected module and case information before analyzing' : uploads.blocked ? 'Review and confirm uploaded information before analysis' : validContext && (narrative.trim() || uploads.candidates.length) ? 'Ready to analyze' : 'Module selected — enter or review the case narrative';
+
+  function chooseModule(nextId: string) {
+    if (nextId === moduleId) return;
+    // Do not transfer module-specific context or confirmed document findings to a new module.
+    setModuleId(nextId); setEarlyPregnancy({}); setPregnancy('unknown'); setPid('unknown');
+    setDemoCaseId(''); setContextOpen(false); setUploads(EmptySession); setUploadGeneration(generation => generation + 1);
+    discardReview();
+  }
+  const contextLabel = [ageRange ? `Age: ${ageRange}` : '', caseType === 'detailed' ? 'Detailed case' : '', pregnancy !== 'unknown' ? `Pregnancy: ${pregnancy === 'yes' ? 'Possible / known' : 'Not possible'}` : '', pid !== 'unknown' ? `PID: ${pid === 'yes' ? 'Diagnosed / presumed' : 'Not diagnosed'}` : '', Object.keys(earlyPregnancy).some(key => earlyPregnancy[key as keyof PregnancyContext] != null) ? 'Early-pregnancy context entered' : ''].filter(Boolean).join(' · ');
 
   return <>
     <a className="skipLink" href="#caseForm">Skip to case entry</a>
@@ -208,57 +223,60 @@ export default function App() {
     <WorkflowBar pending={pending} hasResponse={Boolean(review)} />
     <main>
       <div className="pageIntro"><p className="eyebrow">Endo · Clinical Evidence Assistant</p><h1>New evidence review</h1><p>Bring the case into focus. Review the evidence with confidence and care.</p></div>
-      {synthetic && <aside className="demoBanner" aria-label="Synthetic demonstration boundary"><strong>{DemoNotice}</strong></aside>}
-      {runtimeMode === 'competition' && <aside className="demoBanner" aria-label="Competition evaluation boundary"><strong>{CompetitionBanner}</strong></aside>}
-      <aside className="privacyBanner" aria-label="Clinical and privacy boundaries"><strong>Clinician-facing only</strong><span>De-identified, minimum-necessary information only.</span><span>Not a diagnostic or prescribing system.</span></aside>
-      <ScopePanel synthetic={synthetic} competition={runtimeMode === 'competition'} pregnancyAvailable={modules.some(module => module.moduleId === 'module_02_early_pregnancy')} />
+      <aside className="demoBanner" aria-label="Clinical and privacy boundaries"><strong>{EvaluationBanner}</strong>{synthetic && <p>{DemoNotice}</p>}</aside>
       <div className="workspace">
         <section className="card caseCard" aria-labelledby="caseTitle">
           <div className="cardHeading"><div><h2 id="caseTitle">Build the case</h2><p className="cardSubtitle">Add key details for a focused evidence review.</p></div><span className="memoryLabel">In-memory only</span></div>
           <div className="availability" role="status" aria-live="polite">
-            {loading ? 'Checking module availability…' : availabilityError || (!modules.length ? 'No approved clinical modules are available. The demo is not ready for analysis; no clinical module has been activated.' : !ready ? runtimeMode === 'competition' && canRequest ? 'Language provider unavailable. You can submit a case to review safety outcomes and the safe provider-unavailable response.' : 'Analysis services are not ready. An available module and configured analysis dependencies are required.' : synthetic || runtimeMode === 'competition' ? 'Ready for evidence review.' : 'Approved module and analysis dependencies available.')}
+            {loading ? 'Checking module availability…' : availabilityError || (!modules.length ? 'No approved clinical modules are available. The demo is not ready for analysis; no clinical module has been activated.' : !ready ? runtimeMode === 'competition' && canRequest ? 'Language provider unavailable. You can submit a case to review safety outcomes and the safe provider-unavailable response.' : 'Analysis services are not ready. An available module and configured analysis dependencies are required.' : pending ? 'Analyzing case…' : caseStatus)}
           </div>
           {!loading && (!ready || availabilityError) && <button type="button" className="textButton" onClick={() => { discardReview(); void loadAvailability(); }} disabled={pending}>Refresh availability</button>}
-          <form id="caseForm" tabIndex={-1} onSubmit={submitCase} autoComplete="off" aria-describedby={error ? 'requestError' : undefined}>
+          <form id="caseForm" tabIndex={-1} onSubmit={submitCase} onInvalid={() => setContextOpen(true)} autoComplete="off" aria-describedby={error ? 'requestError' : undefined}>
             <fieldset disabled={pending}>
               <legend className="visuallyHidden">Structured case context</legend>
               {(synthetic || runtimeMode === 'competition') && <div className="demoExamples">
+                <p className="eyebrow">Demonstration / evaluation</p>
                 <label htmlFor="demoCase">Try a demonstration case</label>
-                <select id="demoCase" value={demoCaseId} onChange={event => chooseDemo(event.target.value)} aria-describedby="demoCaseHelp">
-                  <option value="">Choose an example</option>
+                <select id="demoCase" value={demoCaseId} disabled={loading || !examples.length} onChange={event => chooseDemo(event.target.value)} aria-describedby="demoCaseHelp">
+                  <option value="">Choose a demonstration case</option>
                   {examples.map(example => <option key={example.id} value={example.id}>{example.label}</option>)}
                 </select>
-                <p id="demoCaseHelp" className="fieldHint">Review and edit before selecting Analyze. {examples.find(example => example.id === demoCaseId)?.explanation}</p>
+                <p id="demoCaseHelp" className="fieldHint">Review and edit before selecting Analyze case. {examples.find(example => example.id === demoCaseId)?.explanation}</p>
               </div>}
-              <div className="caseTopRow"><div className="moduleField"><label htmlFor="module">Clinical module <span className="required">Required</span></label>
-              <select ref={moduleRef} id="module" value={moduleId} disabled={loading || !modules.length} required aria-describedby="moduleHelp" onChange={event => { setModuleId(event.target.value); setEarlyPregnancy({}); setDemoCaseId(''); discardReview(); }}>
-                <option value="">Select a clinical module</option>{modules.map(module => <option key={module.moduleId} value={module.moduleId}>{module.displayName}</option>)}
-              </select>
-              <p id="moduleHelp" className="fieldHint">Choose explicitly. A module is never inferred from the narrative.</p>
-              </div>
+              <fieldset className="moduleChoices" aria-describedby="moduleHelp">
+                <legend>Select clinical module <span className="required">Required</span></legend>
+                <div className="moduleCards">{modules.map((module, index) => <label key={module.moduleId} className={`moduleCard${moduleId === module.moduleId ? ' selected' : ''}`}>
+                  <input ref={index === 0 ? moduleRef : undefined} type="radio" name="clinicalModule" value={module.moduleId} checked={moduleId === module.moduleId} disabled={loading} onChange={() => chooseModule(module.moduleId)} />
+                  <span>{module.moduleId === 'module_01_endo' ? 'Endometriosis & Chronic Pelvic Pain' : module.moduleId === 'module_02_early_pregnancy' ? 'Early Pregnancy Pain & Bleeding' : module.displayName}</span>
+                  <span className="moduleState" aria-hidden="true">{moduleId === module.moduleId ? 'Selected' : 'Select module'}</span>
+                </label>)}</div>
+                <p id="moduleHelp" className="fieldHint">{moduleId ? 'Module selected explicitly; narrative text will not override it.' : 'Select the clinical module before analyzing this case.'}</p>
+              </fieldset>
+              <label htmlFor="narrative">Case narrative</label>
+              <p id="narrativeHelp" className="fieldHint">Enter relevant symptoms, duration, examination findings, test results or a focused clinical question. Do not include patient identifiers.</p>
+              <textarea ref={narrativeRef} id="narrative" value={narrative} maxLength={2000} rows={6} aria-describedby={`narrativeHelp narrativeCount${error ? ' requestError' : ''}`} autoComplete="off" spellCheck={false} placeholder="Relevant symptoms, duration, test findings or a focused question. Omit identifiers; leave unreported information unknown." onChange={event => { setNarrative(event.target.value); discardReview(); }} />
+              <p id="narrativeCount" className="characterCount">{narrative.length} / 2,000 characters</p>
+              {selected && <details className="additionalContext" open={contextOpen} onToggle={event => setContextOpen(event.currentTarget.open)}>
+                <summary>Additional clinical context{!contextOpen && contextLabel && <span className="contextPreview">{contextLabel}</span>}</summary>
               <div className="fieldGrid">
                 <div><label htmlFor="ageRange">Age range</label><select id="ageRange" value={ageRange} onChange={event => { setAgeRange(event.target.value); discardReview(); }}><option value="">Unknown / not provided</option>{AgeRanges.map(range => <option key={range} value={range.replace('–', '-')}>{range}</option>)}</select></div>
                 <div><label htmlFor="caseType">Case type</label><select id="caseType" value={caseType} onChange={event => { setCaseType(event.target.value as 'brief' | 'detailed'); discardReview(); }}><option value="brief">Brief</option><option value="detailed">Detailed</option></select></div>
-              </div></div>
+              </div>
               <div className="statusFields">
                 <div><label htmlFor="pregnancy">Pregnancy status</label><select id="pregnancy" value={pregnancy} onChange={event => { setPregnancy(event.target.value as Status); discardReview(); }}><option value="unknown">Unknown / not provided</option><option value="yes">Possible / known</option><option value="no">Not possible</option></select></div>
                 <div><label htmlFor="pid">PID status</label><select id="pid" value={pid} onChange={event => { setPid(event.target.value as Status); discardReview(); }}><option value="unknown">Unknown / not provided</option><option value="yes">Diagnosed or presumptively diagnosed</option><option value="no">Not diagnosed</option></select></div>
               </div>
               {moduleId === 'module_02_early_pregnancy' && <PregnancyFields context={earlyPregnancy} onChange={context => { setEarlyPregnancy(context); discardReview(); }} />}
-              <div className="contextSummary"><p className="summaryLabel">Structured context · sent separately</p><div className="contextChips" aria-label="Selected structured context"><span>Age: {ageRange || 'Unknown'}</span><span>{caseType === 'brief' ? 'Brief' : 'Detailed'} case</span><span>Pregnancy: {pregnancy === 'unknown' ? 'Unknown' : pregnancy === 'yes' ? 'Possible / known' : 'Not possible'}</span><span>PID: {pid === 'unknown' ? 'Unknown' : pid === 'yes' ? 'Diagnosed / presumed' : 'Not diagnosed'}</span></div></div>
-              <label htmlFor="narrative">Additional clinical information</label>
-              <p id="narrativeHelp" className="fieldHint">Selected context is sent separately. Add only relevant clinical information; omit names, exact birth dates, addresses, contact details and medical-record numbers.</p>
-              <textarea ref={narrativeRef} id="narrative" value={narrative} maxLength={2000} rows={6} aria-describedby={`narrativeHelp narrativeCount${error ? ' requestError' : ''}`} autoComplete="off" spellCheck={false} placeholder="Relevant symptoms, duration, test findings or a focused question. Omit identifiers; leave unreported information unknown." onChange={event => { setNarrative(event.target.value); discardReview(); }} />
-              <p id="narrativeCount" className="characterCount">{narrative.length} / 2,000 characters</p>
+              </details>}
               <UploadPanel key={uploadGeneration} onChange={updateUploads} disabled={pending} />
             </fieldset>
             {!supported && selected && <p role="status" className="fieldHint">This module does not support the selected case type.</p>}
             {error && <p id="requestError" tabIndex={-1} className="errorPanel" role="alert">{error}</p>}
-            <div className="formActions"><button className="primaryButton" type="submit" disabled={!canSubmit}>{pending ? 'Analyzing…' : 'Analyze'}</button><button className="clearButton" type="button" onClick={() => {
+            <div className="formActions"><button className="primaryButton" type="submit" disabled={!canSubmit}>{pending ? 'Analyzing…' : 'Analyze case'}</button><button className="clearButton" type="button" onClick={() => {
               clearCase();
               const generation = requestGeneration.current;
               requestAnimationFrame(() => {
-                if (mounted.current && requestGeneration.current === generation) (moduleRef.current?.disabled ? narrativeRef.current : moduleRef.current)?.focus();
+                if (mounted.current && requestGeneration.current === generation) (moduleRef.current ?? narrativeRef.current)?.focus();
               });
             }}>Clear case</button></div>
             <p className="submissionStatus" role="status" aria-live="polite">{pending ? 'Request in progress. Please wait.' : cancellationMessage || (review ? 'Response available for review.' : '')}</p>
@@ -266,6 +284,7 @@ export default function App() {
         </section>
         <ResponsePanel findings={findings} review={review} synthetic={synthetic} competition={runtimeMode === 'competition'} pending={pending} />
       </div>
+      <ScopePanel synthetic={synthetic} competition={runtimeMode === 'competition'} pregnancyAvailable={modules.some(module => module.moduleId === 'module_02_early_pregnancy')} />
       <footer><strong>Endo</strong><span>Minimum necessary information. Independent clinical judgment.</span></footer>
     </main>
     </div>

@@ -3,6 +3,7 @@ export const UnexpectedMessage = 'Unable to complete this request. Please try ag
 export const DemoNotice = 'Synthetic demonstration — uses fictional test evidence and must not be used for clinical care.';
 export const SyntheticNotice = 'Synthetic demonstration only; not a diagnosis, treatment selection, or substitute for clinical judgment.';
 export const CompetitionNotice = 'Decision-support notice: Evidence support only; not a diagnosis, treatment selection, or substitute for clinical judgment.';
+export const EvaluationBanner = 'Evaluation system — clinician-facing decision support only. Use de-identified, minimum-necessary information.';
 export const CompetitionBanner = 'Reviewed with healthcare professionals for evaluation and feedback. Not validated or approved for patient care.';
 export const PrescribingNotice = 'Medication selection, dosing and patient-specific prescribing are outside this system’s scope.';
 export type RuntimeMode = 'standard' | 'synthetic' | 'competition' | 'production';

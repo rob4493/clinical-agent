@@ -14,8 +14,8 @@ describe('synthetic presentation without clinical approval claims', () => {
   it.each(['AgentResponse', 'DataConflict', 'ClarificationRequired', 'EvidenceInsufficient'])('shows one banner, one response label and the synthetic notice for %s', async outcome => {
     mockDemo(outcome); render(<App />);
     await screen.findByText(DemoNotice);
-    await userEvent.selectOptions(screen.getByLabelText(/Clinical module/), 'FictionalModule');
-    await userEvent.click(screen.getByRole('button', { name: 'Analyze' }));
+    await userEvent.click(screen.getByDisplayValue('FictionalModule'));
+    await userEvent.click(screen.getByRole('button', { name: 'Analyze case' }));
     expect(await screen.findByText('Synthetic demonstration response')).toBeVisible();
     expect(screen.getAllByText(DemoNotice)).toHaveLength(1);
     expect(screen.getAllByText('Synthetic demonstration response')).toHaveLength(1);
@@ -27,7 +27,7 @@ describe('synthetic presentation without clinical approval claims', () => {
     expect(panel.style.minHeight).toBe('');
     expect(panel).not.toHaveTextContent(/no urgent warning|no urgent issues/i);
     if (outcome === 'AgentResponse') {
-      expect(screen.getByRole('heading', { name: 'Summary' })).toBeVisible();
+      expect(screen.getByRole('heading', { name: 'Evidence summary' })).toBeVisible();
       await userEvent.click(screen.getByRole('button', { name: 'Sources (1)' }));
       const source = screen.getByRole('button', { name: '[1] View source details' });
       expect(panel).not.toHaveTextContent(/fictional example|fictional demonstration source/i);
