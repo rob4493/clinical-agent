@@ -2,7 +2,9 @@
 
 Clinical Evidence Assistant
 
-A local demonstration that helps healthcare professionals review case information alongside supporting medical evidence. You can explore it without medical expertise by loading the supplied example cases.
+A clinician-facing evaluation application that helps healthcare professionals review de-identified case information alongside supporting medical evidence. The supplied demonstration cases allow evaluators to inspect the workflow without entering a case manually.
+
+Public evaluation site: **[clinicalagent.netlify.app](https://clinicalagent.netlify.app/)**
 
 **Use fictional cases only. This application is not approved for patient care.** It does not diagnose, estimate disease probability, infer disease stage or pregnancy viability, prescribe, provide medication doses, or choose treatment for a person.
 
@@ -11,12 +13,15 @@ Developers and future integrations share a [versioned clinical-data contract](sh
 ## What works today
 
 - A React website with a same-origin Netlify evaluation API; FastAPI remains available for local development.
-- Explicit topic selection, structured case fields and editable examples.
+- Explicit module-card selection, a primary case-narrative input, conditionally displayed structured fields and reviewed demonstration cases.
 - Conflict and clarification checks, predefined urgent warnings, evidence retrieval and citation validation.
-- Concise responses, relevant source links and safe evidence-insufficient outcomes.
+- Concise clinician-oriented responses, relevant source links, reviewed visuals and safe evidence-insufficient outcomes.
+- Browser-memory PDF, DOCX and TXT review with clinician confirmation before analysis.
+- Optional server-side watsonx.ai presentation support that cannot replace the deterministic clinical analysis.
+- IBM watsonx Orchestrate integration assets for a separate conversational evaluation agent.
 - Two competition topics: **Endometriosis and Chronic Pelvic Pain** and **Early Pregnancy Pain and Bleeding**.
 
-The competition topics use separate, integrity-verified, project-authored evaluation summary packages. Their eligibility for controlled evaluation does **not** approve the sources for authentic clinical use. All four authentic clinical modules remain inactive and pending review. The language provider is simulated in the offline evaluator; IBM and Milvus are not connected.
+The competition topics use separate, integrity-verified, project-authored evaluation summary packages. Their eligibility for controlled evaluation does **not** approve the sources for authentic clinical use. All four authentic clinical modules remain inactive and pending review. A clean local checkout remains deterministic and does not require IBM or Milvus. Authorized hosted environments can separately enable the constrained watsonx.ai presentation adapter, and the Orchestrate assets can connect a deployed IBM agent to the same public evaluation API.
 
 Original project code and original documentation are licensed under **Apache License 2.0**. Clinical sources, publisher files, knowledge documents and complete source-derived claim packages are **not distributed or licensed by this repository**. See [licensing boundaries](THIRD_PARTY_NOTICES.md).
 
@@ -38,7 +43,7 @@ node --version
 npm --version
 ```
 
-If you already have this project, open its existing folder instead. The folder must contain `backend`, `frontend`, `tests` and this README.
+If you already have this project, open its existing folder instead. The folder must contain `backend`, `frontend`, `netlify`, `shared`, `evaluation`, `tests` and this README. The `orchestrate` directory is included in releases that contain the IBM agent integration assets.
 
 ## Install once
 
@@ -85,7 +90,7 @@ No source download or private installation is needed for the public evaluation p
 .\.venvMilvus\Scripts\python.exe -B -m tools.runDemo --mode competition
 ```
 
-Use the same frontend command above. Confirm the evaluation/privacy banner. Load a demonstration case, or explicitly select **Endometriosis & Chronic Pelvic Pain** or **Early Pregnancy Pain & Bleeding** for manual entry. The professional-review statement and detailed limits remain under **Scope & safety** below the workspace. Responses are composed deterministically from the reviewed public summaries; no live model is connected. Authentic sources remain pending review and authentic modules inactive. Missing or altered public packages or safety code invalidate evaluation readiness. Do not edit hashes to bypass review.
+Use the same frontend command above. Confirm the evaluation/privacy banner. Load a demonstration case, or explicitly select **Endometriosis & Chronic Pelvic Pain** or **Early Pregnancy Pain & Bleeding** for manual entry. The professional-review statement and detailed limits remain under **Scope & safety** below the workspace. The local launcher composes responses deterministically from the reviewed public summaries and does not enable a live model. Authentic sources remain pending review and authentic modules inactive. Missing or altered public packages or safety code invalidate evaluation readiness. Do not edit hashes to bypass review.
 
 Keep age range and case type in dropdowns rather than repeating them in the narrative. Pregnancy and PID have Yes, No and Unknown states; PID means pelvic inflammatory disease, and this field records a clinician-reported diagnosis rather than one made by the app. Module 2 has additional pregnancy-test and ultrasound context. Results start with a short Evidence summary when an exact reviewed mapping is available. Clinical considerations, full clinical details and Sources expand on request. Click a numbered citation to open its source list; urgent warnings and prescribing boundaries stay visible. Absence of a warning does not prove safety.
 
@@ -118,7 +123,7 @@ Set-Location ..
 
 The full historical backend command remains `python -B -m pytest tests/ -v`. It requires the private evidence/knowledge/review fixtures at their original ignored paths in an authorized developer workspace; it does not silently invent or skip absent evidence. Clear `MODULE_ROOT` before running that original full suite. No historical assertions have been weakened. A public source-only clone cannot execute evidence-bearing regressions without those separately supplied fixtures.
 
-`npm run build` produces `frontend/dist`; it does not start a server. The public site uses the same-origin Netlify Function in this repository. It needs no separately hosted backend or private evidence. Plain static hosting alone cannot provide analysis. FastAPI is retained as a separate local-development option. No live IBM or Milvus connection is enabled.
+`npm run build` produces `frontend/dist`; it does not start a server. The public site uses the same-origin Netlify Function in this repository. It needs no separately hosted backend or private evidence. Plain static hosting alone cannot provide analysis. FastAPI is retained as a separate local-development option. A local build does not activate IBM or Milvus merely by being installed; IBM runtime behavior requires explicit server-side configuration.
 
 To create a source-only distribution in a new directory:
 
@@ -145,13 +150,13 @@ Press **Ctrl+C in both windows** to stop. Closing the browser alone does not sto
 
 ## What is included
 
-`backend`, `frontend`, `tests` and `tools` contain original application code, configuration, synthetic test fixtures and test tools. Requirements and the npm lockfile declare separately installed dependencies. `backend/releaseModules` holds inactive configurations without evidence. `EvidenceSources.example.json` holds only identities, filenames, official links, hashes and claim IDs. `ReleaseFiles.txt` is the exact source-release inventory.
+`backend`, `frontend`, `netlify`, `orchestrate`, `shared`, `evaluation`, `tests` and `tools` contain original application code, configuration, public evaluation packages, integration assets, synthetic fixtures and test tools. Requirements and the npm lockfile declare separately installed dependencies. `backend/releaseModules` holds inactive configurations without evidence. `EvidenceSources.example.json` holds only identities, filenames, official links, hashes and claim IDs. `ReleaseFiles.txt` is the exact source-release inventory.
 
 Protected source originals, private source-runtime packages, knowledge documents, intake originals, source-derived review packets, environments, node_modules, builds, screenshots, logs, local coding instructions and historical reports stay untracked. They must not be included in archives, frontend assets or image contexts. Apache 2.0 covers only original project work; it does not grant source rights, trademarks or third-party dependency rights.
 
 ## Tester hosting configuration
 
-The public evaluation site runs entirely on Netlify: the React interface calls a same-origin TypeScript Function through `/api/*`. No separate backend, API key or private evidence installation is required. The root `netlify.toml` pins Node 24.21.0, installs and builds through `npm --prefix frontend`, publishes only `frontend/dist`, and supports page refreshes. Its repository-root base keeps function paths consistent. Run `npm ci` and `npm run build` inside `frontend`.
+The public evaluation site runs entirely on Netlify: the React interface calls a same-origin TypeScript Function through `/api/*`. The deterministic core requires no separate backend, provider API key or private evidence installation. Optional watsonx.ai operation requires separately configured server-side IBM credentials. The root `netlify.toml` pins Node 24.21.0, installs and builds through `npm --prefix frontend`, publishes only `frontend/dist`, and supports page refreshes. Its repository-root base keeps function paths consistent. Run `npm ci` and `npm run build` inside `frontend`.
 
 Modules 1 and 2 use the repository's original evaluation summaries and deterministic server-side composition. They are reviewedForEvaluation and competitionReady, never approved for patient care. Original clinical publications are not distributed. FastAPI remains available for local development. See [hosting, health checks, local emulation and rollback](TesterDeployment.md). A failed integrity or availability check keeps Analyze unavailable. No deployment is performed by these files.
 
@@ -169,23 +174,45 @@ See [Document review and limits](shared/DocumentReview.md) for supported formats
 
 ## Endo interface
 
-Endo is the Clinical Evidence Assistant shown in the browser. The centered case workspace keeps explicit module selection, document review and evidence safeguards. There is no separate reviewer agent or Review Companion panel. See [Endo design and accessibility](shared/EndoDesign.md) for the visual system and its differences from the design reference.
+Endo is the Clinical Evidence Assistant shown in the browser. The centered case workspace keeps explicit module selection, document review and evidence safeguards. The current website does not embed the separate Orchestrate agent and has no Review Companion panel. See [Endo design and accessibility](shared/EndoDesign.md) for the visual system and its differences from the design reference.
 
 Response display and reviewed plain-language wording: see [Response presentation](shared/ResponsePresentation.md).
 
 Protected Netlify Deploy Previews use browser-managed same-origin credentials for `/api/*`, so an existing Netlify login also authenticates API requests. The client never reads or constructs cookies, adds Authorization headers, or sends requests to a cross-origin API target; redirects remain blocked. This does not change server-to-IBM authentication.
 
-## Optional IBM presentation shadow integration
+## IBM watsonx integrations
 
-The Netlify runtime includes a **disabled-by-default, server-only** watsonx.ai shadow adapter. It is not required to run either evaluation module. When explicitly enabled by an authorized operator, it sends only reviewed public presentation facts to IBM, validates the result and discards the generated prose. The visible response remains deterministic. It never sends case notes or uploaded documents.
+The clinical authority remains the deterministic Endo engine. It validates the request, applies safety rules, selects reviewed claims and reconstructs warnings, wording, sources and citations. IBM models cannot replace that analysis or create unrestricted clinical content.
 
-See [shadow-mode configuration, safeguards and limitations](shared/WatsonShadow.md). No IBM integration is enabled by this repository. Do not put provider settings in frontend/Vite variables. Actual model availability, IAM permissions and IBM data-handling settings require a separate controlled connectivity review.
+### watsonx.ai presentation modes
 
-### Optional reviewed Watson presentation
+The Netlify runtime includes an optional, server-only watsonx.ai presentation adapter. The repository and clean local checkout work without IBM; an authorized hosted environment activates the adapter only through server-side configuration.
 
-The Netlify evaluation runtime works without IBM. Watson stays disabled by default. An administrator may test `shadow` (validated output is discarded) or `reviewed` (only exact repository-approved display variants may appear in the existing Summary). Neither mode changes the clinical analysis or approves clinical use. See [the protected-preview and rollback instructions](shared/WatsonReviewed.md). No credentials belong in browser settings.
+- `shadow` sends a bounded public presentation payload, validates the model result and discards it. The visible response remains deterministic.
+- `reviewed` accepts only opaque selections from repository-approved presentation variants. The server validates every selection, then reconstructs the exact trusted wording, claim bindings and citations locally.
 
-### Simplified clinician workspace
+The presentation adapter never receives raw case narratives, demographics, measurements, uploaded text, filenames, document metadata, patient identifiers, source files, official URLs or browser-generated citation numbers. Urgent, conflicting, clarification, insufficient-evidence and unsupported presentation cases can skip the model and retain deterministic handling. Provider failure, timeout, cancellation or validation failure falls back to the unchanged deterministic response.
+
+See [shadow-mode safeguards](shared/WatsonShadow.md) and [reviewed-mode configuration and rollback](shared/WatsonReviewed.md). Keep IBM credentials and configuration in server-side environment variables only; never place them in frontend or Vite settings.
+
+### watsonx Orchestrate agent
+
+The `orchestrate` directory contains the IBM Bob-assisted integration package:
+
+- An OpenAPI 3.0.3 specification exposing only `GET /api/v1/modules` and `POST /api/v1/analyze`.
+- Fail-closed agent instructions requiring the Endo analysis tool for every clinical evaluation.
+- Verified synthetic Module 1 and Module 2 demonstration cases.
+- Setup, evaluation and deployment documentation.
+
+The Orchestrate agent provides a separate conversational interface. Its IBM agent model can read a de-identified conversation, request an explicit module and build a tool call, but the Endo API remains the clinical authority. The agent must return the API's `renderedText` without adding, removing or modifying clinical content.
+
+This creates a different privacy boundary from the direct website: the website's watsonx.ai presentation adapter does not receive case details, while the Orchestrate agent necessarily processes the de-identified conversation needed to build its tool request. The current Orchestrate integration is therefore for fictional, synthetic and de-identified evaluation only. Do not send uploaded document text, filenames, identifiers or real patient information through the agent. The public evaluation endpoint is not an authenticated clinical service.
+
+IBM Bob was used during development to help prepare the OpenAPI tool specification, agent instructions, synthetic fixtures and integration documentation. Bob is not part of the live case-analysis runtime.
+
+Before any patient-adjacent use, independently review authentication, authorization, rate limiting, audit behavior, IBM retention and data-handling settings, institutional security requirements and applicable healthcare agreements. Embedding the Orchestrate agent into the Endo website would also require server-side token signing and secure key management; it is not enabled by the current frontend.
+
+## Simplified clinician workspace
 
 For a manual case, choose a clinical-module card. Alternatively, a demonstration case loads its reviewed fixture-assigned module and exact fields without submitting. Neither a case nor a module is preselected; Clear case removes the selection. Cards are populated from server discovery, so unavailable modules are never selectable. Workflow order is demonstration selector, module cards, Case narrative, Additional clinical context, optional upload, then Analyze case. Case narrative is the main input. Optional age range, case type, pregnancy/PID status and module-specific findings remain editable under **Additional clinical context**, initially collapsed. Unanswered findings remain unknown. Switching modules clears pregnancy/PID and early-pregnancy context and discards uploads that would need review for the new module; manual narrative is retained for clinician review.
 
