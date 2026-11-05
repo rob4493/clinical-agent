@@ -1,3 +1,5 @@
+import { readMode, type FollowupMode } from '../../shared/followupModes';
+import { readConflictAssistance, type PublicConflictAssistance } from '../../shared/conflictAssistance';
 export const DecisionNotice = 'Decision-support notice: This clinician-facing response is based solely on the approved knowledge base. It does not establish a diagnosis, replace independent clinical judgment, or provide patient-specific treatment or prescribing advice.';
 export const UnexpectedMessage = 'Unable to complete this request. Please try again.';
 export const DemoNotice = 'Synthetic demonstration — uses fictional test evidence and must not be used for clinical care.';
@@ -19,7 +21,7 @@ export interface CaseInput {
 }
 export interface Source { number: number; sourceId: string; title: string; verifiedUrl: string | null; organization?: string; date?: string }
 export interface Statement { text: string; numbers: number[] }
-export interface Review { reviewedSummary?: Statement[]; displaySummary?: Statement; moduleId?: string; heading: string; warnings: Statement[]; considerations: Statement[]; messages: string[]; question: string | null; sources: Source[]; notice: string; context?: string; scopeNotice?: string }
+export interface Review { followupMode?: FollowupMode; fieldName?:string; suggestedFollowup?: string; conflictAssistance?: PublicConflictAssistance; reviewedSummary?: Statement[]; displaySummary?: Statement; moduleId?: string; heading: string; warnings: Statement[]; considerations: Statement[]; messages: string[]; question: string | null; sources: Source[]; notice: string; context?: string; scopeNotice?: string }
 
 function record(payload: unknown): Record<string, unknown> {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new Error(UnexpectedMessage);
@@ -187,6 +189,16 @@ export function readReview(payload: unknown, synthetic = false, runtimeMode: Run
       });
     } catch { reviewedSummary = undefined; }
   }
+  let conflictAssistance: PublicConflictAssistance | undefined;
+  if (runtimeMode === 'competition' && outcome.responseType === 'DataConflict' && !warnings.length && envelope.conflictAssistance !== undefined) {
+    try { conflictAssistance = readConflictAssistance(envelope.conflictAssistance); } catch { /* Optional assistance cannot break deterministic conflict review. */ }
+  }
+  let suggestedFollowup: string | undefined;
+  if (runtimeMode === 'competition' && !warnings.length && !scopeNotice && ['AgentResponse','ClarificationRequired'].includes(String(outcome.responseType)) && envelope.suggestedFollowup !== undefined) {
+    try { const suggestion=record(envelope.suggestedFollowup); const questionId=plainText(suggestion.questionId,64); if(Object.keys(suggestion).sort().join('|')!=='moduleId|questionId|reviewedVersion'||suggestion.reviewedVersion!=='1'||!/^module_0[12]_[a-z_]+$/.test(String(suggestion.moduleId))||!/^[a-z]+(?:-[a-z0-9]+)*$/.test(questionId))throw new Error(UnexpectedMessage); suggestedFollowup=questionId; } catch { /* An invalid optional suggestion cannot change the deterministic result. */ }
+  }
+  let followupMode:FollowupMode|undefined;
+  try{if(runtimeMode==='competition'&&envelope.followupMode!==undefined)followupMode=readMode(envelope.followupMode);}catch{ /* A malformed optional mode cannot replace clinical output. */ }
   // Validate the wire notice first; the authoritative response mode controls this display-only notice.
-  return { ...(reviewedSummary ? { reviewedSummary } : {}), ...(typeof outcome.moduleId === 'string' ? { moduleId: plainText(outcome.moduleId, 64) } : {}), heading, warnings, considerations, messages, question, sources: sources.filter(source => citedIds.has(source.sourceId)), notice: synthetic ? SyntheticNotice : notice, ...(context ? { context } : {}), ...(scopeNotice ? { scopeNotice } : {}) };
+  return { ...(typeof outcome.fieldName==='string'?{fieldName:plainText(outcome.fieldName,100)}:{}), ...(followupMode?{followupMode}:{}), ...(suggestedFollowup ? { suggestedFollowup } : {}), ...(conflictAssistance ? { conflictAssistance } : {}), ...(reviewedSummary ? { reviewedSummary } : {}), ...(typeof outcome.moduleId === 'string' ? { moduleId: plainText(outcome.moduleId, 64) } : {}), heading, warnings, considerations, messages, question, sources: sources.filter(source => citedIds.has(source.sourceId)), notice: synthetic ? SyntheticNotice : notice, ...(context ? { context } : {}), ...(scopeNotice ? { scopeNotice } : {}) };
 }

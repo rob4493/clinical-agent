@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import ClassVar, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from backend.app.models.schemaRules import Schema, validateNode
-SchemaHash = "2c3a7c3beaad9a90f922d1f59636c12870374ccbe1b5ed71db145d5b0073e863"
+SchemaHash = "0e2543a2bd879af5157da50313a2c718b72fec884833458d508ca70a09422add"
 class ClinicalModel(BaseModel):
     """Transient, bounded records; repr excludes every submitted field."""
     model_config = ConfigDict(extra="forbid", strict=True, hide_input_in_errors=True, allow_inf_nan=False, regex_engine="python-re")
@@ -212,6 +212,40 @@ class ReportedContext(ClinicalModel):
     fertilityStatus: str | None = Field(default=None, repr=False)
     priorTreatments: str | None = Field(default=None, repr=False)
     familyHistory: str | None = Field(default=None, repr=False)
+ReviewConcept = Literal['pregnancyPossible', 'pidDiagnosedOrPresumed']
+AssertionValue = Literal['present', 'absent', 'unknown', 'notReported', 'notApplicable']
+ResolutionOption = Literal['firstAssertion', 'secondAssertion', 'changedOverTime', 'differentContext', 'correctedReport', 'unresolved', 'requestVerification']
+class ReportAssertion(ClinicalModel):
+    schemaName: ClassVar[str] = "ReportAssertion"
+    id: str = Field(..., repr=False, min_length=1, max_length=64, pattern='^[A-Za-z][A-Za-z0-9-]*$')
+    sourceLabel: str = Field(..., repr=False, min_length=1, max_length=80)
+    concept: ReviewConcept = Field(..., repr=False)
+    normalizedValue: AssertionValue = Field(..., repr=False)
+    verification: Literal['unverified', 'clinicianVerified'] = Field(..., repr=False)
+    contextId: str = Field(..., repr=False, min_length=1, max_length=64, pattern='^[A-Za-z][A-Za-z0-9-]*$')
+    reportStatus: Literal['preliminary', 'final', 'amended', 'corrected'] = Field(default=None, repr=False)
+    effectiveDate: ClinicalDate = Field(default=None, repr=False)
+    displayText: str = Field(..., repr=False, min_length=1, max_length=240)
+    method: str = Field(default=None, repr=False, min_length=1, max_length=64)
+    supersedesId: str = Field(default=None, repr=False, min_length=1, max_length=64, pattern='^[A-Za-z][A-Za-z0-9-]*$')
+class ConflictReview(ClinicalModel):
+    schemaName: ClassVar[str] = "ConflictReview"
+    id: str = Field(..., repr=False, min_length=1, max_length=64, pattern='^[A-Za-z][A-Za-z0-9-]*$')
+    concept: ReviewConcept = Field(..., repr=False)
+    label: str = Field(..., repr=False, min_length=1, max_length=80)
+    conflictType: Literal['opposingValues', 'temporalDifference', 'differentContext', 'reportRelationship'] = Field(..., repr=False)
+    assertions: list[ReportAssertion] = Field(..., repr=False, min_length=2, max_length=4)
+    allowedOptions: list[ResolutionOption] = Field(..., repr=False, min_length=1, max_length=7)
+    resolutionStatus: Literal['unresolved', 'recordedLocally'] = Field(..., repr=False)
+class ConflictResolution(ClinicalModel):
+    schemaName: ClassVar[str] = "ConflictResolution"
+    conflictId: str = Field(..., repr=False, min_length=1, max_length=64, pattern='^[A-Za-z][A-Za-z0-9-]*$')
+    concept: ReviewConcept = Field(..., repr=False)
+    option: ResolutionOption = Field(..., repr=False)
+    assertionIds: list[str] = Field(..., repr=False, min_length=2, max_length=4)
+    recordedAt: str = Field(..., repr=False, min_length=1, max_length=30)
+    note: str = Field(default=None, repr=False, min_length=1, max_length=240)
+    reanalysis: Literal['paused'] = Field(..., repr=False)
 class CanonicalCase(ClinicalModel):
     schemaName: ClassVar[str] = "CanonicalCase"
     model_config = ConfigDict(json_schema_extra={'x-caseIntegrity': True})
@@ -255,4 +289,7 @@ SourceDocument.model_rebuild()
 UserIntent.model_rebuild()
 UrgentIndicators.model_rebuild()
 ReportedContext.model_rebuild()
+ReportAssertion.model_rebuild()
+ConflictReview.model_rebuild()
+ConflictResolution.model_rebuild()
 CanonicalCase.model_rebuild()

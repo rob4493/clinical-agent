@@ -1,0 +1,12 @@
+{
+  "contractVersion": "1",
+  "summaries": {
+    "pregnancy-status-opposition": "The supplied reports contain opposing pregnancy-status information. Endo cannot determine which report is correct.",
+    "pregnancy-status-review": "Pregnancy-status information differs between the supplied reports. Clinician review is needed to understand the discrepancy."
+  },
+  "questions": {
+    "check-effective-dates": "Do the reports refer to the same effective date or point in time?",
+    "check-correction-status": "Has either report been corrected or superseded?",
+    "verify-reported-status": "Can the original reporting source verify the pregnancy-status information?"
+  }
+}

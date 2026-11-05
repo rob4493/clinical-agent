@@ -82,7 +82,7 @@
       },
       "expectedResponseType": "DataConflict",
       "expectedHttpStatus": 200,
-      "notes": "Agent must present the conflict description and clarification request. Must not resolve the conflict or proceed with clinical analysis."
+      "notes": "Agent must return renderedText verbatim. Must not resolve the conflict, select either value, or proceed with clinical analysis. The Endo API is the clinical authority; Orchestrate must not add a conflict resolution of its own. Submit pregnancyPossible=false and additionalNotes exactly as supplied."
     },
     {
       "id": "m1-clarification",

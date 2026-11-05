@@ -1,0 +1,38 @@
+{
+  "id": "DemoPregnancyConflict",
+  "concept": "pregnancyPossible",
+  "label": "Pregnancy status",
+  "conflictType": "opposingValues",
+  "resolutionStatus": "unresolved",
+  "allowedOptions": [
+    "firstAssertion",
+    "secondAssertion",
+    "changedOverTime",
+    "differentContext",
+    "correctedReport",
+    "unresolved",
+    "requestVerification"
+  ],
+  "assertions": [
+    {
+      "id": "DemoAssertionOne",
+      "sourceLabel": "Synthetic report A",
+      "concept": "pregnancyPossible",
+      "normalizedValue": "absent",
+      "verification": "clinicianVerified",
+      "contextId": "CurrentPregnancyStatus",
+      "reportStatus": "final",
+      "displayText": "Pregnancy is reported as not possible."
+    },
+    {
+      "id": "DemoAssertionTwo",
+      "sourceLabel": "Synthetic report B",
+      "concept": "pregnancyPossible",
+      "normalizedValue": "present",
+      "verification": "clinicianVerified",
+      "contextId": "CurrentPregnancyStatus",
+      "reportStatus": "final",
+      "displayText": "Pregnancy is reported as confirmed."
+    }
+  ]
+}

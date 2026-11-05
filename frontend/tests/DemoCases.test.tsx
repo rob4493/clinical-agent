@@ -86,7 +86,7 @@ describe('fictional input presets with mocked HTTP only', () => {
     selector.focus(); expect(selector).toHaveFocus();
     await userEvent.selectOptions(selector, 'conflict');
     expect(selector).toHaveValue('conflict');
-    expect(selector).toHaveAccessibleDescription(/Intentionally contradicts/);
+    expect(selector).toHaveAccessibleDescription(/Endo pauses analysis and requests clarification/);
     await userEvent.tab(); expect(screen.getByRole('radio')).toHaveFocus();
   });
   it('submits edited structured fields separately and retains the intentional conflict', async () => {
@@ -130,5 +130,23 @@ describe('fictional input presets with mocked HTTP only', () => {
     expect(screen.getByText(/Use de-identified, minimum-necessary information only/)).toBeVisible();
     expect(screen.getByText(/Other wording receives an explicit scope or evidence limitation/)).toBeVisible();
     expect(DemoCases).toHaveLength(7);
+  });
+  it('conflict case has the Conflicting information label and safety-oriented explanation', () => {
+    const conflictCase = DemoCases.find(example => example.id === 'conflict')!;
+    expect(conflictCase).toBeDefined();
+    expect(conflictCase.label).toBe('Conflicting information');
+    expect(conflictCase.explanation).toMatch(/Endo pauses analysis and requests clarification without selecting either value/);
+    expect(conflictCase.pregnancy).toBe('no');
+    expect(conflictCase.narrative).toBe('pregnancy confirmed');
+    expect(conflictCase.moduleId).toBe('module_01_endo');
+    expect(conflictCase.caseType).toBe('brief');
+  });
+  it('conflict preset selector is positioned before module selection in the DOM', async () => {
+    await openForm();
+    const selector = screen.getByLabelText('Try a demonstration case');
+    const moduleFieldset = document.querySelector('.moduleChoices');
+    expect(moduleFieldset).not.toBeNull();
+    // selector must precede module fieldset in document order
+    expect(selector.compareDocumentPosition(moduleFieldset!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });

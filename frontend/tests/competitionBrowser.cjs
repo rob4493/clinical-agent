@@ -47,7 +47,7 @@ async function runChecks() {
       await page.getByText(Banner,{exact:true}).waitFor();
       const scenarios = [
         {label:'Brief',heading:Supported}, {label:'Mild/nonurgent',heading:Supported}, {label:'Detailed',heading:Supported},
-        {label:'Urgent warning',heading:'Urgent assessment',urgent:true}, {label:'Conflict',heading:'Resolve conflicting information'},
+        {label:'Urgent warning',heading:'Urgent assessment',urgent:true}, {label:'Conflicting information',heading:'Resolve conflicting information'},
         {label:'Clarification',heading:'Clarification required'}, {label:'Outside scope',heading:'Outside selected module scope'}
       ];
       for (const scenario of scenarios) {
@@ -58,8 +58,13 @@ async function runChecks() {
         assert.equal(await page.locator('input[name=clinicalModule]:checked').evaluateAll(radios => radios[0]?.value || ''),'module_01_endo');
         assert.equal(await page.locator('.decisionNotice').count(),0);
         await page.getByRole('button',{name:'Analyze case',exact:true}).click();
-        await page.getByRole('heading',{name:scenario.heading,exact:true}).waitFor();
-        await page.waitForFunction(urgent => document.activeElement.id === (urgent ? 'urgentTitle':'reviewTitle'),!!scenario.urgent);
+        await page.getByRole('heading',{name:scenario.heading,exact:true,level:2}).waitFor();
+        if (scenario.label === 'Conflicting information') {
+          assert.equal(await page.getByRole('dialog').count(),0);await page.getByRole('button',{name:'Review conflict',exact:true}).click();await page.getByRole('dialog').waitFor();
+          assert.equal(await page.getByRole('dialog').evaluate(dialog => dialog === document.activeElement), true);
+          await page.getByRole('button',{name:'Close conflict review'}).click();
+          await page.waitForFunction(() => document.activeElement.textContent === 'Review conflict');
+        } else await page.waitForFunction(urgent => document.activeElement.id === (urgent ? 'urgentTitle':'reviewTitle'),!!scenario.urgent);
         assert.equal(await page.locator('.urgentPanel').count(),scenario.urgent ? 1:0);
         assert.equal(await page.locator('.decisionNotice').textContent(),Notice);
         assert.equal(await page.locator('.responseCard').evaluate(panel=>panel.lastElementChild.className),'decisionNotice');

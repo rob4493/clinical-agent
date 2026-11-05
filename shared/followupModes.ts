@@ -1,0 +1,31 @@
+import { exactKeys, questionById } from './guidedFollowup';
+export type FollowupKind='analysis'|'conflict'|'clarification'|'missing'|'coverage'|'scope'|'technical'|'urgent';
+export interface FollowupMode {version:'2';kind:FollowupKind;moduleId:string;questionId:string|null;fieldId:string|null}
+export interface Choice {id:string;label:string;fieldId?:string;state?:'present'|'absent'|'unknown'|'notReported';text?:string}
+const Uncertain:Choice[]=[{id:'unknown',label:'Unknown',state:'unknown'},{id:'notReported',label:'Not reported',state:'notReported'},{id:'declined',label:'Leave unchanged / declined'}];
+export function choicesFor(questionId:string):Choice[]{
+ if(questionId==='pregnancy-status'||questionId==='pid-status')return [{id:'yes',label:questionId==='pregnancy-status'?'Possible or known':'Diagnosed or presumptively diagnosed',state:'present'},{id:'no',label:questionId==='pregnancy-status'?'Not possible':'Not diagnosed',state:'absent'},...Uncertain];
+ if(questionId==='pelvic-pattern')return [{id:'cycle',label:'Symptoms reported as related to periods',fieldId:'symptomTiming',state:'present',text:'Symptoms are reported as related to menstruation.'},{id:'sex',label:'Pain during sex reported',fieldId:'sexualPain',state:'present',text:'Pain during sex is reported.'},{id:'bowel',label:'Symptoms reported as related to bowel activity',fieldId:'bowelUrinarySymptoms',state:'present',text:'Symptoms are reported as related to bowel activity.'},{id:'bladder',label:'Symptoms reported as related to bladder activity',fieldId:'bowelUrinarySymptoms',state:'present',text:'Symptoms are reported as related to bladder activity.'},...Uncertain.map(choice=>({...choice,fieldId:'symptomTiming'}))];
+ return [{id:'symptoms',label:'Review the reported symptom pattern',fieldId:'primaryQuestion',state:'present',text:'Please review the reported symptom pattern and uncertainty.'},{id:'tests',label:'Review the reported test findings',fieldId:'primaryQuestion',state:'present',text:'Please review the reported test findings and their limitations.'},...Uncertain.map(choice=>({...choice,fieldId:'primaryQuestion'}))];
+}
+export function questionText(questionId:string):string {
+ if(questionId==='pelvic-pattern')return questionById(questionId).text;
+ if(questionId==='pregnancy-status')return 'Please confirm whether pregnancy is possible or known.';
+ if(questionId==='pid-status')return 'Please confirm or correct the structured PID diagnostic status.';
+ return 'Which supported question would you like the selected module to review?';
+}
+export function modeLabels(mode:FollowupMode){return {
+ analysis:['Suggested follow-up','Gather additional reported context for the selected module.','Start guided follow-up','Dismiss'],
+ conflict:['Resolve conflicting information','Analysis is paused until the discrepancy is reviewed. Endo cannot choose the correct assertion.','Review conflict','Keep unresolved'],
+ clarification:['Additional information needed','Provide only the missing supported value; unknown information stays unknown.','Provide information','Leave unknown'],
+ missing:['Add information to refine the review','Clarify the requested review. More information does not guarantee an evidence-supported answer.','Start guided follow-up','Continue without changes'],
+ coverage:['Evidence coverage unavailable','The reviewed package cannot currently support this request. Additional answers cannot replace missing evidence.','Review supported scope','Continue without changes'],
+ scope:['Confirm the supported scope','Confirm the intended module or edit the question within its supported scope. Endo will not choose a module from symptoms.','Review supported scope','Leave request unchanged'],
+ technical:['Review unavailable','No clinical conversation is available for a technical failure.','Return to case','Dismiss'],
+ urgent:['Urgent assessment first','Do not delay urgent assessment to provide optional information.','Return to case','Dismiss']
+ }[mode.kind];}
+export function readMode(payload:unknown):FollowupMode {const mode=exactKeys(payload,['version','kind','moduleId','questionId','fieldId']);if(mode.version!=='2'||!['analysis','conflict','clarification','missing','coverage','scope','technical','urgent'].includes(String(mode.kind))||typeof mode.moduleId!=='string'||mode.moduleId.length>64||!['pelvic-pattern','pregnancy-status','pid-status','review-task',null].includes(mode.questionId as string|null)||!['pregnancyStatus','pidStatus','primaryQuestion','symptomTiming',null].includes(mode.fieldId as string|null))throw new Error('Follow-up unavailable.');return mode as unknown as FollowupMode;}
+export interface ChoiceRequest {version:'2';action:'start'|'answer'|'confirm';caseInput:unknown;questionId:string;choiceId:string|null;confirmed:boolean}
+export function readChoiceRequest(payload:unknown):ChoiceRequest {const request=exactKeys(payload,['version','action','caseInput','questionId','choiceId','confirmed']);if(request.version!=='2'||!['start','answer','confirm'].includes(String(request.action))||!['pelvic-pattern','pregnancy-status','pid-status','review-task'].includes(String(request.questionId))||typeof request.confirmed!=='boolean'||(request.action==='start'?request.choiceId!==null||request.confirmed:!choicesFor(String(request.questionId)).some(choice=>choice.id===request.choiceId)||request.confirmed!==(request.action==='confirm')))throw new Error('Follow-up unavailable.');return request as unknown as ChoiceRequest;}
+
+export function validateChoiceOffer(payload:unknown){const offer=exactKeys(payload,['version','moduleId','modeId','questionId','clinicianChoiceId','allowedChoiceIds','allowedAcknowledgementIds']);if(offer.version!=='2'||!['module_01_endo','module_02_early_pregnancy'].includes(String(offer.moduleId))||!['analysis','clarification','missing'].includes(String(offer.modeId))||!['pelvic-pattern','pregnancy-status','pid-status','review-task'].includes(String(offer.questionId))||!choicesFor(String(offer.questionId)).some(choice=>choice.id===offer.clinicianChoiceId)||JSON.stringify(offer.allowedChoiceIds)!==JSON.stringify([offer.clinicianChoiceId])||JSON.stringify(offer.allowedAcknowledgementIds)!=='["recorded"]')throw new Error('Invalid reviewed projection.');return offer;}

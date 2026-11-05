@@ -18,6 +18,7 @@ Developers and future integrations share a [versioned clinical-data contract](sh
 - Concise clinician-oriented responses, relevant source links, reviewed visuals and safe evidence-insufficient outcomes.
 - Browser-memory PDF, DOCX and TXT review with clinician confirmation before analysis.
 - Optional server-side watsonx.ai presentation support that cannot replace the deterministic clinical analysis.
+- Optional local follow-up collection with one final approval for case changes; live IBM conversation remains disabled.
 - IBM watsonx Orchestrate integration assets for a separate conversational evaluation agent.
 - Two competition topics: **Endometriosis and Chronic Pelvic Pain** and **Early Pregnancy Pain and Bleeding**.
 
@@ -102,7 +103,7 @@ Do not enter names, exact birth dates, contact details, addresses, record number
 
 Missing information remains Unknown. Conflicting facts stop analysis. Urgent source conditions, including pregnancy state, symptom timing, dizziness duration and access conditions, are not generalized. Sources retain their date, jurisdiction and population limits. Only cited verified URLs become links; other sources use an internal details panel.
 
-Natural paraphrases are checked against bounded supported propositions, not accepted merely because they contain relevant words. Unrecognized wording can fail closed even when it might be clinically reasonable. No claim of diagnostic accuracy, HIPAA compliance, regulatory approval or production readiness is made.
+Responses use reviewed wording and bounded evidence checks, not unrestricted AI clinical paraphrasing. Unrecognized wording can fail closed even when it might be clinically reasonable. No claim of diagnostic accuracy, HIPAA compliance, regulatory approval or production readiness is made.
 
 ## Check the installation
 
@@ -204,9 +205,9 @@ The `orchestrate` directory contains the IBM Bob-assisted integration package:
 - Verified synthetic Module 1 and Module 2 demonstration cases.
 - Setup, evaluation and deployment documentation.
 
-The Orchestrate agent provides a separate conversational interface. Its IBM agent model can read a de-identified conversation, request an explicit module and build a tool call, but the Endo API remains the clinical authority. The agent must return the API's `renderedText` without adding, removing or modifying clinical content.
+These assets are intended for a separately configured IBM Orchestrate agent. This repository does not provision or verify that hosted agent. In an authorized synthetic evaluation, it can build a tool request, but Endo remains the clinical authority and its `renderedText` must be returned unchanged.
 
-This creates a different privacy boundary from the direct website: the website's watsonx.ai presentation adapter does not receive case details, while the Orchestrate agent necessarily processes the de-identified conversation needed to build its tool request. The current Orchestrate integration is therefore for fictional, synthetic and de-identified evaluation only. Do not send uploaded document text, filenames, identifiers or real patient information through the agent. The public evaluation endpoint is not an authenticated clinical service.
+This creates a different privacy boundary from the direct website: the website's watsonx.ai presentation adapter does not receive case details, while the Orchestrate agent necessarily processes the de-identified conversation needed to build its tool request. The assets support separately authorized fictional evaluation only; their presence does not authorize transmitting a conversation to IBM. Do not send uploaded document text, filenames, identifiers or real patient information through the agent. The public evaluation endpoint is not an authenticated clinical service.
 
 IBM Bob was used during development to help prepare the OpenAPI tool specification, agent instructions, synthetic fixtures and integration documentation. Bob is not part of the live case-analysis runtime.
 
@@ -217,3 +218,19 @@ Before any patient-adjacent use, independently review authentication, authorizat
 For a manual case, choose a clinical-module card. Alternatively, a demonstration case loads its reviewed fixture-assigned module and exact fields without submitting. Neither a case nor a module is preselected; Clear case removes the selection. Cards are populated from server discovery, so unavailable modules are never selectable. Workflow order is demonstration selector, module cards, Case narrative, Additional clinical context, optional upload, then Analyze case. Case narrative is the main input. Optional age range, case type, pregnancy/PID status and module-specific findings remain editable under **Additional clinical context**, initially collapsed. Unanswered findings remain unknown. Switching modules clears pregnancy/PID and early-pregnancy context and discards uploads that would need review for the new module; manual narrative is retained for clinician review.
 
 The compact upload control accepts PDF, DOCX or TXT. **File requirements and privacy** explains the limits. After selecting files, confirm they are de-identified, view each file, review its extracted information and explicitly confirm before analysis. The original files and filenames stay in browser memory. Result headings are **Evidence summary**, **Clinical considerations** and **Clinical details and sources**; urgent warnings and prescribing boundaries remain visible first.
+
+
+### Conversational-agent preparation
+
+**Live IBM conversation is not enabled in this version.** The prepared connection still requires privacy authorization, authenticated session controls and reviewed checks for generated content.
+
+To use the available local follow-up workflow:
+
+1. Analyze a demonstration or fictional case, then open **Guided Follow-up** when offered.
+2. Choose **Use local fallback**. This collects a limited set of supported information; it is not an AI conversation.
+3. Continue typing without saving changes. When ready, expand **Pending case changes**, include only the items you want, then select **Apply selected changes** once.
+4. Select **Reanalyze case** separately to review the updated information. Applying an update does not run a new analysis automatically.
+
+**Check IBM connection** checks Endo's availability status only. It does not contact IBM or send your case. Existing conflicts still require their separate review, and urgent warnings take priority over follow-up.
+
+See [connection status and approval requirements](shared/AgentConnection.md).

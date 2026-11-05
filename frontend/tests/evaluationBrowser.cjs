@@ -14,7 +14,7 @@ const Banner = 'Evaluation system — clinician-facing decision support only. Us
 const PregnancyCases = require('../src/PregnancyCases.json');
 const SchemaCases = require('../../tests/fixtures/clinicalDataCases.json');
 const Expected = { pregBrief:[200,'AgentResponse'], pregDetailed:[200,'AgentResponse'], pregEmergency:[200,'AgentResponse'], pregDizziness:[200,'AgentResponse'], pregUnsupported:[503,'EvidenceInsufficient'], pregConflict:[200,'DataConflict'], pregTesting:[200,'EvidenceInsufficient'], pregSerial:[200,'AgentResponse'], pregOutside:[200,'OutsideScope'], pregInjection:[200,'EvidenceInsufficient'] };
-const Module1Cases = [['Brief','AgentResponse'],['Mild/nonurgent','AgentResponse'],['Detailed','AgentResponse'],['Urgent warning','AgentResponse'],['Conflict','DataConflict'],['Clarification','ClarificationRequired'],['Outside scope','OutsideScope']];
+const Module1Cases = [['Brief','AgentResponse'],['Mild/nonurgent','AgentResponse'],['Detailed','AgentResponse'],['Urgent warning','AgentResponse'],['Conflicting information','DataConflict'],['Clarification','ClarificationRequired'],['Outside scope','OutsideScope']];
 const report = { checks:[], externalRequests:0, pageErrors:0, routes:[] };
 
 async function run() {
@@ -50,6 +50,7 @@ async function run() {
     const result = await response.json();
     assert.equal(result.response.responseType,scenario.outcome,scenario.id);
     await page.locator('.responseCard:not(.pendingResponse)').waitFor();
+    if (scenario.id === 'Conflicting information') { assert.equal(await page.getByRole('dialog').count(),0);await page.getByRole('button',{name:'Review conflict',exact:true}).click();await page.getByRole('dialog').waitFor(); await page.getByRole('button',{name:'Close conflict review'}).click(); }
     if (result.warnings.length) assert.ok(result.renderedText.startsWith(result.warnings[0].text));
     assert.ok(result.renderedText.endsWith(result.response.decisionSupportNotice));
     await page.locator('.decisionNotice').waitFor();

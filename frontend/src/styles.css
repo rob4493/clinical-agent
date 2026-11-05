@@ -83,3 +83,84 @@ footer {display:flex;justify-content:space-between;gap:var(--space4);padding:var
 .workspace + .scopePanel { margin-top: 1.5rem; }
 .scopePanel > summary { font-size: .9rem; }
 .scopePanel > h2 { margin-top: 1rem; }
+
+/* Conflict review is a local handling record, not clinical source adjudication. */
+.conflictWorkspace { min-width: 0; }
+.conflictBanner { margin-top: 1rem; padding: 1.25rem; border: 1px solid var(--border, #b4a5ac); border-radius: 1rem; background: #fff8ee; }
+.conflictDialog { max-width: 56rem; max-height: 90dvh; overflow-y: auto; }
+.conflictAssertions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-block: 1rem; }
+.conflictAssertions article { min-width: 0; padding: 1rem; border: 1px solid #b4a5ac; border-radius: .75rem; background: #fffaf5; overflow-wrap: anywhere; }
+.conflictAssertions dl { margin-bottom: 0; }
+.conflictAssertions dt { font-weight: 600; }
+.conflictAssertions dd { margin: 0 0 .5rem; }
+.resolutionChoice { display: flex; align-items: center; gap: .75rem; min-height: 44px; padding: .5rem; }
+.resolutionChoice input[type=radio] { width: 1.1rem; height: 1.1rem; min-height: 1.1rem; flex-shrink: 0; }
+.conflictDialog button { min-height: 44px; margin: .25rem; }
+@media (max-width: 640px) { .conflictAssertions { grid-template-columns: 1fr; } .conflictDialog { width: calc(100vw - 2rem); padding: 1rem; } }
+
+.conflictDialog { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
+.conflictHeader, .conflictFooter { position: sticky; flex-shrink: 0; background: var(--surface, #fffaf5); padding: 1rem 1.5rem; z-index: 1; }
+.conflictHeader { top: 0; border-bottom: 1px solid var(--border, #b4a5ac); }
+.conflictFooter { bottom: 0; border-top: 1px solid var(--border, #b4a5ac); display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; margin: 0; }
+.conflictBody { overflow-y: auto; min-height: 0; padding: 0 1.5rem 1rem; overscroll-behavior: contain; }
+.resolutionGroup { margin-block: 1rem; }
+.resolutionGroup legend { font-weight: 600; }
+@media (max-width: 640px) { .conflictHeader, .conflictFooter { padding: .75rem; } .conflictBody { padding: 0 .75rem .75rem; } }
+
+/* Optional collection stays separate from the authoritative result and uses no persistent state. */
+.guidedSuggestion { padding: 1rem; margin-top: 1rem; border: 1px solid var(--border, #d3c3c8); border-radius: 1rem; }
+.guidedSuggestion button { margin-right: .75rem; }
+.guidedPanel { position: fixed; inset: 1rem 1rem 1rem auto; width: min(32rem, 95vw); overflow: auto; z-index: 1000; padding: 1.5rem; background: #fff8f4; color: #291b29; border: 2px solid #71374f; border-radius: 1rem; box-shadow: 0 0 0 100vmax #20122266; }
+.guidedPanel header { display:flex; gap:1rem; justify-content:space-between; align-items:start; }
+.guidedPanel h2 small { display:block; font-size: .85rem; font-weight:normal; }
+.guidedPanel textarea { box-sizing:border-box; width:100%; }
+.guidedPanel button { min-height:44px; margin:.5rem .5rem .5rem 0; }
+.guidedPanel [role=alert] { border-left:4px solid #a32923; padding:.75rem; }
+.guidedPanel p { overflow-wrap:anywhere; }
+@media(max-width:640px) { .guidedPanel { inset:0; width:auto; border-radius:0; padding:1rem; } }
+
+.guidedSuggestion { background:#f7e8e4; border-left:4px solid #71374f; margin:1rem 0; }
+.guidedSuggestion .guidedStart { background:#71374f; color:#fff; min-height:44px; }
+.guidedSuggestion button { min-height:44px; }
+
+/* The desktop conversation stays in the evidence flow; only narrow screens use a modal surface. */
+.guidedConversation { position:relative; inset:auto; width:auto; max-width:100%; box-shadow:none; z-index:auto; margin-top:1rem; }
+.conversationHistory { max-height:20rem; overflow:auto; overscroll-behavior:contain; padding:.25rem; }
+.conversationMessage { padding:.75rem 1rem; border-radius:.75rem; margin:.75rem 0; max-width:94%; border:1px solid #d3c3c8; }
+.conversationMessage.endo { background:#f6e8e5; margin-right:1.5rem; }
+.conversationMessage.clinician { background:#fff; margin-left:1.5rem; border-left:3px solid #71374f; }
+.conversationMessage p { margin:.4rem 0 0; white-space:pre-wrap; }
+.interpretedObservation { background:#fff; border:1px solid #d3c3c8; border-radius:.75rem; padding:1rem; margin:.75rem 0; }
+.interpretedObservation h4 { margin-top:0; }
+.conversationComposer label { display:block; font-weight:600; margin:.75rem 0; }
+.conversationComposer textarea { min-height:6rem; resize:vertical; }
+@media(max-width:640px) { .guidedConversation { position:fixed; inset:0; width:auto; margin:0; z-index:1000; padding:1rem; border-radius:0; max-width:none; } .conversationHistory { max-height:35vh; } }
+
+.interpretedObservation p { margin:.4rem 0; }
+.interpretedObservation h4 { margin:0 0 .5rem; }
+
+/* One conversation scroll surface: the document on desktop, the sheet on mobile. */
+.guidedConversation { overflow:visible; }
+.guidedConversation .conversationHistory { max-height:none; overflow:visible; overscroll-behavior:auto; }
+.conversationMessage { line-height:1.6; max-width:100%; }
+.conversationClarification { border-left:3px solid #71374f; padding:.75rem 1rem; background:#f6e8e5; margin:1rem 0; }
+@media(max-width:640px) { .guidedConversation { height:100dvh; max-height:100dvh; box-sizing:border-box; overflow-y:auto; overscroll-behavior:contain; } .guidedConversation header { position:sticky; top:-1rem; padding:.5rem 0; background:#fff8f4; z-index:1; } .conversationMessage.endo { margin-right:.5rem; } .conversationMessage.clinician { margin-left:.5rem; } .conversationComposer textarea { resize:none; } }
+
+/* Session tools stay compact and never imply a second clinical reviewer. */
+.conversationProvider { font-size:.85rem; color:#593c50; border-bottom:1px solid #d3c3c8; padding-bottom:.5rem; }
+.conversationRecap { margin:.75rem 0; padding:.5rem; border:1px solid #d3c3c8; border-radius:.5rem; }
+.conversationRecap summary { cursor:pointer; min-height:44px; display:list-item; align-content:center; }
+.conversationRecap li { overflow-wrap:anywhere; white-space:pre-wrap; margin-block:.5rem; }
+.guidedConversation .conversationComposer { position:sticky; bottom:0; background:#fff8f4; border-top:1px solid #d3c3c8; padding:.5rem 0; z-index:1; }
+@media(max-width:640px) { .guidedConversation .conversationComposer textarea { min-height:4rem; } }
+
+/* Proposed changes are optional; the transcript and composer remain primary. */
+.pendingUpdates { margin:.75rem 0; padding:.65rem; border:1px solid #d3c3c8; border-radius:.65rem; background:#fffaf7; }
+.pendingUpdates > summary { cursor:pointer; min-height:44px; align-content:center; font-weight:600; }
+.pendingSelection { display:flex; gap:.6rem; align-items:center; min-height:44px; }
+.pendingSelection input { width:1.25rem; height:1.25rem; flex-shrink:0; }
+.conversationClarification { border:0; background:transparent; padding:.25rem 0; }
+.conversationClarification h3 { font-size:1rem; margin:.25rem 0; }
+.conversationClarification p { margin:.25rem 0; }
+.conversationClarification summary { cursor:pointer; min-height:44px; align-content:center; }
+.conversationProvider button { min-height:36px; padding:.25rem .5rem; font-size:.85rem; }

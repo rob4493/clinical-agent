@@ -1,3 +1,5 @@
+import ConflictFixture from '../../shared/conflictFixture.json';
+import type { ConflictReview } from '../../shared/clinicalData';
 import PregnancyInputs from './PregnancyCases.json';
 import type { PregnancyContext } from './api';
 export type DemoStatus = 'unknown' | 'yes' | 'no';
@@ -23,9 +25,12 @@ export const DemoCases: DemoCase[] = [
   { moduleId: 'module_01_endo', syntheticModuleId: 'SyntheticDemo', id: 'mild', label: 'Mild/nonurgent', explanation: 'A pattern without a predefined warning.', ageRange: '25-34', caseType: 'brief', pregnancy: 'unknown', pid: 'unknown', narrative: 'Mild intermittent pelvic discomfort over several months. Additional findings are not provided.' },
   { moduleId: 'module_01_endo', syntheticModuleId: 'SyntheticDemo', id: 'detailed', label: 'Detailed', explanation: 'A case with more context.', ageRange: '25-34', caseType: 'detailed', pregnancy: 'unknown', pid: 'unknown', narrative: 'Intermittent pelvic discomfort over several months, with variable interference in daily activities. Examination and test findings are not provided. Please review the available evidence and its limitations.' },
   { moduleId: 'module_01_endo', syntheticModuleId: 'SyntheticDemo', id: 'urgent', label: 'Urgent warning', explanation: 'Shows urgent information first.', ageRange: '25-34', caseType: 'brief', pregnancy: 'unknown', pid: 'unknown', narrative: 'sudden acute pelvic pain' },
-  { moduleId: 'module_01_endo', syntheticModuleId: 'SyntheticDemo', id: 'conflict', label: 'Conflict', explanation: 'Intentionally contradicts structured status.', ageRange: '25-34', caseType: 'brief', pregnancy: 'no', pid: 'unknown', narrative: 'pregnancy confirmed' },
+  { moduleId: 'module_01_endo', syntheticModuleId: 'SyntheticDemo', id: 'conflict', label: 'Conflicting information', explanation: 'The submitted pregnancy status conflicts with the narrative. Endo pauses analysis and requests clarification without selecting either value. Synthetic confirmed report assertions are available for local review.', ageRange: '25-34', caseType: 'brief', pregnancy: 'no', pid: 'unknown', narrative: 'pregnancy confirmed' },
   { moduleId: 'module_01_endo', syntheticModuleId: 'SyntheticDemo', id: 'clarification', label: 'Clarification', explanation: 'Missing structured status needs clarification.', ageRange: '25-34', caseType: 'brief', pregnancy: 'unknown', pid: 'unknown', narrative: 'pregnancy confirmed' },
   { moduleId: 'module_01_endo', syntheticModuleId: 'SyntheticDemo', id: 'unsupported', label: 'Outside scope', explanation: 'A concern outside the available module.', ageRange: '25-34', caseType: 'brief', pregnancy: 'unknown', pid: 'unknown', narrative: 'Persistent headache with light sensitivity. Please review the reported symptoms.' },
 ];
 
 export const PregnancyCases: DemoCase[] = PregnancyInputs as DemoCase[];
+
+// Synthetic confirmed assertions mirror the existing exact conflict input; never upload-derived.
+export const ConflictReports: ConflictReview = ConflictFixture as ConflictReview;

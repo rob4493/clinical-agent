@@ -1549,6 +1549,223 @@
         }
       },
       "required": []
+    },
+    "ReviewConcept": {
+      "type": "string",
+      "enum": [
+        "pregnancyPossible",
+        "pidDiagnosedOrPresumed"
+      ]
+    },
+    "AssertionValue": {
+      "type": "string",
+      "enum": [
+        "present",
+        "absent",
+        "unknown",
+        "notReported",
+        "notApplicable"
+      ]
+    },
+    "ResolutionOption": {
+      "type": "string",
+      "enum": [
+        "firstAssertion",
+        "secondAssertion",
+        "changedOverTime",
+        "differentContext",
+        "correctedReport",
+        "unresolved",
+        "requestVerification"
+      ]
+    },
+    "ReportAssertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z][A-Za-z0-9-]*$"
+        },
+        "sourceLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "concept": {
+          "$ref": "#/$defs/ReviewConcept"
+        },
+        "normalizedValue": {
+          "$ref": "#/$defs/AssertionValue"
+        },
+        "verification": {
+          "type": "string",
+          "enum": [
+            "unverified",
+            "clinicianVerified"
+          ]
+        },
+        "contextId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z][A-Za-z0-9-]*$"
+        },
+        "reportStatus": {
+          "type": "string",
+          "enum": [
+            "preliminary",
+            "final",
+            "amended",
+            "corrected"
+          ]
+        },
+        "effectiveDate": {
+          "$ref": "#/$defs/ClinicalDate"
+        },
+        "displayText": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "method": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "supersedesId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z][A-Za-z0-9-]*$"
+        }
+      },
+      "required": [
+        "id",
+        "sourceLabel",
+        "concept",
+        "normalizedValue",
+        "verification",
+        "contextId",
+        "displayText"
+      ]
+    },
+    "ConflictReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z][A-Za-z0-9-]*$"
+        },
+        "concept": {
+          "$ref": "#/$defs/ReviewConcept"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "conflictType": {
+          "type": "string",
+          "enum": [
+            "opposingValues",
+            "temporalDifference",
+            "differentContext",
+            "reportRelationship"
+          ]
+        },
+        "assertions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReportAssertion"
+          },
+          "minItems": 2,
+          "maxItems": 4,
+          "x-uniqueId": "id"
+        },
+        "allowedOptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ResolutionOption"
+          },
+          "minItems": 1,
+          "maxItems": 7,
+          "uniqueItems": true
+        },
+        "resolutionStatus": {
+          "type": "string",
+          "enum": [
+            "unresolved",
+            "recordedLocally"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "concept",
+        "label",
+        "conflictType",
+        "assertions",
+        "allowedOptions",
+        "resolutionStatus"
+      ]
+    },
+    "ConflictResolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "conflictId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z][A-Za-z0-9-]*$"
+        },
+        "concept": {
+          "$ref": "#/$defs/ReviewConcept"
+        },
+        "option": {
+          "$ref": "#/$defs/ResolutionOption"
+        },
+        "assertionIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Za-z][A-Za-z0-9-]*$"
+          },
+          "minItems": 2,
+          "maxItems": 4,
+          "uniqueItems": true
+        },
+        "recordedAt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "reanalysis": {
+          "type": "string",
+          "const": "paused"
+        }
+      },
+      "required": [
+        "conflictId",
+        "concept",
+        "option",
+        "assertionIds",
+        "recordedAt",
+        "reanalysis"
+      ]
     }
   }
 }

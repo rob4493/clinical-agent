@@ -1,0 +1,468 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:endo:understanding:observations:1.0.0",
+  "title": "DraftObservationProposal",
+  "description": "Synthetic offline draft only; proposes reported observations, never clinical truth, source approval or canonical updates.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "observations",
+    "clarification"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "observations": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "conceptId",
+          "fieldPath",
+          "state",
+          "temporalContext",
+          "sourceSpans",
+          "relation",
+          "relatedIds"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8,
+            "pattern": "^O[1-8]$"
+          },
+          "conceptId": {
+            "type": "string",
+            "enum": [
+              "periodPain",
+              "sexualPain",
+              "bowelPain",
+              "bladderPain",
+              "pelvicPain",
+              "pregnancy",
+              "pid",
+              "suddenSevereAbdominalOrPelvicPain",
+              "shoulderPain",
+              "weakness",
+              "dizziness",
+              "fainting",
+              "clinicallyStable",
+              "heavyBleeding",
+              "hemodynamicInstability",
+              "significantConcernAboutPainOrBleeding",
+              "suddenAcutePelvicPain",
+              "severeAcutePelvicPain"
+            ]
+          },
+          "fieldPath": {
+            "type": "string",
+            "enum": [
+              "earlyPregnancy.clinicallyStable",
+              "earlyPregnancy.heavyBleeding",
+              "earlyPregnancy.hemodynamicInstability",
+              "earlyPregnancy.significantConcernAboutPainOrBleeding",
+              "pidStatus",
+              "pregnancyStatus",
+              "reportedContext.bowelUrinarySymptoms",
+              "reportedContext.painLocation",
+              "reportedContext.sexualPain",
+              "reportedContext.symptomTiming",
+              "urgentIndicators.dizziness",
+              "urgentIndicators.fainting",
+              "urgentIndicators.severeAcutePelvicPain",
+              "urgentIndicators.shoulderPain",
+              "urgentIndicators.suddenAcutePelvicPain",
+              "urgentIndicators.suddenSevereAbdominalOrPelvicPain",
+              "urgentIndicators.weakness"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "notReported",
+              "absent",
+              "present",
+              "notApplicable"
+            ]
+          },
+          "temporalContext": {
+            "type": "string",
+            "enum": [
+              "current",
+              "historical",
+              "hypothetical"
+            ]
+          },
+          "sourceSpans": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 3,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "turnId",
+                "start",
+                "end"
+              ],
+              "properties": {
+                "turnId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 8,
+                  "pattern": "^T[1-6]$"
+                },
+                "start": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 512
+                },
+                "end": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 512
+                }
+              }
+            }
+          },
+          "relation": {
+            "type": "string",
+            "enum": [
+              "reported",
+              "clarifies",
+              "corrects",
+              "contradicts"
+            ]
+          },
+          "relatedIds": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 4,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 8,
+              "pattern": "^O[1-8]$"
+            }
+          }
+        }
+      }
+    },
+    "clarification": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "conceptId",
+            "reason",
+            "sourceTurnIds"
+          ],
+          "properties": {
+            "conceptId": {
+              "type": "string",
+              "enum": [
+                "periodPain",
+                "sexualPain",
+                "bowelPain",
+                "bladderPain",
+                "pelvicPain",
+                "pregnancy",
+                "pid",
+                "suddenSevereAbdominalOrPelvicPain",
+                "shoulderPain",
+                "weakness",
+                "dizziness",
+                "fainting",
+                "clinicallyStable",
+                "heavyBleeding",
+                "hemodynamicInstability",
+                "significantConcernAboutPainOrBleeding",
+                "suddenAcutePelvicPain",
+                "severeAcutePelvicPain",
+                "unspecified"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "uncertain",
+                "ambiguous",
+                "missing",
+                "referent",
+                "conflict",
+                "unsupported"
+              ]
+            },
+            "sourceTurnIds": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 3,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 8,
+                "pattern": "^T[1-6]$"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "x-canonicalSchemaVersion": "1.0.0",
+  "x-bindings": {
+    "periodPain": {
+      "path": "reportedContext.symptomTiming",
+      "modules": [
+        "module_01_endo"
+      ],
+      "allowedStates": [
+        "unknown",
+        "notReported",
+        "absent",
+        "present",
+        "notApplicable"
+      ]
+    },
+    "sexualPain": {
+      "path": "reportedContext.sexualPain",
+      "modules": [
+        "module_01_endo"
+      ],
+      "allowedStates": [
+        "unknown",
+        "notReported",
+        "absent",
+        "present",
+        "notApplicable"
+      ]
+    },
+    "bowelPain": {
+      "path": "reportedContext.bowelUrinarySymptoms",
+      "modules": [
+        "module_01_endo"
+      ],
+      "allowedStates": [
+        "unknown",
+        "notReported",
+        "absent",
+        "present",
+        "notApplicable"
+      ]
+    },
+    "bladderPain": {
+      "path": "reportedContext.bowelUrinarySymptoms",
+      "modules": [
+        "module_01_endo"
+      ],
+      "allowedStates": [
+        "unknown",
+        "notReported",
+        "absent",
+        "present",
+        "notApplicable"
+      ]
+    },
+    "pelvicPain": {
+      "path": "reportedContext.painLocation",
+      "modules": [
+        "module_01_endo",
+        "module_02_early_pregnancy"
+      ],
+      "allowedStates": [
+        "unknown",
+        "notReported",
+        "absent",
+        "present",
+        "notApplicable"
+      ]
+    },
+    "pregnancy": {
+      "path": "pregnancyStatus",
+      "modules": [
+        "module_01_endo",
+        "module_02_early_pregnancy"
+      ],
+      "allowedStates": [
+        "unknown",
+        "notReported",
+        "absent",
+        "present",
+        "notApplicable"
+      ]
+    },
+    "pid": {
+      "path": "pidStatus",
+      "modules": [
+        "module_01_endo",
+        "module_02_early_pregnancy"
+      ],
+      "allowedStates": [
+        "unknown",
+        "notReported",
+        "absent",
+        "present",
+        "notApplicable"
+      ]
+    },
+    "suddenSevereAbdominalOrPelvicPain": {
+      "path": "urgentIndicators.suddenSevereAbdominalOrPelvicPain",
+      "modules": [
+        "module_01_endo",
+        "module_02_early_pregnancy"
+      ],
+      "allowedStates": [
+        "unknown",
+        "notReported",
+        "absent",
+        "present",
+        "notApplicable"
+      ]
+    },
+    "shoulderPain": {
+      "path": "urgentIndicators.shoulderPain",
+      "modules": [
+        "module_01_endo",
+        "module_02_early_pregnancy"
+      ],
+      "allowedStates": [
+        "unknown",
+        "notReported",
+        "absent",
+        "present",
+        "notApplicable"
+      ]
+    },
+    "weakness": {
+      "path": "urgentIndicators.weakness",
+      "modules": [
+        "module_01_endo",
+        "module_02_early_pregnancy"
+      ],
+      "allowedStates": [
+        "unknown",
+        "notReported",
+        "absent",
+        "present",
+        "notApplicable"
+      ]
+    },
+    "dizziness": {
+      "path": "urgentIndicators.dizziness",
+      "modules": [
+        "module_01_endo",
+        "module_02_early_pregnancy"
+      ],
+      "allowedStates": [
+        "unknown",
+        "notReported",
+        "absent",
+        "present",
+        "notApplicable"
+      ]
+    },
+    "fainting": {
+      "path": "urgentIndicators.fainting",
+      "modules": [
+        "module_01_endo",
+        "module_02_early_pregnancy"
+      ],
+      "allowedStates": [
+        "unknown",
+        "notReported",
+        "absent",
+        "present",
+        "notApplicable"
+      ]
+    },
+    "clinicallyStable": {
+      "path": "earlyPregnancy.clinicallyStable",
+      "modules": [
+        "module_02_early_pregnancy"
+      ],
+      "allowedStates": [
+        "unknown",
+        "notReported",
+        "absent",
+        "present"
+      ]
+    },
+    "heavyBleeding": {
+      "path": "earlyPregnancy.heavyBleeding",
+      "modules": [
+        "module_02_early_pregnancy"
+      ],
+      "allowedStates": [
+        "unknown",
+        "notReported",
+        "absent",
+        "present"
+      ]
+    },
+    "hemodynamicInstability": {
+      "path": "earlyPregnancy.hemodynamicInstability",
+      "modules": [
+        "module_02_early_pregnancy"
+      ],
+      "allowedStates": [
+        "unknown",
+        "notReported",
+        "absent",
+        "present"
+      ]
+    },
+    "significantConcernAboutPainOrBleeding": {
+      "path": "earlyPregnancy.significantConcernAboutPainOrBleeding",
+      "modules": [
+        "module_02_early_pregnancy"
+      ],
+      "allowedStates": [
+        "unknown",
+        "notReported",
+        "absent",
+        "present"
+      ]
+    },
+    "suddenAcutePelvicPain": {
+      "path": "urgentIndicators.suddenAcutePelvicPain",
+      "modules": [
+        "module_01_endo",
+        "module_02_early_pregnancy"
+      ],
+      "allowedStates": [
+        "unknown",
+        "notReported",
+        "absent",
+        "present",
+        "notApplicable"
+      ]
+    },
+    "severeAcutePelvicPain": {
+      "path": "urgentIndicators.severeAcutePelvicPain",
+      "modules": [
+        "module_01_endo",
+        "module_02_early_pregnancy"
+      ],
+      "allowedStates": [
+        "unknown",
+        "notReported",
+        "absent",
+        "present",
+        "notApplicable"
+      ]
+    }
+  }
+}

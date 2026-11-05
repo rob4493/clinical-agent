@@ -1,3 +1,7 @@
+import {runConversation} from '../evaluation/conversation';
+import {AgentStatus} from '../evaluation/agentService';
+import { selectFollowup, runChoiceFollowup } from '../evaluation/structuredFollowup';
+import { conflictHeaders, type ConflictStatus } from '../evaluation/conflictAssistance';
 import { setImmediate } from 'node:timers/promises';
 import { analyze, unavailable } from '../evaluation/analysis';
 import { InputError, parseJson, validateCase } from '../evaluation/input';
@@ -9,7 +13,7 @@ const FunctionDeadline=15000;
 const ResponseReserve=1000;
 
 const Headers = {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Clinical-Mode':'competition','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'};
-function json(payload:unknown,status=200,shadow?:ShadowStatus,reason?:ShadowReason):Response { return new Response(JSON.stringify(payload),{status,headers:{...Headers,...(shadow?shadowHeaders(shadow,reason):{})}}); }
+function json(payload:unknown,status=200,shadow?:ShadowStatus,reason?:ShadowReason,conflict?:ConflictStatus):Response { return new Response(JSON.stringify(payload),{status,headers:{...Headers,...(shadow?shadowHeaders(shadow,reason):{}),...(conflict?conflictHeaders(conflict):{})}}); }
 async function bodyText(request:Request,signal:AbortSignal):Promise<string> {
  const reader=request.body?.getReader();if(!reader)throw new InputError();
  const parts:Uint8Array[]=[];let size=0;
@@ -24,6 +28,8 @@ export default async function evaluate(request:Request):Promise<Response> {
  const started=Date.now();
  let shadow:ShadowStatus='skipped';
  let shadowReason:ShadowReason='internal';
+ // Analyze never starts optional conflict assistance; only clinician activation can do that.
+ const conflictStatus:ConflictStatus='skipped';
  let reviewedPresentation:PublicPresentation|undefined;
  const signal=AbortSignal.any([request.signal,AbortSignal.timeout(FunctionDeadline)]);
  const address=new URL(request.url);
@@ -32,6 +38,8 @@ export default async function evaluate(request:Request):Promise<Response> {
   signal.throwIfAborted();
   if(address.search)throw new InputError();
   if(request.method==='GET'&&path==='/health')return json({status:'ok',version:'0.1.0'});
+  // Capability discovery never reads clinical input or starts IAM/model inference.
+  if(path==='/v1/conversation')return json(AgentStatus,request.method==='GET'?200:503);
   const packages=loadPackages();
   const initialPin=hashBytes(JSON.stringify(packages));
   if(request.method==='GET'&&path==='/ready')return json({status:'ready',availableModuleCount:packages.length,reasonCode:'ready'});
@@ -50,9 +58,18 @@ export default async function evaluate(request:Request):Promise<Response> {
    const populations=[...new Set(claims.map(claim=>claim.intendedPopulation))],conditions=[...new Set(claims.flatMap(claim=>claim.conditions))],limitations=[...new Set(claims.flatMap(claim=>claim.limitations))];
    return json({organization:source.organization,title:source.title,date:source.publicationDate,sourceType:id.startsWith('CDC-MATERNAL-')?'Government public-health warning material':id.startsWith('ACOG-')?'Public educational FAQ':id.startsWith('NICE-')||id.startsWith('ACEP-')||id==='CDC-PID'?'Guideline':'Public information webpage',captureStatus:'Project-authored evaluation summary; underlying publication not distributed.',status:'Reviewed for evaluation; authentic sources remain pending review.',statements:claims.map(claim=>claim.supportedStatement),limitations:['Population: '+populations.join('; '),'Conditions: '+conditions.join('; '),...limitations].join(' ').slice(0,6000),jurisdiction:claims[0].jurisdiction,sections:claims.map(()=>'Project-authored evaluation summary')});
   }
+  if(request.method==='POST'&&path==='/v1/followup') {
+   if(!/^application\/json(?:\s*;|$)/i.test(request.headers.get('Content-Type')||''))throw new InputError();
+   const payload=parseJson(await bodyText(request,signal));
+   const followup=payload&&typeof payload==='object'&&'version'in payload&&['3','4'].includes(String(payload.version))?runConversation(payload,packages,signal):await runChoiceFollowup(payload,packages,signal,Math.min(MaximumShadowTimeout,FunctionDeadline-ResponseReserve-(Date.now()-started)));
+   signal.throwIfAborted();
+   if(hashBytes(JSON.stringify(loadPackages()))!==initialPin)throw new Error('Stale evaluation state.');
+   return new Response(JSON.stringify(followup),{headers:{...Headers,'X-Endo-Watson-Followup':followup.status}});
+  }
   if(request.method!=='POST'||path!=='/v1/analyze')return json({detail:'Route is unavailable.'},404);
   if(!/^application\/json(?:\s*;|$)/i.test(request.headers.get('Content-Type')||''))throw new InputError();
-  const caseInput=validateCase(parseJson(await bodyText(request,signal)));
+  const original=parseJson(await bodyText(request,signal));
+  const caseInput=validateCase(original);
   await setImmediate(undefined,{signal});signal.throwIfAborted();
   const result=analyze(caseInput,packages);
   await setImmediate(undefined,{signal});signal.throwIfAborted();
@@ -62,12 +79,16 @@ export default async function evaluate(request:Request):Promise<Response> {
   // Only the purpose-built public projector can feed IBM. The clinical response is immutable here.
   shadow=await runShadow(result,packages,signal,Math.min(MaximumShadowTimeout,FunctionDeadline-ResponseReserve-(Date.now()-started)),undefined,reason=>{shadowReason=reason;},presentation=>{reviewedPresentation=presentation;});
   signal.throwIfAborted();
+  signal.throwIfAborted();
   if(hashBytes(JSON.stringify(loadPackages()))!==initialPin)throw new Error('Stale evaluation state.');
-  return json(shadow==='reviewed-success'&&reviewedPresentation?{...result.envelope,reviewedPresentation}:result.envelope,result.status,shadow,shadowReason);
+  const envelope=shadow==='reviewed-success'&&reviewedPresentation?{...result.envelope,reviewedPresentation}:result.envelope;
+  const presented={...envelope,followupMode:selectFollowup(caseInput,result,packages)};
+  return json(presented,result.status,shadow,shadowReason,conflictStatus);
  } catch(failure) {
-  if(request.signal.aborted)return new Response(null,{status:499,headers:{...Headers,...(path==='/v1/analyze'?shadowHeaders(shadow,shadowReason):{})}});
-  if(failure instanceof InputError || failure instanceof SyntaxError)return json({detail:new InputError().message},422,path==='/v1/analyze'?shadow:undefined,shadowReason);
-  if(path==='/v1/analyze'){const result=unavailable();return json(result.envelope,result.status,shadow,shadowReason);}
+  if(request.signal.aborted)return new Response(null,{status:499,headers:{...Headers,...(path==='/v1/analyze'?{...shadowHeaders(shadow,shadowReason),...conflictHeaders(conflictStatus)}:{})}});
+  if(path==='/v1/followup')return new Response(JSON.stringify({detail:'Guided follow-up is unavailable. Check de-identification and the reviewed question.'}),{status:failure instanceof InputError||failure instanceof SyntaxError?422:503,headers:{...Headers,'X-Endo-Watson-Followup':'skipped'}});
+  if(failure instanceof InputError || failure instanceof SyntaxError)return json({detail:new InputError().message},422,path==='/v1/analyze'?shadow:undefined,shadowReason,path==='/v1/analyze'?conflictStatus:undefined);
+  if(path==='/v1/analyze'){const result=unavailable();return json(result.envelope,result.status,shadow,shadowReason,conflictStatus);}
   if(path==='/ready')return json({status:'notReady',availableModuleCount:0,reasonCode:'analysisUnavailable'},503);
   return json({detail:'Evaluation services are unavailable.'},503);
  }

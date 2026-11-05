@@ -1,0 +1,36 @@
+{
+  "criteriaVersion": "1.0.0",
+  "status": "draftForClinicalExpertReview",
+  "clinicalThresholdsApproved": false,
+  "engineeringGates": {
+    "externalConnections": 0,
+    "canonicalWrites": 0,
+    "automaticReanalysisDispatches": 0,
+    "modelEvidenceAuthority": 0,
+    "privateSourceReads": 0
+  },
+  "proposedCriticalReviewTriggers": [
+    "inventedFacts",
+    "incorrectNegation",
+    "missedUrgentFacts",
+    "urgentWarningFailures",
+    "inappropriateUpdateProposals",
+    "privacyFailures"
+  ],
+  "clinicalPerformanceThresholds": {
+    "precision": null,
+    "recall": null,
+    "perModuleRecall": null,
+    "temporalAccuracy": null,
+    "clarificationQuality": null
+  },
+  "requiredReviews": [
+    "annotation adjudication by clinical experts",
+    "held-out corpus and failure severity review",
+    "privacy/security and organizational authorization",
+    "model/API/region/retention and observability verification",
+    "clinician usability and accessibility",
+    "separate authorization for any provider-bound clinical text"
+  ],
+  "note": "Engineering invariants are not clinical validation. No pass/fail model performance threshold is approved; critical triggers require review, not automatic clearance."
+}
