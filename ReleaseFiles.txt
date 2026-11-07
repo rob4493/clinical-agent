@@ -190,6 +190,7 @@ frontend/tests/EmbeddedLifecycle.test.ts
 frontend/tests/EmbeddedPanel.test.tsx
 frontend/tests/Endo.test.tsx
 frontend/tests/GuidedFollowup.test.tsx
+frontend/tests/HostedEmbedKey.test.ts
 frontend/tests/Module02.test.tsx
 frontend/tests/NetlifyFunction.test.ts
 frontend/tests/OrchestrateChat.test.ts
@@ -259,11 +260,13 @@ netlify/evaluation/watsonShadow.ts
 netlify/functions/converse.ts
 netlify/functions/embedSession.ts
 netlify/functions/evaluate.ts
+netlify/functions/verifyEmbedKey.ts
 pytest.ini
 shared/AgentConnection.md
 shared/ConflictReview.md
 shared/ConversationalAgent.md
 shared/DocumentReview.md
+shared/EmbedSecretValidation.md
 shared/EmbeddedActivation.md
 shared/EmbeddedRelease.md
 shared/EndoDesign.md
@@ -364,6 +367,7 @@ tests/unit/testUnderstanding.py
 tests/unit/testValidationPrivacy.py
 tests/unit/testWatsonx.py
 tools/checkEmbedEnvironment.ts
+tools/checkLocalEmbedKey.ts
 tools/clinicalPacket.py
 tools/evidenceInstall.py
 tools/orchestrateChecks.ts
