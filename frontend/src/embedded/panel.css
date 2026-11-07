@@ -1,0 +1,6 @@
+.embeddedAssistant { width: min(42rem, calc(100% - 2rem)); max-height: calc(100dvh - 2rem); overflow-y: auto; border: 1px solid #dccdd5; border-radius: 1rem; padding: clamp(1rem, 3vw, 2rem); background: #faf7f9; color: #29232b; }
+.embeddedAssistant::backdrop { background: rgb(30 20 30 / 45%); }
+.embeddedAssistant header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.embeddedAssistant p { line-height: 1.6; overflow-wrap: anywhere; }
+.embeddedAssistant button { min-height: 44px; padding: .7rem 1rem; font: inherit; }
+.embeddedAssistant button:focus-visible { outline: 3px solid #6d2850; outline-offset: 3px; }

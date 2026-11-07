@@ -21,7 +21,6 @@ import { ReviewNavigation, WorkflowBar } from './ReviewShell';
 const ConflictDialog=lazy(()=>import('./ConflictDialog'));
 const ResponsePanel=lazy(()=>import('./ResponsePanel'));
 const GuidedFollowup=lazy(()=>import('./GuidedFollowup'));
-const OrchestrateChat=lazy(()=>import('./OrchestrateChat'));
 const AgeRanges = ['Under 18', '18–24', '25–34', '35–44', '45–54', '55–64', '65+'];
 const configuredDeadline = import.meta.env.VITE_REQUEST_DEADLINE_MS || '20000';
 if (!/^[0-9]+$/.test(configuredDeadline) || Number(configuredDeadline) < 1000 || Number(configuredDeadline) > 120000) throw new Error('Invalid request deadline configuration.');
@@ -55,7 +54,7 @@ export default function App() {
   const [synthetic, setSynthetic] = useState(false);
   const [runtimeMode, setRuntimeMode] = useState<RuntimeMode>('standard');
   const [canRequest, setCanRequest] = useState(false);
-  const [orchestrateAvailable,setOrchestrateAvailable]=useState(false),[standaloneChat,setStandaloneChat]=useState(false);
+  const [orchestrateAvailable,setOrchestrateAvailable]=useState(false);
   const [pending, setPending] = useState(false);
   const [uploads, setUploads] = useState<UploadSession>(EmptySession);
   const [uploadGeneration, setUploadGeneration] = useState(0);
@@ -82,7 +81,6 @@ export default function App() {
   const moduleRef = useRef<HTMLInputElement>(null);
 
   const clearCase = useCallback(() => {
-    setStandaloneChat(false);
     // Invalidate even a transport that ignores abort: a late result cannot restore cleared case data.
     requestGeneration.current += 1;
     requestController.current?.abort();
@@ -123,7 +121,7 @@ export default function App() {
       setCanRequest(readiness.status === 200 && isReady(readiness.payload) || (readiness.runtimeMode === 'competition' && readiness.status === 503 && (readiness.payload as { reasonCode?: string })?.reasonCode === 'analysisUnavailable'));
     } catch {
       if (mounted.current && moduleController.current === controller) {
-        setOrchestrateAvailable(false);setStandaloneChat(false);setModules([]); setModuleId(''); setCanRequest(false); setAvailabilityError('Evaluation services are unavailable. Refresh availability to try again.');
+        setOrchestrateAvailable(false);setModules([]); setModuleId(''); setCanRequest(false); setAvailabilityError('Evaluation services are unavailable. Refresh availability to try again.');
       }
     } finally {
       clearTimeout(timer);
@@ -271,7 +269,6 @@ export default function App() {
     <main>
       <div className="pageIntro"><p className="eyebrow">Endo · Clinical Evidence Assistant</p><h1>New evidence review</h1><p>Bring the case into focus. Review the evidence with confidence and care.</p></div>
       <aside className="demoBanner" aria-label="Clinical and privacy boundaries"><strong>{EvaluationBanner}</strong>{synthetic && <p>{DemoNotice}</p>}</aside>
-      {orchestrateAvailable&&<section className="card"><button type="button" onClick={()=>setStandaloneChat(current=>!current)}>{standaloneChat?'Close Clinical AI Assistant':'Open Clinical AI Assistant'}</button>{standaloneChat&&<Suspense fallback={<p role="status">Opening controlled IBM conversation…</p>}><OrchestrateChat onFallback={()=>setStandaloneChat(false)} onEnd={()=>setStandaloneChat(false)}/></Suspense>}</section>}
       <div className="workspace">
         <section className="card caseCard" aria-labelledby="caseTitle">
           <div className="cardHeading"><div><h2 id="caseTitle">Build the case</h2><p className="cardSubtitle">Add key details for a focused evidence review.</p></div><span className="memoryLabel">In-memory only</span></div>

@@ -13,6 +13,12 @@
   included_files = ["netlify/RuntimeNotice.txt"]
 
 [[redirects]]
+  from = "/api/v1/embed-session"
+  to = "/.netlify/functions/embedSession"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/v1/conversation"
   to = "/.netlify/functions/converse"
   status = 200
