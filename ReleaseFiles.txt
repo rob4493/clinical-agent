@@ -193,6 +193,7 @@ frontend/tests/GuidedFollowup.test.tsx
 frontend/tests/HostedEmbedKey.test.ts
 frontend/tests/Module02.test.tsx
 frontend/tests/NetlifyFunction.test.ts
+frontend/tests/OperatorContext.test.ts
 frontend/tests/OrchestrateChat.test.ts
 frontend/tests/OrchestrateChatUi.test.tsx
 frontend/tests/OrchestrateChecks.test.ts
@@ -263,6 +264,7 @@ netlify/functions/embedSession.ts
 netlify/functions/evaluate.ts
 netlify/functions/orchestrateProbe.ts
 netlify/functions/verifyEmbedKey.ts
+netlify/functions/verifyOperatorContext.ts
 pytest.ini
 shared/AgentConnection.md
 shared/ConflictReview.md
@@ -273,6 +275,7 @@ shared/EmbeddedActivation.md
 shared/EmbeddedRelease.md
 shared/EndoDesign.md
 shared/GuidedFollowup.md
+shared/OperatorContextVerification.md
 shared/OrchestrateProbe.md
 shared/Preview4Update.md
 shared/README.md

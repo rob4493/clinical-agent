@@ -104,6 +104,7 @@
     "netlify/functions/embedSession.ts": "869b9e9a2dcf608a273d57b8257941d2365ba483c48f310eb176ebb8ca110a7b",
     "netlify/functions/evaluate.ts": "81ad3910a9d00ab0fb2ec9e856580d60bd7ed6295fbe9f6363f51832309da883",
     "netlify/functions/orchestrateProbe.ts": "f5326f46bdd7daaa1f995d790dbfa7d054e04a9da5ccae86187b95013af3ff26",
+    "netlify/functions/verifyOperatorContext.ts": "d3250a75aba0ebe9124b6ba935d4ec45c9e1cd0b72fd57f7835c307da4390a31",
     "shared/caseBridge.ts": "51437e98bfb865dde9d25f6423228661bcb50bc18e1e8d4983c06cc585b243c3",
     "shared/checkSchema.mjs": "127855565df82428664214d7617428cdbe0f54d5ed26b9af49fb3cedcfb3430b",
     "shared/clinicalData.schema.json": "0e2543a2bd879af5157da50313a2c718b72fec884833458d508ca70a09422add",
