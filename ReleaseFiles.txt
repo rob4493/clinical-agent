@@ -196,6 +196,7 @@ frontend/tests/NetlifyFunction.test.ts
 frontend/tests/OrchestrateChat.test.ts
 frontend/tests/OrchestrateChatUi.test.tsx
 frontend/tests/OrchestrateChecks.test.ts
+frontend/tests/OrchestrateProbe.test.ts
 frontend/tests/OrchestrateTarget.test.ts
 frontend/tests/OrchestrateTransport.test.ts
 frontend/tests/PreviewRelease.test.ts
@@ -260,6 +261,7 @@ netlify/evaluation/watsonShadow.ts
 netlify/functions/converse.ts
 netlify/functions/embedSession.ts
 netlify/functions/evaluate.ts
+netlify/functions/orchestrateProbe.ts
 netlify/functions/verifyEmbedKey.ts
 pytest.ini
 shared/AgentConnection.md
@@ -271,6 +273,7 @@ shared/EmbeddedActivation.md
 shared/EmbeddedRelease.md
 shared/EndoDesign.md
 shared/GuidedFollowup.md
+shared/OrchestrateProbe.md
 shared/Preview4Update.md
 shared/README.md
 shared/ResponsePresentation.md

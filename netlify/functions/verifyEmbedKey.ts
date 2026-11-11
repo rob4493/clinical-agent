@@ -9,7 +9,8 @@ export function validateEmbedKey(pem:unknown,pin:unknown):{status:'PASS'|'FAIL';
  if(typeof pem!=='string'||!pem)return {status:'FAIL',reason:'keyMissing'};
  if(pem.length>12000)return {status:'FAIL',reason:'keyTooLarge'};
  if(pem.includes('\\n')&&!pem.includes('\n'))return {status:'FAIL',reason:'literalNewlines'};
- if(!pem.startsWith('-----BEGIN PRIVATE KEY-----')||!pem.includes('\n'))return {status:'FAIL',reason:'unencryptedPkcs8Required'};
+ // Public PEM grammar, not key material; keep literal key headers out of releases.
+ if(!/^-{5}BEGIN PRIVATE KEY-{5}/.test(pem)||!pem.includes('\n'))return {status:'FAIL',reason:'unencryptedPkcs8Required'};
  if(typeof pin!=='string'||!/^[a-f0-9]{64}$/.test(pin))return {status:'FAIL',reason:'fingerprintFormat'};
  try{
   const key=createPrivateKey(pem);

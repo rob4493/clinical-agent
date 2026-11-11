@@ -37,9 +37,16 @@ it('authorizes actual platform user before reading secret material',async()=>{
 });
 it('bounds and sanitizes real key failures without returning fingerprint or key bytes',async()=>{
  const weak=generateKeyPairSync('rsa',{modulusLength:2048}).privateKey.export({type:'pkcs8',format:'pem'}).toString();
- for(const [pem,pin,reason] of [[undefined,Pin,'keyMissing'],['x'.repeat(12001),Pin,'keyTooLarge'],[Pem.replaceAll('\n','\\n'),Pin,'literalNewlines'],[Pair.privateKey.export({type:'pkcs1',format:'pem'}).toString(),Pin,'unencryptedPkcs8Required'],[Pem,'MASKED','fingerprintFormat'],[Pem,'0'.repeat(64),'fingerprintMismatch'],[weak,Pin,'rsa4096Required'],['-----BEGIN PRIVATE KEY-----\nSyntheticSecret',Pin,'keyUnparseable']]){
+ for(const [pem,pin,reason] of [[undefined,Pin,'keyMissing'],['x'.repeat(12001),Pin,'keyTooLarge'],[Pem.replaceAll('\n','\\n'),Pin,'literalNewlines'],[Pair.privateKey.export({type:'pkcs1',format:'pem'}).toString(),Pin,'unencryptedPkcs8Required'],[Pem,'MASKED','fingerprintFormat'],[Pem,'0'.repeat(64),'fingerprintMismatch'],[weak,Pin,'rsa4096Required'],[Pem.split('\n')[0]+'\nSyntheticSecret',Pin,'keyUnparseable']]){
   const result=validateEmbedKey(pem,pin);expect(result).toEqual({status:'FAIL',reason});
   expect(JSON.stringify(result)).not.toContain(Pin);expect(JSON.stringify(result)).not.toContain('SyntheticSecret');
+ }
+});
+it('preserves the exact former PKCS8 prefix predicate without storing a key header fixture',()=>{
+ const header=Pem.split('\n')[0];
+ for(const candidate of [Pem,Pem.replaceAll('\n','\r\n'),' '+Pem,'"'+Pem+'"',Pem.replace('BEGIN','BEGINX'),Pem.replace('PRIVATE KEY','PUBLIC KEY'),Pem.replace(/^-{5}/,'------'),header,header+'\nSyntheticSecret',header+'-\nSyntheticSecret']){
+  const acceptedHeader=candidate.startsWith(header)&&candidate.includes('\n');
+  expect(validateEmbedKey(candidate,Pin).reason==='unencryptedPkcs8Required').toBe(!acceptedHeader);
  }
 });
 it('rejects input misuse and does not answer an aborted request',async()=>{

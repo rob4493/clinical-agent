@@ -50,8 +50,9 @@ export function createOrchestrateTransport(gate:OrchestrateGate=ClosedGate,trans
    await wait(gate.reserve(operation),operation);operation.throwIfAborted();
    const bearer=await wait(iam.authenticate(environment,operation,target.timeout()),operation);operation.throwIfAborted();
    // This documented compatibility endpoint invokes the supplied deployed agent,
-   // not a model ID. No invented environment parameter or Draft fallback is used.
-   const response=await wait(transport(target.apiBase()+'/v1/orchestrate/'+target.agentId()+'/chat/completions',{method:'POST',redirect:'error',credentials:'omit',cache:'no-store',headers:{Accept:'application/json','Content-Type':'application/json',Authorization:'Bearer '+bearer},body:JSON.stringify({messages:turn.messages,stream:false,...(turn.threadId?{thread_id:turn.threadId}:{})}),signal:operation}),operation);
+   // not a model ID. The server-owned continuation belongs in IBM's header,
+   // never an undocumented body field or a browser-provided ownership assertion.
+   const response=await wait(transport(target.apiBase()+'/v1/orchestrate/'+target.agentId()+'/chat/completions',{method:'POST',redirect:'error',credentials:'omit',cache:'no-store',headers:{Accept:'application/json','Content-Type':'application/json',Authorization:'Bearer '+bearer,...(turn.threadId?{'X-IBM-THREAD-ID':turn.threadId}:{})},body:JSON.stringify({messages:turn.messages,stream:false}),signal:operation}),operation);
    const reply=await readReply(response,operation);operation.throwIfAborted();if(turn.threadId&&reply.threadId!==turn.threadId)throw new OrchestrateError();return reply;
   }catch{signal.throwIfAborted();throw new OrchestrateError();}
  }});
