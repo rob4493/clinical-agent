@@ -20,6 +20,19 @@ it('reserves quota before IAM and reuses the existing key without model/project 
  const [address,options]=http.mock.calls[1];expect(address).toBe(Settings.ORCHESTRATE_API_URL+'/v1/orchestrate/'+Settings.ORCHESTRATE_AGENT_ID+'/chat/completions');expect(address).not.toContain('SyntheticBearer');expect(address).not.toContain('SyntheticExistingKey');expect(options.redirect).toBe('error');expect(options.credentials).toBe('omit');expect(options.cache).toBe('no-store');expect(JSON.parse(String(options.body))).toEqual({messages:Turn.messages,stream:false});expect(new Headers(options.headers).get('Authorization')).toBe('Bearer SyntheticBearer');
 });
 it('reuses expiration-aware IAM caching across turns and preserves supplied context/thread',async()=>{const policy=gate(),http=transport(),provider=createOrchestrateTransport(policy,http,Settings);await provider.complete(Turn,signal());const messages=[...Turn.messages,{role:'assistant' as const,content:'Public prior reply.'},{role:'user' as const,content:'Public follow-up question.'}];await provider.complete({threadId:Thread,messages},signal());expect(http).toHaveBeenCalledTimes(3);expect(policy.reserve).toHaveBeenCalledTimes(2);expect(JSON.parse(String(http.mock.calls[2][1].body))).toEqual({messages,stream:false});expect(new Headers(http.mock.calls[1][1].headers).has('X-IBM-THREAD-ID')).toBe(false);expect(new Headers(http.mock.calls[2][1].headers).get('X-IBM-THREAD-ID')).toBe(Thread);});
+it('preserves IAM, quota admission and thread continuity on EU-DE with the configured agent',async()=>{
+ const environment={...Settings,ORCHESTRATE_API_URL:'https://api.eu-de.watson-orchestrate.cloud.ibm.com/instances/SyntheticTenant',ORCHESTRATE_AGENT_ID:'c6698d4e-a08d-4b77-bf05-139ff3b4c695'};
+ const http=transport(),policy=gate(),provider=createOrchestrateTransport(policy,http,environment);
+ await provider.complete(Turn,signal());await provider.complete({...Turn,threadId:Thread},signal());
+ expect(http).toHaveBeenCalledTimes(3);expect(policy.reserve).toHaveBeenCalledTimes(2);
+ expect(http.mock.calls[0][0]).toBe('https://iam.cloud.ibm.com/identity/token');
+ for(const [address,options] of http.mock.calls.slice(1)){
+  expect(address).toBe(environment.ORCHESTRATE_API_URL+'/v1/orchestrate/'+environment.ORCHESTRATE_AGENT_ID+'/chat/completions');
+  expect(new Headers(options.headers).get('Authorization')).toBe('Bearer SyntheticBearer');expect(options.redirect).toBe('error');
+  expect(JSON.parse(String(options.body))).toEqual({messages:Turn.messages,stream:false});
+ }
+ expect(new Headers(http.mock.calls[1][1].headers).has('X-IBM-THREAD-ID')).toBe(false);expect(new Headers(http.mock.calls[2][1].headers).get('X-IBM-THREAD-ID')).toBe(Thread);
+});
 it('deduplicates concurrent IAM refresh without combining conversation payloads',async()=>{const http=transport(),provider=createOrchestrateTransport(gate(),http,Settings);await Promise.all([provider.complete(Turn,signal()),provider.complete({messages:[{role:'user',content:'Other public question.'}]},signal())]);expect(http.mock.calls.filter(([address])=>address.includes('/identity/token'))).toHaveLength(1);expect(http.mock.calls.filter(([address])=>!address.includes('/identity/token'))).toHaveLength(2);});
 it('fails closed on quota storage failure without starting IAM',async()=>{const policy=gate(),http=transport();policy.reserve=vi.fn(async()=>{throw new Error('SyntheticStorageSecret');});await expect(createOrchestrateTransport(policy,http,Settings).complete(Turn,signal())).rejects.toThrow('IBM conversation is unavailable. The case is unchanged.');expect(http).not.toHaveBeenCalled();});
 it.each([

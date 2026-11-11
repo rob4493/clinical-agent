@@ -21,6 +21,20 @@ resource. A prior successful watsonx.ai call or IAM token exchange does not prov
 that permission. No embed RSA key or client JWT is involved. Tokens and HMAC
 receipts remain server-side. There is no browser session token or thread ID.
 
+EU-DE compatibility: the exact approved API hosts are
+`api.dl.watson-orchestrate.ibm.com`,
+`api.us-south.watson-orchestrate.cloud.ibm.com` and
+`api.eu-de.watson-orchestrate.cloud.ibm.com`. Target admission and probe error
+classification use the same strict URL validator: canonical HTTPS only, no user
+credentials, explicit ports, queries, fragments or encoded paths, and exactly
+`/instances/{instanceId}`. No wildcard region or browser/embed host is accepted.
+Use the actual service URL from IBM API details; synthetic tenant strings in tests
+are never deployed defaults. The operator has identified EU-DE and Live Agent
+Endo ID `c6698d4e-a08d-4b77-bf05-139ff3b4c695` as the intended current target.
+These are configuration inputs, not proof of runtime injection or IAM permission.
+Regional compatibility does not enable any route, authorize inference, change IAM
+authentication, or require embedded-chat RSA/JWT settings.
+
 Official references reviewed 7 November 2026; endpoint contract rechecked 8 November 2026:
 
 - https://developer.watson-orchestrate.ibm.com/apis/orchestrate-agent/chat-with-agents

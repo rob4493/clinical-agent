@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import Prompts from '../../shared/orchestratePrompts.json';
-import {OrchestrateTarget} from '../evaluation/orchestrateTarget';
+import {OrchestrateTarget,isOrchestrateApiUrl} from '../evaluation/orchestrateTarget';
 import {createOrchestrateTransport,type OrchestrateTurn} from '../evaluation/orchestrateTransport';
 import {createWatsonRuntime,type Transport} from '../evaluation/watsonShadow';
 import {createAdmission} from '../evaluation/demoAdmission';
@@ -57,7 +57,7 @@ export function createProbe(options:{settings?:()=>Settings;transport?:Transport
    signal.throwIfAborted();
    // Private projections configure reused helpers only; no legacy/public flag is mutated.
    const providerEnvironment={...environment,ORCHESTRATE_ENABLED:'true'};
-   try{new OrchestrateTarget(providerEnvironment);}catch{return json(200,{...report,reason:!environment.ORCHESTRATE_API_URL||!/^https:\/\/api\.(?:dl\.watson-orchestrate\.ibm\.com|us-south\.watson-orchestrate\.cloud\.ibm\.com)\/instances\/[A-Za-z0-9-]+$/.test(environment.ORCHESTRATE_API_URL)?'incorrectEndpoint':'configuration'});}
+   try{new OrchestrateTarget(providerEnvironment);}catch{return json(200,{...report,reason:!isOrchestrateApiUrl(environment.ORCHESTRATE_API_URL)?'incorrectEndpoint':'configuration'});}
    const credential=environment.WATSONX_AI_APIKEY;
    if(!credential||credential.length>512||/\s|[\u0000-\u001f]/.test(credential))return json(200,{...report,reason:'configuration'});
    const gated=()=>{if(!allowed(settings(),clock())||operator.expiresAt.getTime()<=clock()){reason='disabled';throw new Error();}};

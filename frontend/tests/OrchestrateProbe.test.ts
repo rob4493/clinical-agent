@@ -34,6 +34,28 @@ it('runs two real-shaped mocked turns with one IAM identity and server-only thre
  for(const forbidden of ['SyntheticBearer','SyntheticServerKey',Thread,'Blue Lantern','SyntheticTenant','receipt'])expect(JSON.stringify(report)).not.toContain(forbidden);
  expect(JSON.stringify([...records.values()])).not.toMatch(/Blue Lantern|message|prompt|caseInput/);
 });
+it.each(['api.dl.watson-orchestrate.ibm.com','api.us-south.watson-orchestrate.cloud.ibm.com','api.eu-de.watson-orchestrate.cloud.ibm.com'])('uses the same approved endpoint policy for target and probe: %s',async host=>{
+ const {handler,environment,transport}=fixture();
+ environment.ORCHESTRATE_API_URL='https://'+host+'/instances/SyntheticTenant';
+ environment.ORCHESTRATE_AGENT_ID='c6698d4e-a08d-4b77-bf05-139ff3b4c695';
+ expect((await (await handler(request(),Context)).json()).status).toBe('PASS');
+ expect(transport.mock.calls[1][0]).toBe(environment.ORCHESTRATE_API_URL+'/v1/orchestrate/'+environment.ORCHESTRATE_AGENT_ID+'/chat/completions');
+ expect(new Headers(transport.mock.calls[2][1].headers).get('X-IBM-THREAD-ID')).toBe(Thread);
+ // A valid regional endpoint with invalid non-URL config is not misclassified.
+ const invalid=fixture();invalid.environment.ORCHESTRATE_API_URL=environment.ORCHESTRATE_API_URL;invalid.environment.ORCHESTRATE_ENVIRONMENT='draft';
+ expect((await (await invalid.handler(request(),Context)).json()).reason).toBe('configuration');expect(invalid.transport).not.toHaveBeenCalled();expect(invalid.store).not.toHaveBeenCalled();
+});
+it.each([
+ 'https://api.eu-gb.watson-orchestrate.cloud.ibm.com/instances/SyntheticTenant',
+ 'https://api.eu-de.watson-orchestrate.cloud.ibm.com.evil.invalid/instances/SyntheticTenant',
+ 'https://dl.watson-orchestrate.ibm.com/instances/SyntheticTenant',
+ 'http://api.eu-de.watson-orchestrate.cloud.ibm.com/instances/SyntheticTenant',
+ 'https://api.eu-de.watson-orchestrate.cloud.ibm.com/instances/-tenant',
+ 'https://api.eu-de.watson-orchestrate.cloud.ibm.com/instances/SyntheticTenant/extra'
+])('rejects unsafe regional probe targets before quota or IAM %#',async address=>{
+ const {handler,environment,transport,store}=fixture();environment.ORCHESTRATE_API_URL=address;
+ expect((await (await handler(request(),Context)).json()).reason).toBe('incorrectEndpoint');expect(transport).not.toHaveBeenCalled();expect(store).not.toHaveBeenCalled();
+});
 it('is disabled at import/construction and for missing or unverified gates without storage or HTTP',async()=>{
  const network=vi.fn();vi.stubGlobal('fetch',network);
  expect((await createProbe()(request(),Context)).status).toBe(404);expect(network).not.toHaveBeenCalled();
