@@ -171,6 +171,7 @@ frontend/tests/AgentRuntime.test.ts
 frontend/tests/AgentUi.test.tsx
 frontend/tests/AgentWorkflow.test.tsx
 frontend/tests/App.test.tsx
+frontend/tests/BlobsInitialization.test.ts
 frontend/tests/Cancellation.test.tsx
 frontend/tests/ClinicalSchema.test.ts
 frontend/tests/CompetitionPresentation.test.tsx

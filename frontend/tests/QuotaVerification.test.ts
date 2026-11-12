@@ -123,13 +123,42 @@ it('rejects wrong origins, methods, queries, media types and oversized bodies be
  expect(factory).not.toHaveBeenCalled();
 });
 it('exposes an authenticated no-storage positive control',async()=>{
- const {factory}=storage(),response=await createVerification(()=>Closed,factory)(new Request(Origin+'/.netlify/functions/verifyQuota'),operator());expect(await response.json()).toEqual({version:'1',status:'operatorReady',ibm:'disabled'});expect(factory).not.toHaveBeenCalled();
+ const {factory}=storage(),inspect=vi.fn(async()=> 'initializationReady' as const),response=await createVerification(()=>Closed,factory,'worker',inspect)(new Request(Origin+'/.netlify/functions/verifyQuota'),operator());expect(await response.json()).toEqual({version:'1',status:'operatorReady',ibm:'disabled',initialization:'initializationReady'});expect(factory).not.toHaveBeenCalled();expect(inspect).toHaveBeenCalledOnce();
 });
 it('uses trusted runtime deployment context without reading process.env.CONTEXT',async()=>{
  const {factory}=storage();
  const settings=new Proxy(Closed,{get(target,key){if(key==='CONTEXT')throw new Error('Build metadata must not be read');return Reflect.get(target,key);}});
- const response=await createVerification(()=>settings,factory)(new Request(Origin+'/.netlify/functions/verifyQuota'),operator());
- expect(response.status).toBe(200);expect(await response.json()).toEqual({version:'1',status:'operatorReady',ibm:'disabled'});expect(factory).not.toHaveBeenCalled();
+ const response=await createVerification(()=>settings,factory,'worker',async()=> 'initializationReady')(new Request(Origin+'/.netlify/functions/verifyQuota'),operator());
+ expect(response.status).toBe(200);expect(await response.json()).toEqual({version:'1',status:'operatorReady',ibm:'disabled',initialization:'initializationReady'});expect(factory).not.toHaveBeenCalled();
+});
+it.each(['sdkImportFailed','automaticConfigurationUnavailable','adapterRejected','initializationReady','initializationUnknown'] as const)('returns only a fixed protected GET initialization result: %s',async initialization=>{
+ const {factory}=storage(),inspect=vi.fn(async()=>initialization),network=vi.fn();vi.stubGlobal('fetch',network);
+ try{const response=await createVerification(()=>Closed,factory,'worker',inspect)(new Request(Origin+'/.netlify/functions/verifyQuota'),operator());
+  expect(response.status).toBe(200);expect(await response.json()).toEqual({version:'1',status:'operatorReady',ibm:'disabled',initialization});expect(inspect).toHaveBeenCalledOnce();expect(factory).not.toHaveBeenCalled();expect(network).not.toHaveBeenCalled();
+ }finally{vi.unstubAllGlobals();}
+});
+it('rejects unknown inspector results and exceptions without echoing private information',async()=>{
+ for(const inspect of [async()=> 'SyntheticPrivatePayload' as never,async()=>{throw new Error('SyntheticPrivatePayload');}]){
+  const {factory}=storage(),response=await createVerification(()=>Closed,factory,'worker',inspect)(new Request(Origin+'/.netlify/functions/verifyQuota'),operator());
+  expect(await response.json()).toEqual({version:'1',status:'operatorReady',ibm:'disabled',initialization:'initializationUnknown'});expect(factory).not.toHaveBeenCalled();
+ }
+});
+it('does not initialize before the GET preview/operator/safety gates pass',async()=>{
+ const {factory}=storage(),inspect=vi.fn(async()=> 'initializationReady' as const),get=new Request(Origin+'/.netlify/functions/verifyQuota');
+ for(const context of [{deploy:Deploy},{...operator(),user:{...operator().user,id:'other'}},{...operator(),user:{...operator().user,expiresAt:new Date(0)}},{...operator(),deploy:{...Deploy,context:'production'}},{...operator(),deploy:{...Deploy,published:true}}]){
+  expect([403,404]).toContain((await createVerification(()=>Closed,factory,'worker',inspect)(get,context)).status);
+ }
+ const other=new Request('https://deploy-preview-5--clinicalagent.netlify.app/.netlify/functions/verifyQuota');expect((await createVerification(()=>Closed,factory,'worker',inspect)(other,operator())).status).toBe(404);
+ for(const key of Object.keys(Closed).filter(k=>k!=='QUOTA_VERIFICATION_OPERATOR_IDS')){
+  expect((await createVerification(()=>({...Closed,[key]:undefined}),factory,'worker',inspect)(get,operator())).status).toBe(404);
+ }
+ expect(inspect).not.toHaveBeenCalled();expect(factory).not.toHaveBeenCalled();
+});
+it.each(['disabled','expired','unlisted','cancelled'])('rechecks protection after asynchronous GET initialization: %s',async change=>{
+ const settings={...Closed},context=operator(),abort=new AbortController(),{factory}=storage();
+ const inspect=vi.fn(async()=>{if(change==='disabled')settings.QUOTA_VERIFICATION_ENABLED='false';if(change==='expired')context.user.expiresAt=new Date(0);if(change==='unlisted')settings.QUOTA_VERIFICATION_OPERATOR_IDS='other';if(change==='cancelled')abort.abort();return 'initializationReady' as const;});
+ const response=await createVerification(()=>settings,factory,'worker',inspect)(new Request(Origin+'/.netlify/functions/verifyQuota',{signal:abort.signal}),context);
+ expect(response.status).toBe(change==='disabled'?404:change==='cancelled'?499:403);expect(await response.text()).not.toContain('initializationReady');expect(factory).not.toHaveBeenCalled();
 });
 it.each([undefined,null,{}, {...Deploy,context:'production'}, {...Deploy,context:'branch-deploy'}, {...Deploy,published:true}, {...Deploy,published:undefined}, {...Deploy,published:'false'}, {...Deploy,id:undefined}, {...Deploy,id:''}, {...Deploy,id:'x'.repeat(129)}, {...Deploy,id:'invalid/id'}, {...Deploy,context:undefined}])('fails closed for absent, malformed or non-preview platform deployment metadata %#',async deploy=>{
  const {factory}=storage();const context={...operator(),deploy} as ReturnType<typeof operator>;

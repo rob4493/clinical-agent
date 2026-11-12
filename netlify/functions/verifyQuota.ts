@@ -1,6 +1,6 @@
 import {randomUUID} from 'node:crypto';
 import {createQuota,QuotaError,type QuotaStore} from '../evaluation/demoQuota';
-import {netlifyQuota} from '../../frontend/src/server/netlifyQuota';
+import {netlifyQuota,inspectQuotaInitialization,type QuotaInitialization} from '../../frontend/src/server/netlifyQuota';
 
 type Settings=Record<string,string|undefined>;
 type OperatorContext={user?:{id:string;expiresAt:Date};deploy?:{id:string;context:string;published:boolean}};
@@ -22,14 +22,29 @@ function json(payload:unknown,status=200){return new Response(JSON.stringify(pay
  * production store selection, deletion, reset or inference permission exists here.
  * Platform-verified context.user is required even on the direct Function URL.
  */
-export function createVerification(settings:()=>Settings=()=>process.env,factory:(name:string,signal:AbortSignal)=>Promise<QuotaStore>=(name,signal)=>netlifyQuota(name,signal),workerId:string=WorkerId){
+export function createVerification(settings:()=>Settings=()=>process.env,factory:(name:string,signal:AbortSignal)=>Promise<QuotaStore>=(name,signal)=>netlifyQuota(name,signal),workerId:string=WorkerId,inspect:typeof inspectQuotaInitialization=inspectQuotaInitialization){
  return async function verifyQuota(request:Request,context:OperatorContext={}):Promise<Response>{
   const environment=settings(),operator=context?.user;
   if(!previewAllowed(request,context)||!closed(environment))return json({code:'disabled'},404);
   const allowed=(environment.QUOTA_VERIFICATION_OPERATOR_IDS||'').split(',').filter(Boolean);
   if(!operator||!allowed.includes(operator.id)||!(operator.expiresAt instanceof Date)||!Number.isFinite(operator.expiresAt.getTime())||operator.expiresAt.getTime()<=Date.now())return json({code:'operatorRequired'},403);
   const address=new URL(request.url);
-  if(request.method==='GET'&&!address.search)return json({version:'1',status:'operatorReady',ibm:'disabled'});
+  if(request.method==='GET'&&!address.search){
+   const signal=AbortSignal.any([request.signal,AbortSignal.timeout(2000)]);
+   let initialization:QuotaInitialization='initializationUnknown';
+   try{
+    const observed=await inspect('EndoQuotaVerifyInitialization',signal,environment);
+    if(['sdkImportFailed','automaticConfigurationUnavailable','adapterRejected','initializationReady','initializationUnknown'].includes(observed))initialization=observed;
+   }catch{/* Unknown failures remain a fixed unknown result, never exception details. */}
+   if(request.signal.aborted)return new Response(null,{status:499});
+   if(signal.aborted)initialization='initializationUnknown';
+   try{
+    const current=settings();
+    if(!previewAllowed(request,context)||!closed(current))return json({code:'disabled'},404);
+    if(!(current.QUOTA_VERIFICATION_OPERATOR_IDS||'').split(',').filter(Boolean).includes(operator.id)||!(operator.expiresAt instanceof Date)||!Number.isFinite(operator.expiresAt.getTime())||operator.expiresAt.getTime()<=Date.now())return json({code:'operatorRequired'},403);
+    return json({version:'1',status:'operatorReady',ibm:'disabled',initialization});
+   }catch{return json({code:'verificationFailed'},503);}
+  }
   if(request.method!=='POST'||address.search||request.headers.get('origin')!==address.origin||request.headers.get('content-type')!=='application/json')return json({code:'inputRejected'},400);
   const signal=AbortSignal.any([request.signal,AbortSignal.timeout(10000)]);
   let startStage:StartStage|undefined;

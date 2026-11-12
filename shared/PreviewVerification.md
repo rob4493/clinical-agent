@@ -39,7 +39,8 @@ protection or a client-provided user header. Netlify documents platform verifica
 of this context for private projects and team login protection.
 
 Every IBM flag listed below must be explicitly closed. GET is a no-storage positive
-control returning `operatorReady`. POST start generates a random UUID internally,
+control retaining `version: 1`, `status: operatorReady`, `ibm: disabled` and adding
+only the fixed `initialization` classification below. POST start generates a random UUID internally,
 constructs `EndoQuotaVerify` plus its 32 hex digits, and conditionally creates and
 strongly reads a run marker. A collision fails; it never overwrites an old run.
 POST reserve accepts only an existing run UUID and performs one limit-3 reservation.
@@ -56,6 +57,36 @@ Worker IDs are random per process, not host/user/IP identifiers. No tickets are
 deleted, even after a failed test. Test records contain only operational UUIDs,
 timestamps and a fixed capacity. Old run IDs must never be reused for a new test.
 The test is not an atomicity proof for all failures, a spending cap, or IBM validation.
+
+## Initialization-only GET
+
+After the same preview/operator/expiration and twelve safety checks, GET uses the
+quota adapter's shared SDK-construction path with a network-denying transport.
+It calls no storage methods, returns no store, and never reserves capacity or reads
+IBM credentials. The local SDK import and constructor have a two-second inspection
+deadline, composed with client cancellation. Authorization is checked again after
+the asynchronous import. No runtime context payload is copied, decoded by our
+diagnostic, returned or logged; only the pinned SDK consumes its automatic context.
+
+The response keeps HTTP 200 for an authorized GET, with `initialization` set to:
+
+- `sdkImportFailed`: local SDK import rejected, independent of exception wording.
+- `automaticConfigurationUnavailable`: the pinned SDK's exact
+  `MissingBlobsEnvironmentError` arose in the synchronous `getStore` phase.
+- `adapterRejected`: the adapter's existing telemetry/name validation rejected input.
+- `initializationReady`: the client was constructed without any transport attempt.
+- `initializationUnknown`: cancellation, unexpected errors/exports, malformed client,
+  or any attempted use of the denied transport. No inference from error messages.
+
+`operatorReady` proves authorization only. `initializationReady` does not prove
+storage permissions, strong-read endpoint availability, immutable writes, rate
+limits or IBM access. Malformed runtime configuration that does not yield the
+recognized SDK error stays unknown. Protected POST failures keep their existing
+fixed-stage behavior; other operational adapter failures stay generic.
+
+No hosted GET/POST or deployment is authorized merely by this document. Testing
+uses synthetic automatic context and mocked transports only; no manual Netlify
+credential injection is part of the initialization diagnostic.
 
 The protected `action=start` failure response retains HTTP 503 and
 `code: verificationFailed`, with only a fixed `stage` added after authorization:
