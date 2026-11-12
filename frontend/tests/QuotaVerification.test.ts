@@ -6,9 +6,10 @@ import type {QuotaStore} from '../../netlify/evaluation/demoQuota';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 
-const Closed={CONTEXT:'deploy-preview',QUOTA_VERIFICATION_ENABLED:'true',QUOTA_VERIFICATION_OPERATOR_IDS:'synthetic-operator',ENDO_DEMO_KILL_SWITCH:'true',OTEL_SDK_DISABLED:'true',WATSONX_CONVERSATION_MODE:'disabled',ORCHESTRATE_ENABLED:'false',ORCHESTRATE_SYNTHETIC_AUTHORIZED:'false',ORCHESTRATE_DISCUSSION_AUTHORIZED:'false',ORCHESTRATE_HOSTED_CONTROLS_VERIFIED:'false',ENDO_DEMO_INFERENCE_ENABLED:'false',WATSONX_ENABLED:'false',WATSONX_CONFLICT_ASSIST_ENABLED:'false',WATSONX_GUIDED_FOLLOWUP_ENABLED:'false'};
-const Origin='https://deploy-preview-1--clinicalagent.netlify.app';
-const operator=()=>({user:{id:'synthetic-operator',expiresAt:new Date(Date.now()+60000)}});
+const Closed={QUOTA_VERIFICATION_ENABLED:'true',QUOTA_VERIFICATION_OPERATOR_IDS:'synthetic-operator',ENDO_DEMO_KILL_SWITCH:'true',OTEL_SDK_DISABLED:'true',WATSONX_CONVERSATION_MODE:'disabled',ORCHESTRATE_ENABLED:'false',ORCHESTRATE_SYNTHETIC_AUTHORIZED:'false',ORCHESTRATE_DISCUSSION_AUTHORIZED:'false',ORCHESTRATE_HOSTED_CONTROLS_VERIFIED:'false',ENDO_DEMO_INFERENCE_ENABLED:'false',WATSONX_ENABLED:'false',WATSONX_CONFLICT_ASSIST_ENABLED:'false',WATSONX_GUIDED_FOLLOWUP_ENABLED:'false'};
+const Origin='https://deploy-preview-4--clinicalagent.netlify.app';
+const Deploy={id:'synthetic-deploy',context:'deploy-preview',published:false};
+const operator=()=>({user:{id:'synthetic-operator',expiresAt:new Date(Date.now()+60000)},deploy:{...Deploy}});
 const request=(payload:unknown)=>new Request(Origin+'/.netlify/functions/verifyQuota',{method:'POST',headers:{Origin,'Content-Type':'application/json'},body:JSON.stringify(payload)});
 function storage(){
  const stores=new Map<string,Map<string,{data:unknown;etag:string}>>();
@@ -19,13 +20,21 @@ function storage(){
  });return {factory,stores};
 }
 it('requires preview context, explicit operator opt-in and every IBM gate closed before storage',async()=>{
- for(const settings of [{},...Object.keys(Closed).map(key=>({...Closed,[key]:undefined})),{...Closed,CONTEXT:'production'},{...Closed,CONTEXT:'branch-deploy'},{...Closed,ORCHESTRATE_ENABLED:'true'},{...Closed,ENDO_DEMO_KILL_SWITCH:'false'}]){
+ for(const settings of [{},...Object.keys(Closed).map(key=>({...Closed,[key]:undefined})),{...Closed,ORCHESTRATE_ENABLED:'true'},{...Closed,ENDO_DEMO_KILL_SWITCH:'false'}]){
   const {factory}=storage();const response=await createVerification(()=>settings,factory)(request({action:'start'}),operator());expect([403,404]).toContain(response.status);expect(factory).not.toHaveBeenCalled();
  }
 });
+it.each(Object.entries(Closed).filter(([key])=>key!=='QUOTA_VERIFICATION_OPERATOR_IDS'))('retains the exact mandatory safety value for %s',async(key,value)=>{
+ const {factory}=storage(),network=vi.fn();vi.stubGlobal('fetch',network);
+ try{
+  const settings={...Closed,[key]:value==='true'?'false':value==='false'?'true':'reviewed'};
+  const response=await createVerification(()=>settings,factory)(request({action:'start'}),operator());
+  expect(response.status).toBe(404);expect(factory).not.toHaveBeenCalled();expect(network).not.toHaveBeenCalled();
+ }finally{vi.unstubAllGlobals();}
+});
 it('rejects missing, expired, unlisted or header-spoofed operators even on direct URLs',async()=>{
  const {factory}=storage(),handler=createVerification(()=>Closed,factory);
- for(const context of [{},{user:{id:'other',expiresAt:new Date(Date.now()+60000)}},{user:{id:'synthetic-operator',expiresAt:new Date(0)}},{user:{id:'synthetic-operator',expiresAt:new Date('invalid')}}]){
+ for(const context of [{deploy:Deploy},{deploy:Deploy,user:{id:'other',expiresAt:new Date(Date.now()+60000)}},{deploy:Deploy,user:{id:'synthetic-operator',expiresAt:new Date(0)}},{deploy:Deploy,user:{id:'synthetic-operator',expiresAt:new Date('invalid')}}]){
   const incoming=request({action:'start'});incoming.headers.set('x-nf-user','synthetic-operator');expect((await handler(incoming,context)).status).toBe(403);
  }expect(factory).not.toHaveBeenCalled();
 });
@@ -60,6 +69,27 @@ it('rejects wrong origins, methods, queries, media types and oversized bodies be
 });
 it('exposes an authenticated no-storage positive control',async()=>{
  const {factory}=storage(),response=await createVerification(()=>Closed,factory)(new Request(Origin+'/.netlify/functions/verifyQuota'),operator());expect(await response.json()).toEqual({version:'1',status:'operatorReady',ibm:'disabled'});expect(factory).not.toHaveBeenCalled();
+});
+it('uses trusted runtime deployment context without reading process.env.CONTEXT',async()=>{
+ const {factory}=storage();
+ const settings=new Proxy(Closed,{get(target,key){if(key==='CONTEXT')throw new Error('Build metadata must not be read');return Reflect.get(target,key);}});
+ const response=await createVerification(()=>settings,factory)(new Request(Origin+'/.netlify/functions/verifyQuota'),operator());
+ expect(response.status).toBe(200);expect(await response.json()).toEqual({version:'1',status:'operatorReady',ibm:'disabled'});expect(factory).not.toHaveBeenCalled();
+});
+it.each([undefined,null,{}, {...Deploy,context:'production'}, {...Deploy,context:'branch-deploy'}, {...Deploy,published:true}, {...Deploy,published:undefined}, {...Deploy,published:'false'}, {...Deploy,id:undefined}, {...Deploy,id:''}, {...Deploy,id:'x'.repeat(129)}, {...Deploy,id:'invalid/id'}, {...Deploy,context:undefined}])('fails closed for absent, malformed or non-preview platform deployment metadata %#',async deploy=>{
+ const {factory}=storage();const context={...operator(),deploy} as ReturnType<typeof operator>;
+ const response=await createVerification(()=>({...Closed,CONTEXT:'deploy-preview'}),factory)(request({action:'start'}),context);
+ expect(response.status).toBe(404);expect(await response.json()).toEqual({code:'disabled'});expect(factory).not.toHaveBeenCalled();
+});
+it.each(['https://deploy-preview-5--clinicalagent.netlify.app','https://clinicalagent.netlify.app','https://deploy-preview-4--clinicalagent.netlify.app.evil.invalid','http://deploy-preview-4--clinicalagent.netlify.app'])('rejects other preview, production and spoofed origins before storage %#',async origin=>{
+ const {factory}=storage(),incoming=new Request(origin+'/.netlify/functions/verifyQuota',{method:'POST',headers:{Origin,'Content-Type':'application/json','x-nf-deploy-context':'deploy-preview','x-nf-deploy-id':'synthetic-deploy'},body:JSON.stringify({action:'start',deploy:Deploy})});
+ expect((await createVerification(()=>Closed,factory)(incoming,operator())).status).toBe(404);expect(factory).not.toHaveBeenCalled();
+});
+it('does not accept deployment identity from headers, query or body, or from an omitted context',async()=>{
+ const {factory}=storage(),handler=createVerification(()=>Closed,factory);
+ const incoming=new Request(Origin+'/.netlify/functions/verifyQuota?context=deploy-preview',{method:'POST',headers:{Origin,'Content-Type':'application/json','x-nf-deploy-context':'deploy-preview','x-nf-deploy-id':'synthetic-deploy'},body:JSON.stringify({action:'start',deploy:Deploy})});
+ expect((await handler(incoming,{user:operator().user})).status).toBe(404);expect((await handler(incoming)).status).toBe(404);
+ expect((await handler(request({action:'start',deploy:Deploy}),operator())).status).toBe(400);expect(factory).not.toHaveBeenCalled();
 });
 it('requires a Netlify login redirect rather than missing routes, application failures or spoofable server headers',()=>{
  for(const status of [200,401,403,404,500])expect(platformLogin({status,headers:new Headers({server:'Netlify'})},Origin)).toBe(false);

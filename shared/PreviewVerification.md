@@ -24,8 +24,14 @@ Deploy Preview visibility is Private. Do not merge the PR or publish its deploy.
 
 ## Operator-only Function
 
-`netlify/functions/verifyQuota.ts` requires `CONTEXT=deploy-preview` (Netlify supplied),
-`QUOTA_VERIFICATION_ENABLED=true`, and a nonexpired platform `context.user` whose
+`netlify/functions/verifyQuota.ts` requires trusted platform
+`context.deploy.context === 'deploy-preview'`, `context.deploy.published === false`,
+a bounded valid deployment ID and the exact request origin
+`https://deploy-preview-4--clinicalagent.netlify.app`. Missing or malformed platform
+metadata, Production and other previews fail closed. It does not read the build-only
+`process.env.CONTEXT` or accept deployment identity from headers, queries or bodies.
+All twelve existing inference-disabled setting checks remain mandatory, including
+`QUOTA_VERIFICATION_ENABLED=true`, plus a nonexpired platform `context.user` whose
 `id` appears in `QUOTA_VERIFICATION_OPERATOR_IDS` (comma-separated, no spaces).
 It trusts no user header, body identity, browser-supplied permission or secret token.
 Missing platform identity is a hard denial; do not replace this with basic password
@@ -66,7 +72,7 @@ combining context and scope updates on existing variables. Newly created nonsecr
 gates use the CLI's default scopes, including Functions.
 
 ```powershell
-Set-Location 'C:\Users\rob44\OneDrive\Desktop\clinicalAgent'
+# Run from the repository root.
 $ErrorActionPreference = 'Stop'
 $netlifyCli = Join-Path $PWD 'frontend/.testNetlifyTools/node_modules/netlify-cli/bin/run.js'
 node $netlifyCli status

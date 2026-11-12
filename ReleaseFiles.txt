@@ -201,6 +201,7 @@ frontend/tests/OrchestrateProbe.test.ts
 frontend/tests/OrchestrateTarget.test.ts
 frontend/tests/OrchestrateTransport.test.ts
 frontend/tests/PreviewRelease.test.ts
+frontend/tests/QuotaVerification.test.ts
 frontend/tests/RequestPolicy.test.ts
 frontend/tests/ResponsePresentation.test.tsx
 frontend/tests/ReviewedSummary.test.tsx
@@ -265,6 +266,7 @@ netlify/functions/evaluate.ts
 netlify/functions/orchestrateProbe.ts
 netlify/functions/verifyEmbedKey.ts
 netlify/functions/verifyOperatorContext.ts
+netlify/functions/verifyQuota.ts
 pytest.ini
 shared/AgentConnection.md
 shared/ConflictReview.md
@@ -278,6 +280,7 @@ shared/GuidedFollowup.md
 shared/OperatorContextVerification.md
 shared/OrchestrateProbe.md
 shared/Preview4Update.md
+shared/PreviewVerification.md
 shared/README.md
 shared/ResponsePresentation.md
 shared/VisualFindings.md
@@ -377,6 +380,9 @@ tools/checkLocalEmbedKey.ts
 tools/clinicalPacket.py
 tools/evidenceInstall.py
 tools/orchestrateChecks.ts
+tools/previewAccess.mjs
+tools/previewAccessPolicy.ts
+tools/previewQuotaBrowser.js
 tools/releaseExport.py
 tools/reviewReseal.py
 tools/runDemo.py
