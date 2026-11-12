@@ -102,3 +102,6 @@ GEMINI.md
 
 # Historical reports and source-derived review fixtures stay local.
 /docs/*
+
+# Installed server-side Functions dependencies
+/node_modules/

@@ -317,3 +317,23 @@ did not finish. A separate safety-suite attempt also did not finish. Both attemp
 were interrupted; no complete backend pass is claimed. `TestBackend.ps1` runs the
 same 548 selected checks in the operator terminal before committing. Stop on any
 failure. No tests or clinical rules were changed to accommodate the sandbox.
+
+## Functions dependency packaging
+
+Netlify v2 uses NFT packaging even with `node_bundler = "esbuild"`. Local
+TypeScript imports are combined at the Function entry point; package imports
+remain external and are traced from that location. Installing Blobs only under
+`frontend/node_modules` leaves the packaged Function without the SDK. The root
+`package.json` and lockfile install the exact existing SDK and transitive pins
+before frontend installation. Keep both SDK pins synchronized. No adapter,
+authentication, quota, consistency or activation settings change.
+
+Offline reproduction with Netlify CLI's zip-it-and-ship-it `zipFunction`:
+package `netlify/functions/verifyQuota.ts` using repository-root base, Node 24
+and the existing Functions config. Before the fix, the artifact has an unresolved
+SDK import and no SDK files; its protected GET returns `sdkImportFailed`. After
+root `npm ci --ignore-scripts`, the artifact includes the SDK and dependencies.
+With synthetic automatic configuration, protected GET returns
+`initializationReady` without HTTP or storage calls; missing or malformed
+configuration remains fail-closed. This is local packaging evidence, not a
+hosted storage test or authorization to deploy or run POST.

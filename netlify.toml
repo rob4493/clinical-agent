@@ -1,6 +1,6 @@
 [build]
   base = "."
-  command = "npm --prefix frontend ci --ignore-scripts --no-audit --no-fund && npm --prefix frontend run build"
+  command = "npm ci --ignore-scripts --no-audit --no-fund && npm --prefix frontend ci --ignore-scripts --no-audit --no-fund && npm --prefix frontend run build"
   publish = "frontend/dist"
 
 [build.environment]

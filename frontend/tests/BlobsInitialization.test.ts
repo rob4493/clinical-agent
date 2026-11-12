@@ -76,3 +76,16 @@ it('keeps operational adapter failures generic outside the protected diagnostic'
  vi.stubGlobal('netlifyBlobsContext',undefined);vi.stubEnv('NETLIFY_BLOBS_CONTEXT','');
  await expect(netlifyQuota(Name,signal(),Enabled,vi.fn())).rejects.toMatchObject({category:'unavailable',message:'Demo usage is unavailable. No IBM request was started.'});
 });
+
+// Netlify v2 bundles local sources into the Function directory before tracing
+// external packages. Resolution must therefore work from that directory.
+it('keeps the locked SDK resolvable from the production Function location',async()=>{
+ const {createRequire}=await import('node:module');const {readFileSync}=await import('node:fs');
+ const require=createRequire(new URL('../../netlify/functions/verifyQuota.ts',import.meta.url));
+ const root=JSON.parse(readFileSync(new URL('../../package.json',import.meta.url),'utf8'));
+ const lock=JSON.parse(readFileSync(new URL('../../package-lock.json',import.meta.url),'utf8'));
+ const frontend=JSON.parse(readFileSync(new URL('../package-lock.json',import.meta.url),'utf8'));
+ expect(root.dependencies).toEqual({'@netlify/blobs':'11.1.7'});
+ expect(JSON.parse(readFileSync(require.resolve('@netlify/blobs/package.json'),'utf8')).version).toBe('11.1.7');
+ for(const [name,pin] of Object.entries(lock.packages) as [string,{version:string}][])if(name)expect(pin).toEqual(frontend.packages[name]);
+});

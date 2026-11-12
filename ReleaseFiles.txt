@@ -268,6 +268,8 @@ netlify/functions/orchestrateProbe.ts
 netlify/functions/verifyEmbedKey.ts
 netlify/functions/verifyOperatorContext.ts
 netlify/functions/verifyQuota.ts
+package-lock.json
+package.json
 pytest.ini
 shared/AgentConnection.md
 shared/ConflictReview.md
