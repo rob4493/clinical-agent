@@ -192,6 +192,7 @@ frontend/tests/EmbeddedPanel.test.tsx
 frontend/tests/Endo.test.tsx
 frontend/tests/GuidedFollowup.test.tsx
 frontend/tests/HostedEmbedKey.test.ts
+frontend/tests/IamVerification.test.ts
 frontend/tests/Module02.test.tsx
 frontend/tests/NetlifyFunction.test.ts
 frontend/tests/OperatorContext.test.ts
@@ -266,6 +267,7 @@ netlify/functions/embedSession.ts
 netlify/functions/evaluate.ts
 netlify/functions/orchestrateProbe.ts
 netlify/functions/verifyEmbedKey.ts
+netlify/functions/verifyIam.ts
 netlify/functions/verifyOperatorContext.ts
 netlify/functions/verifyQuota.ts
 package-lock.json
@@ -280,6 +282,7 @@ shared/EmbeddedActivation.md
 shared/EmbeddedRelease.md
 shared/EndoDesign.md
 shared/GuidedFollowup.md
+shared/IamVerification.md
 shared/OperatorContextVerification.md
 shared/OrchestrateProbe.md
 shared/Preview4Update.md

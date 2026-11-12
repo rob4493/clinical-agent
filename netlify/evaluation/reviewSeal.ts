@@ -1,2 +1,2 @@
 // Trusted review pin; never regenerated during application startup or build.
-export const ReviewHash = 'bdeccbda59f81a96c4bee1b78af33df829f62f2e7d8660fd14b0a491d407fdc1';
+export const ReviewHash = '06a40d236338fd1c7beca57ad76711cdf6e853e9a4d1032931e3a6b9595e7238';
