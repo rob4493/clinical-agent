@@ -4,6 +4,7 @@ import {netlifyQuota} from '../../frontend/src/server/netlifyQuota';
 
 type Settings=Record<string,string|undefined>;
 type OperatorContext={user?:{id:string;expiresAt:Date};deploy?:{id:string;context:string;published:boolean}};
+type StartStage='storeInitialization'|'initialWrite'|'metadataReadback'|'integrityVerification';
 const PreviewOrigin='https://deploy-preview-4--clinicalagent.netlify.app';
 const WorkerId=randomUUID();
 const RunPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -31,6 +32,7 @@ export function createVerification(settings:()=>Settings=()=>process.env,factory
   if(request.method==='GET'&&!address.search)return json({version:'1',status:'operatorReady',ibm:'disabled'});
   if(request.method!=='POST'||address.search||request.headers.get('origin')!==address.origin||request.headers.get('content-type')!=='application/json')return json({code:'inputRejected'},400);
   const signal=AbortSignal.any([request.signal,AbortSignal.timeout(10000)]);
+  let startStage:StartStage|undefined;
   try{
    // Bound streamed input, including requests with a missing/false Content-Length.
    const reader=request.body?.getReader();if(!reader)return json({code:'inputRejected'},400);
@@ -48,10 +50,14 @@ export function createVerification(settings:()=>Settings=()=>process.env,factory
    // caller nor environment configuration can select EndoConversationQuota.
    const name='EndoQuotaVerify'+runId.replaceAll('-','');
    if(!previewAllowed(request,context)||!closed(settings()))return json({code:'disabled'},404);
+   if(start)startStage='storeInitialization';
    const store=await factory(name,signal),key='thread/'+runId;
    if(start){
+    startStage='initialWrite';
     const written=await store.set(key,JSON.stringify({ownerId:runId}),{onlyIfNew:true});
+    startStage='metadataReadback';
     const observed=await store.getWithMetadata(key);
+    startStage='integrityVerification';
     if(!written.modified||!written.etag||observed?.etag!==written.etag||JSON.stringify(observed.data)!==JSON.stringify({ownerId:runId}))throw new Error();
     return json({version:'1',runId,status:'freshStoreCreated',limit:3});
    }
@@ -60,7 +66,17 @@ export function createVerification(settings:()=>Settings=()=>process.env,factory
    if(!previewAllowed(request,context)||!closed(settings()))return json({code:'disabled'},404);
    try{await createQuota(store).reserve({visitorId:randomUUID(),ordinal:0,dailyLimit:3},signal);return json({outcome:'admitted',workerId});}
    catch(failure){if(failure instanceof QuotaError&&failure.category==='exhausted')return json({outcome:'exhausted',workerId},429);throw failure;}
-  }catch{return json({code:'verificationFailed'},503);}
+  }catch{
+   // Fixed operation labels only, never exception text or SDK responses. Recheck
+   // authorization before disclosure in case a gate/session expired during I/O.
+   try{
+    const current=settings();
+    if(startStage&&!signal.aborted&&previewAllowed(request,context)&&closed(current)
+     &&operator&&(current.QUOTA_VERIFICATION_OPERATOR_IDS||'').split(',').filter(Boolean).includes(operator.id)
+     &&operator.expiresAt instanceof Date&&Number.isFinite(operator.expiresAt.getTime())&&operator.expiresAt.getTime()>Date.now())return json({code:'verificationFailed',stage:startStage},503);
+   }catch{/* Preserve the generic failure if diagnostic authorization cannot be rechecked. */}
+   return json({code:'verificationFailed'},503);
+  }
  };
 }
 export default createVerification();

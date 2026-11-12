@@ -57,6 +57,20 @@ deleted, even after a failed test. Test records contain only operational UUIDs,
 timestamps and a fixed capacity. Old run IDs must never be reused for a new test.
 The test is not an atomicity proof for all failures, a spending cap, or IBM validation.
 
+The protected `action=start` failure response retains HTTP 503 and
+`code: verificationFailed`, with only a fixed `stage` added after authorization:
+`storeInitialization`, `initialWrite`, `metadataReadback` or `integrityVerification`.
+The first is the adapter factory; the next two identify the failed operation;
+the last means operations returned but the existing integrity comparison failed.
+These labels do not distinguish SDK configuration, network, permission or service
+errors within an operation. No exception text, token, endpoint, store/run identifier
+or contents are returned or logged. Authorization and all inference-disabled gates
+are rechecked before returning a stage. Revoked/expired sessions, cancellation,
+malformed requests and reservation failures retain generic behavior. A 503 can
+follow a successful partial write; never treat it as successful verification,
+retry it automatically, delete records or reset quota. No extra hosted test is
+authorized by this documentation.
+
 ## Preview-only configuration commands
 
 These are prepared commands, not authorization to execute them. Run only after

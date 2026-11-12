@@ -59,6 +59,61 @@ it('distinguishes storage failure from quota exhaustion and rejects unknown runs
  const response=await handler(request({action:'start'}),operator());expect(response.status).toBe(503);expect(await response.text()).not.toContain('SyntheticSecret');
  const {factory:empty}=storage();expect((await createVerification(()=>Closed,empty)(request({action:'reserve',runId:'11111111-1111-4111-8111-111111111111'}),operator())).status).toBe(400);
 });
+it.each(['storeInitialization','initialWrite','metadataReadback','integrityVerification'] as const)('returns only the fixed protected start failure stage: %s',async stage=>{
+ const network=vi.fn();vi.stubGlobal('fetch',network);
+ const logs=[vi.spyOn(console,'log'),vi.spyOn(console,'warn'),vi.spyOn(console,'error')];
+ const failure=()=>{throw new Error('SyntheticPrivatePayloadAndCredential');};
+ const write=vi.fn(async()=>stage==='initialWrite'?failure():{modified:true,etag:'synthetic-etag'});
+ const read=vi.fn(async()=>stage==='metadataReadback'?failure():{data:{ownerId:'mismatch'},etag:'synthetic-etag'});
+ const factory=vi.fn(async()=>stage==='storeInitialization'?failure():{set:write,getWithMetadata:read});
+ try{
+  const response=await createVerification(()=>Closed,factory)(request({action:'start'}),operator());
+  expect(response.status).toBe(503);expect(response.headers.get('x-quota-verification')).toBe('application');
+  expect(await response.json()).toEqual({code:'verificationFailed',stage});
+  expect(factory).toHaveBeenCalledOnce();expect(write).toHaveBeenCalledTimes(stage==='storeInitialization'?0:1);
+  expect(read).toHaveBeenCalledTimes(['storeInitialization','initialWrite'].includes(stage)?0:1);
+  expect(network).not.toHaveBeenCalled();for(const log of logs)expect(log).not.toHaveBeenCalled();
+ }finally{for(const log of logs)log.mockRestore();vi.unstubAllGlobals();}
+});
+it.each(['notModified','missingEtag','nullReadback','changedEtag','changedOwner','extraContent'])('does not accept incomplete or inconsistent initial writes: %s',async scenario=>{
+ const write=vi.fn(async()=>({modified:scenario!=='notModified',etag:scenario==='missingEtag'?'':'synthetic-etag'}));
+ const read=vi.fn(async(key:string)=>scenario==='nullReadback'?null:{etag:scenario==='changedEtag'?'other':'synthetic-etag',data:scenario==='extraContent'?{ownerId:key.slice(7),extra:true}:{ownerId:scenario==='changedOwner'?'other':key.slice(7)}});
+ const response=await createVerification(()=>Closed,async()=>({set:write,getWithMetadata:read}))(request({action:'start'}),operator());
+ expect(response.status).toBe(503);expect(await response.json()).toEqual({code:'verificationFailed',stage:'integrityVerification'});expect(write).toHaveBeenCalledOnce();expect(read).toHaveBeenCalledOnce();
+});
+it('preserves a partial write as failed verification without retrying, deleting or reserving quota',async()=>{
+ const records=new Map<string,string>();
+ const write=vi.fn(async(key:string,content:string)=>{records.set(key,content);return {modified:true,etag:'synthetic-etag'};});
+ const read=vi.fn(async()=>{throw new Error('SyntheticReadFailure');});
+ const response=await createVerification(()=>Closed,async()=>({set:write,getWithMetadata:read}))(request({action:'start'}),operator());
+ expect(response.status).toBe(503);expect(await response.json()).toEqual({code:'verificationFailed',stage:'metadataReadback'});
+ expect([...records.keys()]).toHaveLength(1);expect([...records.keys()][0]).toMatch(/^thread\/[0-9a-f-]{36}$/);expect(write).toHaveBeenCalledOnce();expect(read).toHaveBeenCalledOnce();
+});
+it('keeps malformed requests and reservation failures generic rather than assigning a start stage',async()=>{
+ const factory=vi.fn(async()=>{throw new Error('SyntheticSecret');}),handler=createVerification(()=>Closed,factory);
+ const oversized=await handler(request({action:'start',padding:'x'.repeat(300)}),operator());expect(await oversized.json()).toEqual({code:'verificationFailed'});expect(factory).not.toHaveBeenCalled();
+ const reserved=await handler(request({action:'reserve',runId:'11111111-1111-4111-8111-111111111111'}),operator());expect(reserved.status).toBe(503);expect(await reserved.json()).toEqual({code:'verificationFailed'});
+});
+it('does not disclose a failure stage to unauthorized callers',async()=>{
+ const factory=vi.fn(async()=>{throw new Error('SyntheticSecret');});
+ for(const context of [{...operator(),user:undefined},{...operator(),user:{...operator().user,id:'other'}},{...operator(),deploy:{...Deploy,context:'production'}},{...operator(),deploy:{...Deploy,published:true}},{...operator(),user:{...operator().user,expiresAt:new Date(0)}}]){
+  const response=await createVerification(()=>Closed,factory)(request({action:'start'}),context);expect([403,404]).toContain(response.status);expect(await response.json()).not.toHaveProperty('stage');
+ }
+ const disabled=await createVerification(()=>({...Closed,QUOTA_VERIFICATION_ENABLED:'false'}),factory)(request({action:'start'}),operator());expect(await disabled.json()).toEqual({code:'disabled'});expect(factory).not.toHaveBeenCalled();
+});
+it.each(['disabled','unlisted','expired','cancelled','metadataMissing'])('withholds a stage when protected authorization is lost during storage: %s',async change=>{
+ const settings={...Closed},context=operator(),abort=new AbortController();
+ const write=vi.fn(async()=>{
+  if(change==='disabled')settings.QUOTA_VERIFICATION_ENABLED='false';
+  if(change==='unlisted')settings.QUOTA_VERIFICATION_OPERATOR_IDS='other';
+  if(change==='expired')context.user.expiresAt=new Date(0);
+  if(change==='cancelled')abort.abort();
+  if(change==='metadataMissing')context.deploy.id='';
+  throw new Error('SyntheticPrivateDetail');
+ });
+ const response=await createVerification(()=>settings,async()=>({set:write,getWithMetadata:vi.fn()}))(new Request(request({action:'start'}),{signal:abort.signal}),context);
+ expect(response.status).toBe(503);expect(await response.json()).toEqual({code:'verificationFailed'});expect(write).toHaveBeenCalledOnce();
+});
 it('rejects wrong origins, methods, queries, media types and oversized bodies before storage',async()=>{
  const {factory}=storage(),handler=createVerification(()=>Closed,factory);
  const wrongOrigin=request({action:'start'});wrongOrigin.headers.set('origin','https://outside.invalid');
