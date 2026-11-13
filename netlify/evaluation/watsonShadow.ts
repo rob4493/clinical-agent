@@ -14,6 +14,12 @@ export type ShadowStatus='skipped'|'shadow-success'|'shadow-fallback'|'reviewed-
 const ShadowReasons=['configuration','iam-timeout','iam-rejected','iam-response','model-timeout','model-rejected','model-response','presentation-validation','internal'] as const;
 export type ShadowReason=typeof ShadowReasons[number];
 class ShadowFault extends Error { constructor(readonly reason:ShadowReason){super('Shadow operation unavailable.');} }
+/** Fixed IAM-only classification for a protected diagnostic. Unknown errors never
+ * borrow provider text or a forged reason property. Existing broker behavior is unchanged. */
+export function classifyIamFailure(error:unknown):'configuration'|'iamTimeout'|'iamRejected'|'iamResponseInvalid'|'internal'{
+ if(!(error instanceof ShadowFault))return 'internal';
+ return error.reason==='configuration'?'configuration':error.reason==='iam-timeout'?'iamTimeout':error.reason==='iam-rejected'?'iamRejected':error.reason==='iam-response'?'iamResponseInvalid':'internal';
+}
 export function shadowHeaders(status:ShadowStatus,reason:ShadowReason='internal'):Record<string,string> {
  return {'X-Endo-Watson':status,...((status==='shadow-fallback'||status==='reviewed-fallback')?{'X-Endo-Watson-Reason':ShadowReasons.includes(reason)?reason:'internal'}:{})};
 }
@@ -43,6 +49,21 @@ class ShadowConfig {
  request(requiredOutput:CanonicalPresentation|ReviewedOffer,reviewed:boolean){return {model_id:this.#model,project_id:this.#project,messages:[{role:'system',content:reviewed?ReviewedInstructions:Instructions},{role:'user',content:JSON.stringify(reviewed?requiredOutput:{requiredOutput})}],temperature:0,max_tokens:1024,n:1,response_format:{type:'json_object'}};}
  requestContent(payload:unknown,instructions:string){return {model_id:this.#model,project_id:this.#project,messages:[{role:'system',content:instructions},{role:'user',content:JSON.stringify(payload)}],temperature:0,max_tokens:1024,n:1,response_format:{type:'json_object'}};}
  model(){return this.#model;}
+}
+
+/** Reuses the existing IAM broker for a service other than direct-model text/chat.
+ * No model/project configuration is required to authenticate an Orchestrate call.
+ */
+class IamCredential {
+ #key:string;#timeout:number;
+ constructor(environment:Environment,budget:number){
+  const key=environment.WATSONX_AI_APIKEY,timeout=environment.WATSONX_AI_TIMEOUT_MS??String(DefaultShadowTimeout);
+  if(environment.WATSONX_AI_AUTH_TYPE!=='iam'||!key||key.length>512||/\s|[\u0000-\u001f]/.test(key)||!/^\d+$/.test(timeout)||Number(timeout)<MinimumShadowTimeout||Number(timeout)>MaximumShadowTimeout||!Number.isInteger(budget)||budget<MinimumShadowTimeout||budget>MaximumShadowTimeout)throw new ShadowFault('configuration');
+  this.#key=key;this.#timeout=Math.min(Number(timeout),budget);
+ }
+ fingerprint(){return createHash('sha256').update(this.#key).digest('hex');}
+ timeout(){return this.#timeout;}
+ authentication(){return new URLSearchParams({grant_type:'urn:ibm:params:oauth:grant-type:apikey',apikey:this.#key}).toString();}
 }
 
 function abortable<T>(operation:Promise<T>,signal:AbortSignal):Promise<T> {
@@ -130,7 +151,7 @@ async function readCompletion(response:Response,signal:AbortSignal,config:Shadow
 export function createWatsonRuntime(transport:Transport=(input,init)=>fetch(input,init),clock:()=>number=Date.now) {
  let token:{identity:string;secret:string;expires:number}|undefined;
  let pending:{identity:string;controller:AbortController;promise:Promise<string>;waiters:number}|undefined;
- async function accessToken(config:ShadowConfig,signal:AbortSignal):Promise<string> {
+ async function accessToken(config:Pick<ShadowConfig,'fingerprint'|'timeout'|'authentication'>,signal:AbortSignal):Promise<string> {
   const identity=config.fingerprint();
   if(token?.identity===identity&&token.expires>clock())return token.secret;
   // A credential rotation cannot inherit the previous credential's in-flight refresh.
@@ -217,7 +238,13 @@ export function createWatsonRuntime(transport:Transport=(input,init)=>fetch(inpu
    throw new ShadowFault(reason);
   }
  };
- return {shadow,request};
+ // Server-only extension: the caller must authorize projection/quota before this
+ // method. Existing shadow/reviewed paths keep their original configuration gates.
+ const authenticate=async(environment:Environment,signal:AbortSignal,budget:number):Promise<string>=>{
+  const config=new IamCredential(environment,budget);
+  return accessToken(config,AbortSignal.any([signal,AbortSignal.timeout(config.timeout())]));
+ };
+ return {shadow,request,authenticate};
 }
 
 /** Compatibility factory: ordinary presentation eligibility and validation remain unchanged. */

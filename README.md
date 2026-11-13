@@ -54,6 +54,7 @@ Run these commands from the project folder in a fresh checkout. The Python envir
 py -3.12 -m venv .venvMilvus
 .\.venvMilvus\Scripts\python.exe -m pip install -c backend/constraintsMilvus.txt setuptools==81.0.0 -r backend/requirements.txt -r backend/requirementsTest.txt
 .\.venvMilvus\Scripts\python.exe -m pip check
+npm ci --ignore-scripts
 Set-Location frontend
 npm ci --ignore-scripts
 Set-Location ..
@@ -157,7 +158,7 @@ Protected source originals, private source-runtime packages, knowledge documents
 
 ## Tester hosting configuration
 
-The public evaluation site runs entirely on Netlify: the React interface calls a same-origin TypeScript Function through `/api/*`. The deterministic core requires no separate backend, provider API key or private evidence installation. Optional watsonx.ai operation requires separately configured server-side IBM credentials. The root `netlify.toml` pins Node 24.21.0, installs and builds through `npm --prefix frontend`, publishes only `frontend/dist`, and supports page refreshes. Its repository-root base keeps function paths consistent. Run `npm ci` and `npm run build` inside `frontend`.
+The public evaluation site runs entirely on Netlify: the React interface calls a same-origin TypeScript Function through `/api/*`. The deterministic core requires no separate backend, provider API key or private evidence installation. Optional watsonx.ai operation requires separately configured server-side IBM credentials. The root `netlify.toml` pins Node 24.21.0, installs the root Functions dependencies before installing and building `frontend`, publishes only `frontend/dist`, and supports page refreshes. Its repository-root base keeps function paths consistent. Run `npm ci --ignore-scripts` at the repository root, then `npm ci --ignore-scripts` and `npm run build` inside `frontend`. The root lockfile pins the server-side Blobs SDK and the same transitive versions already reviewed in the frontend lockfile; it contains no credentials.
 
 Modules 1 and 2 use the repository's original evaluation summaries and deterministic server-side composition. They are reviewedForEvaluation and competitionReady, never approved for patient care. Original clinical publications are not distributed. FastAPI remains available for local development. See [hosting, health checks, local emulation and rollback](TesterDeployment.md). A failed integrity or availability check keeps Analyze unavailable. No deployment is performed by these files.
 

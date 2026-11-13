@@ -1,6 +1,6 @@
 [build]
   base = "."
-  command = "npm --prefix frontend ci --ignore-scripts --no-audit --no-fund && npm --prefix frontend run build"
+  command = "npm ci --ignore-scripts --no-audit --no-fund && npm --prefix frontend ci --ignore-scripts --no-audit --no-fund && npm --prefix frontend run build"
   publish = "frontend/dist"
 
 [build.environment]
@@ -11,6 +11,18 @@
   node_bundler = "esbuild"
   # Generated from the reviewed public allowlist; never original publications.
   included_files = ["netlify/RuntimeNotice.txt"]
+
+[[redirects]]
+  from = "/api/v1/embed-session"
+  to = "/.netlify/functions/embedSession"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/v1/conversation"
+  to = "/.netlify/functions/converse"
+  status = 200
+  force = true
 
 [[redirects]]
   from = "/api/*"

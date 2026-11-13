@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -125,6 +126,66 @@ def testReleaseContainsNoProtectedFiles(tmp_path):
     private = json.loads((project / "EvidenceSources.example.json").read_bytes())["files"][0]["path"]
     with pytest.raises(InstallationError):
         checkRelease(project, sorted(set(names + [private])))
+
+
+def testReleaseAcceptsPublicKeyValidationSource():
+    """Format checks and synthetic fixtures contain no literal key headers."""
+    project = Path(__file__).resolve().parents[2]
+    paths = ["frontend/tests/HostedEmbedKey.test.ts", "netlify/functions/verifyEmbedKey.ts"]
+    assert sorted(checkRelease(project, paths)) == paths
+
+
+@pytest.fixture(scope="session")
+def releaseTestKeys():
+    # Existing Node crypto generates disposable test keys, never project credentials.
+    # Capture them in memory; return a function so failure output cannot repr a key map.
+    script = """
+const {generateKeyPairSync}=require('node:crypto');
+const rsa=generateKeyPairSync('rsa',{modulusLength:2048}).privateKey;
+const ec=generateKeyPairSync('ec',{namedCurve:'prime256v1'}).privateKey;
+process.stdout.write(JSON.stringify({
+ pkcs8:rsa.export({type:'pkcs8',format:'pem'}),
+ pkcs1:rsa.export({type:'pkcs1',format:'pem'}),
+ sec1:ec.export({type:'sec1',format:'pem'})
+}));
+"""
+    result = subprocess.run(["node", "-e", script], capture_output=True, timeout=15)
+    if result.returncode:
+        pytest.fail("Synthetic key generation failed.", pytrace=False)
+    keys = json.loads(result.stdout)
+    return lambda kind: keys[kind].encode()
+
+
+def releaseFixture(tmp_path, content):
+    (tmp_path / "EvidenceSources.example.json").write_text('{"files":[]}', encoding="utf-8")
+    (tmp_path / "app.txt").write_bytes(content)
+    return ["app.txt"]
+
+
+@pytest.mark.parametrize("kind", ["pkcs8", "pkcs1", "sec1"])
+def testReleaseRejectsCompleteSyntheticKeys(kind, releaseTestKeys, tmp_path, caplog):
+    paths = releaseFixture(tmp_path, releaseTestKeys(kind))
+    with pytest.raises(InstallationError, match="^Source-free release verification failed\\.$"):
+        checkRelease(tmp_path, paths)
+    assert not caplog.text
+
+
+@pytest.mark.parametrize("kind", ["PRIVATE KEY", "RSA PRIVATE KEY", "EC PRIVATE KEY", "OPENSSH PRIVATE KEY"])
+@pytest.mark.parametrize("tail", [b"", b"\nInvalid synthetic payload", b"\nQUJD\n"])
+def testReleaseRejectsBareAndMalformedKeyHeaders(kind, tail, tmp_path):
+    # Materialize public header syntax only in disposable scanner inputs. There is
+    # no real or encoded secret in this test source, and the scanner sees full bytes.
+    header = b"-" * 5 + b"BEGIN " + kind.encode() + b"-" * 5
+    paths = releaseFixture(tmp_path, header + tail)
+    with pytest.raises(InstallationError):
+        checkRelease(tmp_path, paths)
+
+
+@pytest.mark.parametrize("prefix,length", [(b"ghp_", 30), (b"AKIA", 16), (b"npm_", 30)])
+def testReleaseStillRejectsCredentialSignatures(prefix, length, tmp_path):
+    paths = releaseFixture(tmp_path, prefix + b"A" * length)
+    with pytest.raises(InstallationError):
+        checkRelease(tmp_path, paths)
 
 
 def testCompletePrivateInstallationAndTampering(tmp_path):

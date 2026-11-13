@@ -176,9 +176,11 @@ def testNetlifyConfiguration():
     assert config["build"]["base"] == "."
     assert config["build"]["publish"] == "frontend/dist"
     assert (project / config["build"]["base"] / config["build"]["publish"]).relative_to(project).as_posix() == "frontend/dist"
-    assert config["build"]["command"] == "npm --prefix frontend ci --ignore-scripts --no-audit --no-fund && npm --prefix frontend run build"
+    assert config["build"]["command"] == "npm ci --ignore-scripts --no-audit --no-fund && npm --prefix frontend ci --ignore-scripts --no-audit --no-fund && npm --prefix frontend run build"
     assert config["build"]["environment"] == {"NODE_VERSION": "24.21.0"}
     assert config["redirects"] == [
+        {"from": "/api/v1/embed-session", "to": "/.netlify/functions/embedSession", "status": 200, "force": True},
+        {"from": "/api/v1/conversation", "to": "/.netlify/functions/converse", "status": 200, "force": True},
         {"from": "/api/*", "to": "/.netlify/functions/evaluate/:splat", "status": 200, "force": True},
         {"from": "/*", "to": "/index.html", "status": 200},
     ]

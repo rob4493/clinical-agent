@@ -54,6 +54,7 @@ export default function App() {
   const [synthetic, setSynthetic] = useState(false);
   const [runtimeMode, setRuntimeMode] = useState<RuntimeMode>('standard');
   const [canRequest, setCanRequest] = useState(false);
+  const [orchestrateAvailable,setOrchestrateAvailable]=useState(false);
   const [pending, setPending] = useState(false);
   const [uploads, setUploads] = useState<UploadSession>(EmptySession);
   const [uploadGeneration, setUploadGeneration] = useState(0);
@@ -114,12 +115,13 @@ export default function App() {
       setModules(available);
       setModuleId(selected => available.some(module => module.moduleId === selected) ? selected : '');
       setReady(readiness.status === 200 && isReady(readiness.payload));
+      setOrchestrateAvailable((readiness.payload as {conversation?:{available?:unknown}})?.conversation?.available===true);
       // Competition can return safe dependency-unavailable outcomes while listing
       // its modules. Allowing a request does not turn a 503 into readiness.
       setCanRequest(readiness.status === 200 && isReady(readiness.payload) || (readiness.runtimeMode === 'competition' && readiness.status === 503 && (readiness.payload as { reasonCode?: string })?.reasonCode === 'analysisUnavailable'));
     } catch {
       if (mounted.current && moduleController.current === controller) {
-        setModules([]); setModuleId(''); setCanRequest(false); setAvailabilityError('Evaluation services are unavailable. Refresh availability to try again.');
+        setOrchestrateAvailable(false);setModules([]); setModuleId(''); setCanRequest(false); setAvailabilityError('Evaluation services are unavailable. Refresh availability to try again.');
       }
     } finally {
       clearTimeout(timer);
@@ -325,7 +327,7 @@ export default function App() {
             <p className="submissionStatus" role="status" aria-live="polite">{pending ? 'Request in progress. Please wait.' : cancellationMessage || (review ? 'Response available for review.' : '')}</p>
           </form>
         </section>
-        <div className="conflictWorkspace"><Suspense fallback={<section aria-label="Evidence review" aria-busy={pending}><p role="status">Loading evidence review...</p></section>}><ResponsePanel findings={findings} review={review} synthetic={synthetic} competition={runtimeMode === 'competition'} pending={pending} followup={guidedCase&&guidedQuestion&&review&&!pending&&<Suspense fallback={null}><GuidedFollowup key={requestGeneration.current} clarification={review.heading==='Clarification required'||guidedQuestion.kind==='missing'?review.messages[0]:undefined} mode={guidedQuestion} caseInput={guidedCase} onConflict={message=>{setFollowupConflict(message);setConflictOpen(true);}} onSafety={preview=>{if(guidedCase&&review)priorReviews.current=[...priorReviews.current,{caseInput:guidedCase,review}].slice(-5);setReview(preview);setFindings([]);}} onReturn={field=>{requestAnimationFrame(()=>{if(field==='module')moduleRef.current?.focus();else if(field==='context'){setContextOpen(true);document.querySelector<HTMLInputElement>('.pregnancyContext input,.pregnancyContext select')?.focus();}else narrativeRef.current?.focus();});}} onConfirm={applyConfirmed}/></Suspense>} /></Suspense>
+        <div className="conflictWorkspace"><Suspense fallback={<section aria-label="Evidence review" aria-busy={pending}><p role="status">Loading evidence review...</p></section>}><ResponsePanel findings={findings} review={review} synthetic={synthetic} competition={runtimeMode === 'competition'} pending={pending} followup={guidedCase&&guidedQuestion&&review&&!pending&&<Suspense fallback={null}><GuidedFollowup orchestrateAvailable={orchestrateAvailable} key={requestGeneration.current} clarification={review.heading==='Clarification required'||guidedQuestion.kind==='missing'?review.messages[0]:undefined} mode={guidedQuestion} caseInput={guidedCase} onConflict={message=>{setFollowupConflict(message);setConflictOpen(true);}} onSafety={preview=>{if(guidedCase&&review)priorReviews.current=[...priorReviews.current,{caseInput:guidedCase,review}].slice(-5);setReview(preview);setFindings([]);}} onReturn={field=>{requestAnimationFrame(()=>{if(field==='module')moduleRef.current?.focus();else if(field==='context'){setContextOpen(true);document.querySelector<HTMLInputElement>('.pregnancyContext input,.pregnancyContext select')?.focus();}else narrativeRef.current?.focus();});}} onConfirm={applyConfirmed}/></Suspense>} /></Suspense>
 
         {changeRecord&&<details><summary>Session change review</summary><p>Clinician decision: confirmed. Session only; not an EHR audit record.</p>{changeRecord.length?changeRecord.map(change=><div key={change.label}><strong>{change.label}</strong><p>Original: {change.original}</p><p>Confirmed: {change.proposed}</p></div>):<p>No canonical values changed.</p>}</details>}
         {conflictUpdate&&<section className="guidedSuggestion" aria-label="Proposed canonical correction"><h3>Proposed canonical correction</h3><p>Review the selected assertion. Original reports and narrative remain unchanged; reanalysis is separate.</p><p>Original pregnancy value: {pregnancy}</p><p>Proposed pregnancy value: {conflictUpdate.pregnancyStatus?.state}</p><button type="button" onClick={()=>applyConfirmed(conflictUpdate)}>Confirm canonical correction</button><button type="button" onClick={()=>setConflictUpdate(null)}>Reject correction</button></section>}

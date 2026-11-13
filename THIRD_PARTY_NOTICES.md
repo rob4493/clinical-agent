@@ -43,3 +43,7 @@ SOFTWARE.
 ## Document readers
 
 The optional in-browser upload workflow bundles PDF.js 6.4.299 (Apache-2.0), fflate 0.8.3 (MIT), saxes 6.0.0 (ISC, including its inherited notices) and xmlchars 2.2.0 (MIT). Their required notices are included in frontend/public/THIRD_PARTY_NOTICES.txt and copied into the website build. The saxes licence was checked against its official v6.0.0 tag on 2026-10-21. No clinical publication is distributed by this workflow. Optional PDF.js native canvas dependencies are not imported into browser or server function bundles.
+
+## Server-only quota dependency
+
+The prepared anonymous-demo quota adapter uses @netlify/blobs 11.1.7 (MIT), with its separately licensed dependencies. It is not imported into browser code. The 46 newly locked packages declare MIT, Apache-2.0, ISC, 0BSD or MIT/CC0 terms; callsite 1.0.0 omits the manifest licence field but identifies MIT in its distributed Readme. Package licences and notices remain applicable independently of this project licence. OpenTelemetry tracing bootstrap is not imported and content tracing remains disabled. No Netlify dependency licence covers clinical source publications.
