@@ -104,7 +104,7 @@
     "netlify/functions/embedSession.ts": "869b9e9a2dcf608a273d57b8257941d2365ba483c48f310eb176ebb8ca110a7b",
     "netlify/functions/evaluate.ts": "81ad3910a9d00ab0fb2ec9e856580d60bd7ed6295fbe9f6363f51832309da883",
     "netlify/functions/orchestrateProbe.ts": "0689de2729785d131872b82baa131041d55095ca10db6c2d7aec8451289843e2",
-    "netlify/functions/verifyIam.ts": "9075ecfcf6922d58c3764192722d5991df11327fba42a1aacdc44df2b7422a08",
+    "netlify/functions/verifyIam.ts": "cc7dd7c9a36f1d15c3fb809672a17f1cf429a96b5cf41702f9a41195a8bfb0a2",
     "netlify/functions/verifyOperatorContext.ts": "d3250a75aba0ebe9124b6ba935d4ec45c9e1cd0b72fd57f7835c307da4390a31",
     "netlify/functions/verifyQuota.ts": "5f3481795226549126465a6535548148179cc57c477a38557e56a6cc66eb07fd",
     "shared/caseBridge.ts": "51437e98bfb865dde9d25f6423228661bcb50bc18e1e8d4983c06cc585b243c3",

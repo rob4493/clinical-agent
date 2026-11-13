@@ -7,7 +7,7 @@ const IamUrl='https://iam.cloud.ibm.com/identity/token';
 const FunctionDeadline=4000,OperationBudget=2000,WindowLimit=600000;
 const ClosedFlags=['ORCHESTRATE_ENABLED','ORCHESTRATE_SYNTHETIC_AUTHORIZED','ORCHESTRATE_DISCUSSION_AUTHORIZED','ORCHESTRATE_HOSTED_CONTROLS_VERIFIED','ENDO_DEMO_INFERENCE_ENABLED','WATSONX_ENABLED','WATSONX_CONFLICT_ASSIST_ENABLED','WATSONX_GUIDED_FOLLOWUP_ENABLED'];
 export const config={rateLimit:{windowLimit:2,windowSize:60,aggregateBy:['ip','domain'],action:'rate_limit'}};
-type Reason='disabled'|'operatorRequired'|'operatorReady'|'inputRejected'|'configuration'|'iamAccepted'|'iamRejected'|'iamResponseInvalid'|'iamTimeout'|'networkFailure'|'internal';
+type Reason='disabled'|'operatorRequired'|'operatorReady'|'inputRejected'|'configuration'|'iamAccepted'|'iamRejected'|'iamHttp400'|'iamHttp401'|'iamHttp403'|'iamHttp429'|'iamHttp5xx'|'iamResponseInvalid'|'iamTimeout'|'networkFailure'|'internal';
 class NetworkFailure extends Error{}
 function result(http:number,status:'PASS'|'FAIL'|'READY'|'DISABLED',reason:Reason){return new Response(JSON.stringify({version:'1',status,reason}),{status:http,headers:{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Cross-Origin-Resource-Policy':'same-origin','Referrer-Policy':'no-referrer'}});}
 function permitted(e:Settings,context:Context,url:string,now:number){
@@ -28,7 +28,7 @@ async function fixedBody(request:Request,signal:AbortSignal){const reader=reques
 export function createIamVerification(options:{settings?:()=>Settings;transport?:Transport;clock?:()=>number}={}){
  const settings=options.settings??(()=>process.env),clock=options.clock??Date.now;
  return async function verifyIam(request:Request,context:Context={}):Promise<Response>{
-  const deadline=AbortSignal.timeout(FunctionDeadline),signal=AbortSignal.any([request.signal,deadline]);let activeIamSignal:AbortSignal|undefined;
+  const deadline=AbortSignal.timeout(FunctionDeadline),signal=AbortSignal.any([request.signal,deadline]);let activeIamSignal:AbortSignal|undefined;let iamRejection:Reason|undefined;
   try{
    if(request.signal.aborted)return new Response(null,{status:499});
    const e=settings(),address=new URL(request.url);
@@ -41,7 +41,12 @@ export function createIamVerification(options:{settings?:()=>Settings;transport?
    recheck();let calls=0;
    const transport:Transport=async(url,init)=>{
     recheck();if(url!==IamUrl||init.method!=='POST'||init.redirect!=='error'||init.credentials!=='omit'||init.cache!=='no-store'||calls!==0)throw new Error();calls++;activeIamSignal=init.signal??undefined;
-    try{return await (options.transport??fetch)(url,init);}catch{if(activeIamSignal?.aborted)throw new Error();throw new NetworkFailure();}
+    let response:Response;
+    try{response=await (options.transport??fetch)(url,init);}catch{if(activeIamSignal?.aborted)throw new Error();throw new NetworkFailure();}
+    // Preserve only an allowlisted status category. The existing broker cancels
+    // rejected bodies; no provider body, header or credential data is inspected.
+    if(response.status!==200)iamRejection=response.status===400?'iamHttp400':response.status===401?'iamHttp401':response.status===403?'iamHttp403':response.status===429?'iamHttp429':response.status>=500&&response.status<=599?'iamHttp5xx':'iamRejected';
+    return response;
    };
    // Fresh per invocation: success cannot come from a previously cached token.
    // The returned token is discarded and the broker is never kept globally.
@@ -51,7 +56,8 @@ export function createIamVerification(options:{settings?:()=>Settings;transport?
    if(request.signal.aborted)return new Response(null,{status:499});
    try{if(!permitted(settings(),context,request.url,clock()))return result(404,'DISABLED','disabled');if(!operator(settings(),context,clock()))return result(403,'FAIL','operatorRequired');}catch{return result(503,'FAIL','internal');}
    // A request failure before token transport is not evidence of an IAM timeout.
-   const reason:Reason=activeIamSignal?.aborted||deadline.aborted&&!!activeIamSignal?'iamTimeout':error instanceof NetworkFailure?'networkFailure':classifyIamFailure(error);
+   const brokerReason=classifyIamFailure(error);
+   const reason:Reason=activeIamSignal?.aborted||deadline.aborted&&!!activeIamSignal?'iamTimeout':error instanceof NetworkFailure?'networkFailure':brokerReason==='iamRejected'?iamRejection??'iamRejected':brokerReason;
    return result(200,'FAIL',reason);
   }
  };
