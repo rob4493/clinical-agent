@@ -60,7 +60,11 @@ function finish(caseInput:CaseInput,entry:Package|undefined,outcome:RecordFields
   }
   if(!count&&!warnings.length)throw new Error('Empty response.');
   const reportedFacts:RecordFields=Object.fromEntries(['ageRange','painLocation','painQuality','painSeverity','symptomTiming','bowelUrinarySymptoms','sexualPain','menstrualHistory','pregnancyPossible','pidDiagnosedOrPresumed','fertilityStatus','priorTreatments','familyHistory'].map(name=>[name,'Unknown']));
-  reportedFacts.ageRange=caseInput.ageRange||'Unknown';
+  // These are normalized caller reports, not facts inferred from retrieved evidence.
+  for(const name of Object.keys(reportedFacts)) {
+   const value=caseInput[name];
+   if(typeof value==='string'&&value.length)reportedFacts[name]=value;
+  }
   reportedFacts.pregnancyPossible=caseInput.pregnancyPossible===null?'Unknown':caseInput.pregnancyPossible?'Yes':'No';
   reportedFacts.pidDiagnosedOrPresumed=caseInput.pidDiagnosedOrPresumed===null?'Unknown':caseInput.pidDiagnosedOrPresumed?'Yes':'No';
   outcome={urgentWarnings:warnings,responseType:'AgentResponse',moduleId:entry!.moduleId,caseType:caseInput.caseType,reportedFacts,supportedInterpretations:considerations,missingInformation:[],overlappingConsiderations:[],testExamReferral:[],urgentWarningResult:{moduleId:entry!.moduleId,rulesEvaluated:['U1','U2','U3'],warningsTriggered:warnings},evidenceSufficient:true,decisionSupportNotice:DecisionNotice};
