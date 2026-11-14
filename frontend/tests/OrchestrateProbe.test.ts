@@ -1,13 +1,16 @@
 // @vitest-environment node
 import {afterEach,expect,it,vi} from 'vitest';
+import {createHash} from 'node:crypto';
 import {createProbe} from '../../netlify/functions/orchestrateProbe';
 import type {QuotaStore} from '../../netlify/evaluation/demoQuota';
 import type {Transport} from '../../netlify/evaluation/watsonShadow';
 import Prompts from '../../shared/orchestratePrompts.json';
+import {ApprovedLiveOperations,LiveProbeAgent,LiveProbeVersion,ExceptionRisks,liveAccessReviewValid,liveProbeAuthorizationValid} from '../../netlify/evaluation/orchestrateProbePolicy';
 const Origin='https://deploy-preview-4--clinicalagent.netlify.app';
 const Now=Date.parse('2026-11-07T12:00:00Z');
 const Thread='11111111-1111-4111-8111-111111111111';
-const Settings={ORCHESTRATE_PROBE_ENABLED:'true',ORCHESTRATE_PROBE_KILL_SWITCH:'false',ORCHESTRATE_PROBE_TEST_UNTIL:'2026-11-07T12:20:00Z',ORCHESTRATE_PROBE_TOOLS_VERIFIED:'true',ORCHESTRATE_PROBE_PRIVACY_VERIFIED:'true',ORCHESTRATE_PROBE_USAGE_VERIFIED:'true',ORCHESTRATE_PROBE_QUOTA_VERIFIED:'true',ORCHESTRATE_EMBED_PREVIEW_ENABLED:'false',ORCHESTRATE_EMBED_KILL_SWITCH:'true',ORCHESTRATE_EMBED_PREVIEW_ID:'4',ORCHESTRATE_EMBED_PREVIEW_ORIGIN:Origin,ORCHESTRATE_EMBED_OPERATOR_IDS:'operator',OTEL_SDK_DISABLED:'true',ORCHESTRATE_API_URL:'https://api.dl.watson-orchestrate.ibm.com/instances/SyntheticTenant',ORCHESTRATE_AGENT_ID:'22222222-2222-4222-8222-222222222222',ORCHESTRATE_ENVIRONMENT:'live',WATSONX_AI_AUTH_TYPE:'iam',WATSONX_AI_APIKEY:'SyntheticServerKey',WATSONX_AI_TIMEOUT_MS:'1000',ORCHESTRATE_ENABLED:'false',ENDO_DEMO_INFERENCE_ENABLED:'false',ENDO_DEMO_KILL_SWITCH:'true'};
+const AccessReview={version:'1',agentId:LiveProbeAgent,agentVersion:LiveProbeVersion,environment:'live',apiUrl:'https://api.eu-de.watson-orchestrate.cloud.ibm.com/instances/SyntheticTenant',operations:ApprovedLiveOperations.map(operation=>({...operation})),collaborators:[],delegatedAgents:[],workflows:[],otherActionPaths:[],evidence:{reference:'SyntheticOfflineReview',reviewedAt:new Date(Now-1000).toISOString(),validUntil:new Date(Now+3600000).toISOString(),scope:'effectiveRuntimePermissions',caseSubmission:'blockedForConnectionProbe',downstreamInference:'blockedForConnectionProbe'}};
+const Settings={ORCHESTRATE_PROBE_EXCEPTION_ENABLED:'false',ORCHESTRATE_PROBE_EXCEPTION_APPROVAL:'',ORCHESTRATE_PROBE_ACCESS_REVIEW:JSON.stringify(AccessReview),ORCHESTRATE_PROBE_ENABLED:'true',ORCHESTRATE_PROBE_KILL_SWITCH:'false',ORCHESTRATE_PROBE_TEST_UNTIL:'2026-11-07T12:20:00Z',ORCHESTRATE_PROBE_TOOLS_VERIFIED:'true',ORCHESTRATE_PROBE_PRIVACY_VERIFIED:'true',ORCHESTRATE_PROBE_USAGE_VERIFIED:'true',ORCHESTRATE_PROBE_QUOTA_VERIFIED:'true',ORCHESTRATE_EMBED_PREVIEW_ENABLED:'false',ORCHESTRATE_EMBED_KILL_SWITCH:'true',ORCHESTRATE_EMBED_PREVIEW_ID:'4',ORCHESTRATE_EMBED_PREVIEW_ORIGIN:Origin,ORCHESTRATE_EMBED_OPERATOR_IDS:'operator',OTEL_SDK_DISABLED:'true',ORCHESTRATE_API_URL:'https://api.eu-de.watson-orchestrate.cloud.ibm.com/instances/SyntheticTenant',ORCHESTRATE_AGENT_ID:LiveProbeAgent,ORCHESTRATE_ENVIRONMENT:'live',WATSONX_AI_AUTH_TYPE:'iam',WATSONX_AI_APIKEY:'SyntheticServerKey',WATSONX_AI_TIMEOUT_MS:'1000',ORCHESTRATE_ENABLED:'false',ENDO_DEMO_INFERENCE_ENABLED:'false',ENDO_DEMO_KILL_SWITCH:'true'};
 const Context={user:{id:'operator',expiresAt:new Date(Now+600000)},deploy:{id:'SyntheticDeploy',context:'deploy-preview',published:false}};
 const json=(contents:unknown)=>new Response(JSON.stringify(contents),{headers:{'content-type':'application/json'}});
 const request=(body='{"action":"probe"}')=>new Request(Origin+'/.netlify/functions/orchestrateProbe',{method:'POST',headers:{Origin,'Content-Type':'application/json'},body});
@@ -34,7 +37,8 @@ it('runs two real-shaped mocked turns with one IAM identity and server-only thre
  for(const forbidden of ['SyntheticBearer','SyntheticServerKey',Thread,'Blue Lantern','SyntheticTenant','receipt'])expect(JSON.stringify(report)).not.toContain(forbidden);
  expect(JSON.stringify([...records.values()])).not.toMatch(/Blue Lantern|message|prompt|caseInput/);
 });
-it.each(['api.dl.watson-orchestrate.ibm.com','api.us-south.watson-orchestrate.cloud.ibm.com','api.eu-de.watson-orchestrate.cloud.ibm.com'])('uses the same approved endpoint policy for target and probe: %s',async host=>{
+it('accepts the reviewed EU-DE Live Agent Endo target only',async()=>{
+ const host='api.eu-de.watson-orchestrate.cloud.ibm.com';
  const {handler,environment,transport}=fixture();
  environment.ORCHESTRATE_API_URL='https://'+host+'/instances/SyntheticTenant';
  environment.ORCHESTRATE_AGENT_ID='c6698d4e-a08d-4b77-bf05-139ff3b4c695';
@@ -145,4 +149,118 @@ it('cancels an active model request without a partial report or second turn',asy
 it('denies a thread already owned by another server visit',async()=>{
  const {handler,transport,records}=fixture();records.set('thread/'+Thread,{data:{ownerId:'33333333-3333-4333-8333-333333333333'},etag:'existing'});
  const report=await (await handler(request(),Context)).json();expect(report.status).toBe('FAIL');expect(report.secondTurn).toBe('NOT_TESTED');expect(transport).toHaveBeenCalledTimes(2);
+});
+
+it('requires a separate reviewed access record even when every legacy verification flag is true',async()=>{
+ const f=fixture();f.environment.ORCHESTRATE_PROBE_ACCESS_REVIEW='';
+ const credentialRead=vi.fn(()=>{throw new Error('UnexpectedCredentialAccess');});Object.defineProperty(f.environment,'WATSONX_AI_APIKEY',{get:credentialRead});
+ expect(await (await f.handler(request(),Context)).json()).toMatchObject({reason:'livePolicyRequired',authentication:'NOT_TESTED'});
+ expect(f.store).not.toHaveBeenCalled();expect(f.transport).not.toHaveBeenCalled();expect(credentialRead).not.toHaveBeenCalled();
+});
+it.each(['extraTool','changedDestination','changedMethod','credentialMetadata','collaborators','delegatedAgents','workflows','otherActionPaths','expiredReview','futureReview','clinicalCaseAllowed','downstreamCallsAllowed','wrongAgent','wrongVersion','wrongInstance','wrongRegion'])('denies incompatible access-review inventory before storage/IAM: %s',async scenario=>{
+ const f=fixture(),review:any=structuredClone(AccessReview);
+ if(scenario==='extraTool')review.operations.push({...review.operations[0],tool:'UnexpectedTool'});
+ else if(scenario==='changedDestination')review.operations[1].url='https://unexpected.invalid/api/v1/analyze';
+ else if(scenario==='changedMethod')review.operations[0].method='POST';
+ else if(scenario==='credentialMetadata')review.operations[0].authorization='SyntheticCredentialNeverReturned';
+ else if(['collaborators','delegatedAgents','workflows','otherActionPaths'].includes(scenario))review[scenario]=['UnexpectedOperation'];
+ else if(scenario==='expiredReview')review.evidence.validUntil=new Date(Now).toISOString();
+ else if(scenario==='futureReview')review.evidence.reviewedAt=new Date(Now+1).toISOString();
+ else if(scenario==='clinicalCaseAllowed')review.evidence.caseSubmission='allowed';
+ else if(scenario==='downstreamCallsAllowed')review.evidence.downstreamInference='allowed';
+ else if(scenario==='wrongAgent')review.agentId='22222222-2222-4222-8222-222222222222';
+ else if(scenario==='wrongVersion')review.agentVersion='1.0.0';
+ else if(scenario==='wrongInstance')review.apiUrl=review.apiUrl.replace('SyntheticTenant','OtherSyntheticTenant');
+ else if(scenario==='wrongRegion')review.apiUrl=review.apiUrl.replace('eu-de','us-south');
+ f.environment.ORCHESTRATE_PROBE_ACCESS_REVIEW=JSON.stringify(review);
+ const log=vi.spyOn(console,'log'),error=vi.spyOn(console,'error');
+ const report=await (await f.handler(request(),Context)).json();
+ expect(report.reason).toBe('livePolicyRequired');expect(f.transport).not.toHaveBeenCalled();expect(f.store).not.toHaveBeenCalled();
+ expect(JSON.stringify(report)).not.toMatch(/SyntheticCredential|SyntheticTenant|SyntheticOfflineReview|UnexpectedOperation|Bearer|access_token/);
+ expect(log).not.toHaveBeenCalled();expect(error).not.toHaveBeenCalled();
+});
+it('rejects malformed, oversized and duplicate-key review records',()=>{
+ for(const value of ['{}','null','x'.repeat(8193),Settings.ORCHESTRATE_PROBE_ACCESS_REVIEW.replace('"version":"1"','"version":"1","version":"1"')])expect(liveAccessReviewValid({...Settings,ORCHESTRATE_PROBE_ACCESS_REVIEW:value},Now)).toBe(false);
+ expect(liveAccessReviewValid(Settings,Now)).toBe(true);
+});
+it('rechecks the reviewed inventory between turns without refunding tickets',async()=>{
+ const f=fixture();f.transport.mockImplementation(async(address)=>{
+  if(address.includes('/identity/token'))return json({access_token:'SyntheticBearer',token_type:'Bearer',expires_in:3600});
+  f.environment.ORCHESTRATE_PROBE_ACCESS_REVIEW='';return json({thread_id:Thread,choices:[{index:0,finish_reason:'stop',message:{role:'assistant',content:'Blue Lantern acknowledged.'}}]});
+ });
+ const report=await (await f.handler(request(),Context)).json();expect(report.reason).toBe('disabled');expect(report.secondTurn).toBe('NOT_TESTED');expect(f.transport).toHaveBeenCalledTimes(2);
+ expect([...f.records.keys()].filter(key=>key.startsWith('daily/'))).toHaveLength(1);
+});
+it('exhausted daily reservations reject before IAM without changing capacity',async()=>{
+ vi.spyOn(Date,'now').mockReturnValue(Now);
+ const f=fixture(),day=new Date(Now).toISOString().slice(0,10);
+ for(let i=0;i<2;i++)f.records.set('daily/'+day+'/'+i,{data:{reservationId:'44444444-4444-4444-8444-444444444444',createdAt:Now},etag:'occupied'});
+ const report=await (await f.handler(request(),Context)).json();expect(report.reason).toBe('quotaRejected');expect(f.transport).not.toHaveBeenCalled();
+ expect([...f.records.keys()].filter(key=>key.startsWith('daily/'))).toHaveLength(2);
+});
+
+// Synthetic approvals below exercise code only. No real approval or IBM access is implied.
+function exceptionFixture(){
+ const f=fixture(),review=structuredClone(AccessReview);
+ review.evidence.scope='independentlyReviewedLiveBindings';review.evidence.caseSubmission='possibleUnderException';review.evidence.downstreamInference='possibleUnderException';
+ const raw=JSON.stringify(review);f.environment.ORCHESTRATE_PROBE_ACCESS_REVIEW=raw;f.environment.ORCHESTRATE_PROBE_EXCEPTION_ENABLED='true';f.environment.ORCHESTRATE_PROBE_TOOLS_VERIFIED='false';f.environment.ORCHESTRATE_PROBE_USAGE_VERIFIED='false';
+ const approval={version:'1',reference:'SyntheticOneTestApproval',test:'blueLanternTwoTurn',agentId:LiveProbeAgent,agentVersion:LiveProbeVersion,apiUrl:Settings.ORCHESTRATE_API_URL,previewId:'4',previewOrigin:Origin,operatorId:'operator',reviewHash:createHash('sha256').update(raw).digest('hex'),approvedAt:new Date(Now).toISOString(),expiresAt:Settings.ORCHESTRATE_PROBE_TEST_UNTIL,maxAgentCalls:2,maxAttempts:1,automaticRetries:0,noRealPatientData:true,acceptedRisks:[...ExceptionRisks]};
+ f.environment.ORCHESTRATE_PROBE_EXCEPTION_APPROVAL=JSON.stringify(approval);return {...f,approval,review};
+}
+it('admits one mocked v2.0.0 exception attempt without claiming technical tool or spending verification',async()=>{
+ vi.spyOn(Date,'now').mockReturnValue(Now);const f=exceptionFixture(),before=JSON.stringify(f.environment);
+ expect(liveProbeAuthorizationValid(f.environment,Now,'operator')).toBe(true);
+ const report=await (await f.handler(request(),Context)).json();expect(report).toEqual({version:'1',status:'PASS',authentication:'PASS',firstTurn:'PASS',secondTurn:'PASS',continuity:'PASS',reason:'completed'});
+ const calls=f.transport.mock.calls;expect(calls).toHaveLength(3);
+ expect(JSON.parse(String(calls[1][1].body))).toEqual({messages:[{role:'user',content:Prompts.connectionProbe[0].text}],stream:false});
+ expect(JSON.parse(String(calls[2][1].body))).toEqual({messages:[{role:'user',content:Prompts.connectionProbe[1].text}],stream:false});
+ expect(new Headers(calls[2][1].headers).get('X-IBM-THREAD-ID')).toBe(Thread);expect(JSON.stringify(calls[2][1].body)).not.toContain('Blue Lantern');
+ expect(JSON.stringify(report)).not.toMatch(/SyntheticOneTestApproval|operator|access_token|SyntheticServerKey|11111111|Blue Lantern|reviewHash/);
+ expect(JSON.stringify(f.environment)).toBe(before);expect(f.environment.ORCHESTRATE_PROBE_TOOLS_VERIFIED).toBe('false');expect(f.environment.ORCHESTRATE_PROBE_USAGE_VERIFIED).toBe('false');
+ expect((await (await f.handler(request(),Context)).json()).reason).toBe('quotaRejected');expect(f.transport).toHaveBeenCalledTimes(3);
+ expect([...f.records.keys()].filter(key=>key.startsWith('daily/'))).toHaveLength(2);
+});
+it.each(['noApproval','oldVersion','wrongOperator','missingRisk','changedReview','wrongWindow','expired','future','extraMetadata','moreCalls','moreAttempts','retries','patientData','unknownDestination','unknownTool','collaborator','unreviewedBindings'])('fails closed on incompatible exception approval or v2 inventory: %s',async scenario=>{
+ const f=exceptionFixture(),approval:any=structuredClone(f.approval),review:any=structuredClone(f.review);
+ if(scenario==='oldVersion')approval.agentVersion='1.0.0';
+ else if(scenario==='wrongOperator')approval.operatorId='anotherOperator';
+ else if(scenario==='missingRisk')approval.acceptedRisks.pop();
+ else if(scenario==='changedReview')approval.reviewHash='0'.repeat(64);
+ else if(scenario==='wrongWindow')approval.expiresAt=new Date(Now+120000).toISOString();
+ else if(scenario==='expired')approval.expiresAt=new Date(Now).toISOString();
+ else if(scenario==='future')approval.approvedAt=new Date(Now+1).toISOString();
+ else if(scenario==='extraMetadata')approval.authorization='SyntheticPrivateMetadata';
+ else if(scenario==='moreCalls')approval.maxAgentCalls=3;
+ else if(scenario==='moreAttempts')approval.maxAttempts=2;
+ else if(scenario==='retries')approval.automaticRetries=1;
+ else if(scenario==='patientData')approval.noRealPatientData=false;
+ else if(scenario==='unknownDestination')review.operations[0].url='https://unexpected.invalid/modules';
+ else if(scenario==='unknownTool')review.operations.push({...review.operations[0],tool:'OtherTool'});
+ else if(scenario==='collaborator')review.collaborators=['OtherAgent'];
+ else if(scenario==='unreviewedBindings')review.evidence.scope='agentSelfReport';
+ f.environment.ORCHESTRATE_PROBE_ACCESS_REVIEW=JSON.stringify(review);
+ if(['unknownDestination','unknownTool','collaborator','unreviewedBindings'].includes(scenario))approval.reviewHash=createHash('sha256').update(f.environment.ORCHESTRATE_PROBE_ACCESS_REVIEW).digest('hex');
+ f.environment.ORCHESTRATE_PROBE_EXCEPTION_APPROVAL=scenario==='noApproval'?'':JSON.stringify(approval);
+ expect((await (await f.handler(request(),Context)).json()).reason).toBe('livePolicyRequired');expect(f.store).not.toHaveBeenCalled();expect(f.transport).not.toHaveBeenCalled();
+});
+it('rejects v1 review inventory even with a freshly supplied approval hash',async()=>{
+ const f=exceptionFixture(),review={...f.review,agentVersion:'1.0.0'};f.environment.ORCHESTRATE_PROBE_ACCESS_REVIEW=JSON.stringify(review);
+ f.environment.ORCHESTRATE_PROBE_EXCEPTION_APPROVAL=JSON.stringify({...f.approval,reviewHash:createHash('sha256').update(f.environment.ORCHESTRATE_PROBE_ACCESS_REVIEW).digest('hex')});
+ expect((await (await f.handler(request(),Context)).json()).reason).toBe('livePolicyRequired');expect(f.transport).not.toHaveBeenCalled();expect(f.store).not.toHaveBeenCalled();
+});
+it('rejects risk acceptance masquerading as technical verification',async()=>{
+ for(const key of ['ORCHESTRATE_PROBE_TOOLS_VERIFIED','ORCHESTRATE_PROBE_USAGE_VERIFIED'] as const){const f=exceptionFixture();f.environment[key]='true';expect((await f.handler(request(),Context)).status).toBe(404);expect(f.transport).not.toHaveBeenCalled();expect(f.store).not.toHaveBeenCalled();}
+});
+it('does not activate an exception through its approval record alone',async()=>{
+ const f=exceptionFixture();f.environment.ORCHESTRATE_PROBE_EXCEPTION_ENABLED='false';expect((await f.handler(request(),Context)).status).toBe(404);expect(f.store).not.toHaveBeenCalled();expect(f.transport).not.toHaveBeenCalled();
+});
+it('requires a same-UTC-day approval window to preserve the existing single-attempt ticket guarantee',()=>{
+ const f=exceptionFixture(),issued=Date.parse('2026-11-07T23:50:00Z'),expiry='2026-11-08T00:10:00Z';
+ f.environment.ORCHESTRATE_PROBE_TEST_UNTIL=expiry;const review=structuredClone(f.review);review.evidence.reviewedAt=new Date(issued).toISOString();review.evidence.validUntil=new Date(issued+3600000).toISOString();
+ f.environment.ORCHESTRATE_PROBE_ACCESS_REVIEW=JSON.stringify(review);f.environment.ORCHESTRATE_PROBE_EXCEPTION_APPROVAL=JSON.stringify({...f.approval,reviewHash:createHash('sha256').update(f.environment.ORCHESTRATE_PROBE_ACCESS_REVIEW).digest('hex'),approvedAt:new Date(issued).toISOString(),expiresAt:expiry});
+ expect(liveProbeAuthorizationValid(f.environment,issued,'operator')).toBe(false);
+});
+it('rechecks exception revocation between turns and never retries or refunds',async()=>{
+ const f=exceptionFixture();f.transport.mockImplementation(async address=>{if(address.includes('/identity/token'))return json({access_token:'SyntheticBearer',token_type:'Bearer',expires_in:3600});f.environment.ORCHESTRATE_PROBE_EXCEPTION_APPROVAL='';return json({thread_id:Thread,choices:[{index:0,finish_reason:'stop',message:{role:'assistant',content:'Blue Lantern acknowledged.'}}]});});
+ const report=await (await f.handler(request(),Context)).json();expect(report.reason).toBe('disabled');expect(report.secondTurn).toBe('NOT_TESTED');expect(f.transport).toHaveBeenCalledTimes(2);
 });

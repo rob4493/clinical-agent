@@ -6,6 +6,8 @@ export interface Visit {version:'1';visitId:string;ordinal:number;issuedAt:numbe
 const Uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const Lifetime=600000;
 /** Anonymous capability receipts contain operational IDs only, never a transcript.
+ * Receipts are signed, not encrypted: the website recipient can read visit/thread
+ * IDs. The protected probe keeps its receipts internal. No token/key is included.
  * Domain separation permits existing server-key reuse without exposing the key.
  */
 export function createReceipts(secret:string,clock:()=>number=Date.now){

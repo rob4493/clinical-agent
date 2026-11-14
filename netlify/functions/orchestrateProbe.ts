@@ -1,4 +1,5 @@
 import {createHash} from 'node:crypto';
+import {liveProbeAuthorizationValid} from '../evaluation/orchestrateProbePolicy';
 import Prompts from '../../shared/orchestratePrompts.json';
 import {OrchestrateTarget,isOrchestrateApiUrl} from '../evaluation/orchestrateTarget';
 import {createOrchestrateTransport,type OrchestrateTurn} from '../evaluation/orchestrateTransport';
@@ -12,7 +13,7 @@ import {netlifyQuota} from '../../frontend/src/server/netlifyQuota';
 type Settings=Record<string,string|undefined>;
 type Context={user?:{id:string;expiresAt:Date};deploy?:{id:string;context:string;published:boolean}};
 type Outcome='PASS'|'FAIL'|'NOT_TESTED';
-type Reason='completed'|'disabled'|'operatorRequired'|'inputRejected'|'configuration'|'incorrectEndpoint'|'authenticationFailure'|'authorizationFailure'|'endpointOrAgentUnavailable'|'quotaRejected'|'quotaUnavailable'|'networkFailure'|'timeout'|'providerUnavailable'|'providerResponse'|'continuityFailure'|'internal';
+type Reason='completed'|'disabled'|'operatorRequired'|'inputRejected'|'configuration'|'incorrectEndpoint'|'livePolicyRequired'|'authenticationFailure'|'authorizationFailure'|'endpointOrAgentUnavailable'|'quotaRejected'|'quotaUnavailable'|'networkFailure'|'timeout'|'providerUnavailable'|'providerResponse'|'continuityFailure'|'internal';
 const Origin='https://deploy-preview-4--clinicalagent.netlify.app';
 const FunctionDeadline=28000,ResponseReserve=1000;
 const StoreName='EndoOrchestrateProbeQuota';
@@ -21,9 +22,11 @@ const json=(status:number,report:unknown)=>new Response(JSON.stringify(report),{
 
 function allowed(settings:Settings,now:number){
  const expiry=Date.parse(settings.ORCHESTRATE_PROBE_TEST_UNTIL||'');
+ const exception=settings.ORCHESTRATE_PROBE_EXCEPTION_ENABLED==='true';
  return settings.ORCHESTRATE_PROBE_ENABLED==='true'&&settings.ORCHESTRATE_PROBE_KILL_SWITCH==='false'&&settings.OTEL_SDK_DISABLED==='true'
   &&settings.ORCHESTRATE_EMBED_PREVIEW_ENABLED==='false'&&settings.ORCHESTRATE_EMBED_KILL_SWITCH==='true'
-  &&['TOOLS','PRIVACY','USAGE','QUOTA'].every(name=>settings['ORCHESTRATE_PROBE_'+name+'_VERIFIED']==='true')
+  &&['PRIVACY','QUOTA'].every(name=>settings['ORCHESTRATE_PROBE_'+name+'_VERIFIED']==='true')
+  &&settings.ORCHESTRATE_PROBE_TOOLS_VERIFIED===(exception?'false':'true')&&settings.ORCHESTRATE_PROBE_USAGE_VERIFIED===(exception?'false':'true')
   &&Number.isFinite(expiry)&&expiry>now&&expiry-now<=1800000;
 }
 function dailyVisit(now:number){
@@ -56,11 +59,13 @@ export function createProbe(options:{settings?:()=>Settings;transport?:Transport
    if(!await fixedBody(request,signal))return json(400,{...report,reason:'inputRejected'});
    signal.throwIfAborted();
    // Private projections configure reused helpers only; no legacy/public flag is mutated.
-   const providerEnvironment={...environment,ORCHESTRATE_ENABLED:'true'};
+   const providerEnvironment={ORCHESTRATE_ENABLED:'true',ORCHESTRATE_API_URL:environment.ORCHESTRATE_API_URL,ORCHESTRATE_AGENT_ID:environment.ORCHESTRATE_AGENT_ID,ORCHESTRATE_ENVIRONMENT:environment.ORCHESTRATE_ENVIRONMENT,WATSONX_AI_AUTH_TYPE:environment.WATSONX_AI_AUTH_TYPE,WATSONX_AI_TIMEOUT_MS:environment.WATSONX_AI_TIMEOUT_MS,WATSONX_AI_APIKEY:undefined as string|undefined};
    try{new OrchestrateTarget(providerEnvironment);}catch{return json(200,{...report,reason:!isOrchestrateApiUrl(environment.ORCHESTRATE_API_URL)?'incorrectEndpoint':'configuration'});}
+   if(!liveProbeAuthorizationValid(environment,clock(),operator.id))return json(404,{...report,reason:'livePolicyRequired'});
    const credential=environment.WATSONX_AI_APIKEY;
    if(!credential||credential.length>512||/\s|[\u0000-\u001f]/.test(credential))return json(200,{...report,reason:'configuration'});
-   const gated=()=>{if(!allowed(settings(),clock())||operator.expiresAt.getTime()<=clock()){reason='disabled';throw new Error();}};
+   providerEnvironment.WATSONX_AI_APIKEY=credential;
+   const gated=()=>{if(!allowed(settings(),clock())||!liveProbeAuthorizationValid(settings(),clock(),operator.id)||operator.expiresAt.getTime()<=clock()){reason='disabled';throw new Error();}};
    const factory=options.store??((operation:AbortSignal)=>netlifyQuota(StoreName,operation));
    const policy=()=>{gated();return {ENDO_DEMO_INFERENCE_ENABLED:'true',ENDO_DEMO_KILL_SWITCH:'false',OTEL_SDK_DISABLED:'true',ENDO_DEMO_DAILY_LIMIT:'2'};};
    const admission=createAdmission(factory,policy),visitId=dailyVisit(clock());

@@ -25,6 +25,8 @@ export function validateDiscussion(text:unknown):string{
 type Admission={run<T>(visitId:string,ordinal:number,signal:AbortSignal,infer:(signal:AbortSignal)=>Promise<T>):Promise<T>};
 /** No case/upload fields or raw visitor messages enter this controller. The signed
  * receipt binds the server-created visit, exact prompt IDs and provider thread.
+ * The receipt is readable by the browser, not encrypted; binding prevents edits,
+ * not inspection of operational IDs. IBM bearer tokens never enter the receipt.
  */
 export function createChat(options:{environment?:OrchestrateEnvironment;admission:Admission;ownThread:(visitId:string,threadId:string,signal:AbortSignal)=>Promise<void>;transport?:Transport;clock?:()=>number}){
  const environment=options.environment??process.env;
