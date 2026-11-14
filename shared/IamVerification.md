@@ -1,3 +1,103 @@
+# Metadata-only extension — local preparation, Live Endo v2.0.0
+
+The existing verifyIam endpoint now supports a separately gated fixed action
+`{"action":"metadata"}`. No new endpoint, credential or quota system is added.
+The original `{"action":"verify"}` still performs IAM-only verification.
+The historical IAM-only instructions below describe that original action only.
+
+## Disabled controls and future operator procedure
+
+Default ORCHESTRATE_METADATA_DIAGNOSTIC_ENABLED=false. All existing IAM diagnostic
+controls, exact unpublished Preview #4 pins, trusted allowlist and future Date
+expiration, inference-disabled flags, embed kill switch and telemetry gate remain
+mandatory. Metadata also rejects an active Blue Lantern exception. GET remains
+readiness-only with zero credential/network/storage operations; it is not a
+metadata query. Missing metadata opt-in rejects the metadata POST before IAM.
+
+After separate commit/push/deployment AND execution approval only:
+1. Deploy the reviewed candidate to protected Preview #4 with both diagnostics
+   disabled, IAM kill switch engaged and expiry blank. Confirm commit and SSO.
+2. Temporarily set ORCHESTRATE_IAM_DIAGNOSTIC_ENABLED=true,
+   ORCHESTRATE_IAM_DIAGNOSTIC_KILL_SWITCH=false,
+   ORCHESTRATE_IAM_DIAGNOSTIC_UNTIL to a fresh UTC expiry <=10 minutes ahead,
+   and ORCHESTRATE_METADATA_DIAGNOSTIC_ENABLED=true, only in approved preview
+   Functions scope. Rebuild if needed. Keep Blue Lantern, its exception, public
+   chat, embed, editable Send and all inference disabled. No credential changes.
+3. Authenticated GET verifyIam must return READY/operatorReady. Then run once:
+
+```javascript
+fetch('/.netlify/functions/verifyIam', {
+ method:'POST', credentials:'same-origin', redirect:'error', cache:'no-store',
+ headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'metadata'})
+}).then(r=>r.json()).then(report=>console.log(report));
+```
+
+One invocation exchanges IAM once; a fresh broker is discarded afterward. It
+performs at most 12 bounded metadata GETs, each <=2 seconds, within a 27-second
+request budget. JSON is capped at 256 KiB per reply, strict duplicate-key and depth
+validation, no redirects, no application retries. The existing rate limit remains
+2 requests/60 seconds. This is NOT a distributed single-use ticket: the operator
+must invoke once and shut down; a repeat POST would authenticate again. No probe
+quota store is touched or modified to enforce diagnostic single-use.
+
+4. Immediately set ORCHESTRATE_METADATA_DIAGNOSTIC_ENABLED=false,
+   ORCHESTRATE_IAM_DIAGNOSTIC_ENABLED=false, IAM_DIAGNOSTIC_KILL_SWITCH=true,
+   and IAM_DIAGNOSTIC_UNTIL blank (all IAM names prefixed ORCHESTRATE_).
+   Rebuild when necessary; authenticated GET must return 404/DISABLED/disabled.
+
+## Exact metadata request boundaries
+
+Using the existing configured canonical EU-DE /instances/{instanceId} base,
+correct UUID c6698d4e-a08d-4b77-bf05-139ff3b4c695 and environment=live:
+- GET /v1/orchestrate/agents/{fixedAgentId}/environment
+- GET /v1/orchestrate/agents/{fixedAgentId}/releases/status?environment_id={referencedLiveId}
+- GET /v1/orchestrate/agents/{fixedAgentId}
+- GET /v1/orchestrate/tools
+- GET /v1/orchestrate/tools/{referencedToolId}, only the two expected names
+- Where referenced, GET /v1/orchestrate/connections/applications?connection_id={id}
+  followed by GET /v1/orchestrate/connections/applications/{appId}/configurations/live
+
+IDs use a bounded safe alphabet and can only fill these fixed paths. No caller
+URLs, provider URLs, callback destinations, credentials endpoints, runtime
+credentials, artifacts, schemas, tool invocation, analysis, agent chat or model
+routes are fetched. Unexpected extra tools/unsafe IDs/unsupported response shapes
+fail closed. Unexpected links, plugins, callbacks, binding types or extensions
+are flagged and never followed. A catalog of >200 tools or a paginated/enveloped
+shape not explicitly understood is rejected, not silently truncated.
+
+## Evidence limitations — do not claim Live proof
+
+IBM's SDK calls the generic agent and tool detail getters get_draft_by_id.
+Their returned bindings can be shared or Draft metadata. A Live environment and
+successful release status do NOT establish that these exact generic definitions
+are the immutable v2.0.0 deployment snapshot. The diagnostic always reports
+BLOCKED/liveSnapshotNotEstablished and liveAgentAssociation NOT_VERIFIED for this
+reason, even when generic methods/paths/servers match. An internal current_version
+reference is not assumed to mean the displayed semantic version 2.0.0. Missing
+operation IDs, authentication, version or indirect actions remain notExposed or
+UNKNOWN. No alternate version endpoint is invented or tried automatically.
+
+Only fixed comparisons/status codes leave the Function: matched/different/missing
+method/path/server/operation-ID fields, declared authentication category, presence
+of connection metadata, and indirect-action flags. No provider prose, names, IDs,
+URLs, version identifiers, configuration values, headers, raw JSON, exceptions,
+API keys or bearer tokens are returned or logged. Connection config is held only
+in memory; credential-bearing fields are neither selected nor echoed.
+
+Nonclinical downstream analysis/presentation and runtime permission enforcement
+cannot be proven by catalog metadata alone. This diagnostic supplies evidence;
+it does not set a verification flag or authorize Blue Lantern.
+
+## Public implementation references inspected 2026-11-14
+
+Official IBM ADK source, not tenant requests or software installation:
+- https://github.com/IBM/ibm-watsonx-orchestrate-adk/blob/main/packages/clients/ibm_watsonx_orchestrate_clients/agents/agent_client.py
+- https://github.com/IBM/ibm-watsonx-orchestrate-adk/blob/main/packages/clients/ibm_watsonx_orchestrate_clients/tools/tool_client.py
+- https://github.com/IBM/ibm-watsonx-orchestrate-adk/blob/main/packages/clients/ibm_watsonx_orchestrate_clients/connections/connections_client.py
+- https://github.com/IBM/ibm-watsonx-orchestrate-adk/blob/main/packages/core/ibm_watsonx_orchestrate_core/types/tools/types.py
+
+---
+
 # Prepared protected IAM-only diagnostic
 
 Status: local preparation only. Separate deployment, activation and execution approval
