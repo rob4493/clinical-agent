@@ -6,6 +6,8 @@ import { loadPackages, Module1, Module2 } from '../../netlify/evaluation/package
 import { parseJson, validateCase } from '../../netlify/evaluation/input';
 import { validateAtoms } from '../../netlify/evaluation/analysis';
 import { caseText, retrieve1 } from '../../netlify/evaluation/retrieval';
+import { phraseStates, reportedStates } from '../../netlify/evaluation/assertions';
+import { evaluateSafety } from '../../netlify/evaluation/safety';
 import PregnancyCases from '../src/PregnancyCases.json';
 import { DemoCases } from '../src/DemoCases';
 import Content from '../.evaluationBundle/content.json';
@@ -13,6 +15,73 @@ import Content from '../.evaluationBundle/content.json';
 function request(path:string,payload?:unknown,signal?:AbortSignal) { return evaluate(new Request('http://localhost/api'+path,{method:payload===undefined?'GET':'POST',headers:payload===undefined?{}:{'Content-Type':'application/json'},...(payload===undefined?{}:{body:JSON.stringify(payload)}),signal})); }
 function presetCase(example:typeof PregnancyCases[number]) {return {moduleHint:example.moduleId,caseType:example.caseType,ageRange:example.ageRange,pregnancyPossible:example.pregnancy==='yes'?true:example.pregnancy==='no'?false:null,pidDiagnosedOrPresumed:null,earlyPregnancy:example.earlyPregnancy,additionalNotes:example.narrative};}
 describe('Actual offline Netlify function',()=>{
+ const stablePregnancy={moduleHint:Module2,caseType:'brief',pregnancyPossible:true,earlyPregnancy:{gestationalWeeks:6,clinicallyStable:true}};
+ it.each([
+  'No dizziness, fainting, or shoulder pain reported.',
+  'No dizziness, fainting and shoulder pain.',
+  'The patient denies dizziness, fainting, and shoulder pain.',
+  'Without dizziness, fainting or shoulder pain reported.',
+  'No dizziness. No fainting. No shoulder pain.',
+  'Dizziness, fainting, and shoulder pain are denied.',
+ ])('preserves explicit denial across emergency findings: %s',notes=>{
+  for(const interpret of [phraseStates,reportedStates])for(const symptom of ['dizziness','fainting','shoulder pain'])expect([...interpret(notes,symptom)]).toEqual([false]);
+  const result=evaluateSafety(validateCase({...stablePregnancy,additionalNotes:notes}));
+  expect(result.halt).toBeNull(); expect(result.warnings).toEqual([]);
+  expect(result.findings).toMatchObject({dizziness:false,fainting:false,shoulderPain:false});
+ });
+ it('does not falsely attribute denied findings in a stable six-week API response',async()=>{
+  const response=await request('/v1/analyze',{...stablePregnancy,additionalNotes:'Mild pelvic cramping and light spotting. No dizziness, fainting, or shoulder pain reported.'});
+  const result=await response.json();
+  expect(response.status).toBe(200);expect(result.response.responseType).toBe('AgentResponse');
+  expect(result.warnings).toEqual([]);expect(result.response.urgentWarnings).toEqual([]);
+  expect(result.renderedText).not.toMatch(/with shoulder pain|with fainting|immediate emergency assessment/i);
+ });
+ it.each([
+  'No dizziness or fainting, but severe shoulder pain is present.',
+  'No dizziness, fainting, or weakness reported. Shoulder pain is present.',
+  'No dizziness, shoulder pain is present.',
+  'No dizziness, shoulder pain is reported.',
+ ])('retains a separately asserted positive emergency: %s',notes=>{
+  const result=evaluateSafety(validateCase({...stablePregnancy,additionalNotes:notes}));
+  expect(result.halt).toBeNull();expect(result.findings.dizziness).toBe(false);expect(result.findings.shoulderPain).toBe(true);
+  expect(result.warnings.map(warning=>warning.ruleId)).toContain('U1');
+  expect(result.warnings[0].text).toContain('shoulder pain');expect(result.warnings[0].text).not.toContain('fainting');
+ });
+ it('separates historical findings from a new current emergency',()=>{
+  const result=evaluateSafety(validateCase({...stablePregnancy,additionalNotes:'Previous dizziness and fainting resolved. Current shoulder pain is present.'}));
+  expect(result.halt).toBeNull();expect(result.findings).toMatchObject({dizziness:null,fainting:null,shoulderPain:true});
+  expect(result.warnings.map(warning=>warning.ruleId)).toContain('U1');
+ });
+ it.each([
+  ['Possible dizziness, fainting, or shoulder pain.',null],
+  ['Dizziness, fainting, or shoulder pain not reported.',null],
+  ['History of dizziness, fainting, and shoulder pain.',null],
+  ['If dizziness, fainting, or shoulder pain develop.',null],
+  ['Dizziness, fainting, and shoulder pain resolved.',null],
+  ['"Dizziness, fainting, or shoulder pain" is an example.',null],
+  ['No relevant symptoms discussed.',null],
+ ] as const)('does not promote uncertain, unreported or noncurrent findings: %s',(notes,expected)=>{
+  const result=evaluateSafety(validateCase({...stablePregnancy,additionalNotes:notes}));
+  expect(result.warnings).toEqual([]);expect(result.halt).toBeNull();
+  for(const symptom of ['dizziness','fainting','shoulderPain'])expect(result.findings[symptom]).toBe(expected);
+ });
+ it.each(['Fainting is present.','Shoulder pain is present.','Sudden severe pelvic pain.','Hemodynamic instability.'])('retains a genuine emergency: %s',notes=>{
+  const input=validateCase({...stablePregnancy,earlyPregnancy:{gestationalWeeks:6},additionalNotes:notes});
+  const result=evaluateSafety(input);expect(result.halt).toBeNull();expect(result.warnings.length).toBeGreaterThan(0);
+ });
+ it.each(['Current fainting.','Shoulder pain is present.','Sudden severe pelvic pain.','Hemodynamic instability.'])('preserves evidence-bound emergency output from the API: %s',async notes=>{
+  const response=await request('/v1/analyze',{...stablePregnancy,earlyPregnancy:{gestationalWeeks:6},additionalNotes:'Patient is pregnant. '+notes});
+  const result=await response.json();expect(response.status).toBe(200);
+  expect(result.response.responseType).toBe('AgentResponse');expect(result.warnings.length).toBeGreaterThan(0);
+  expect(result.renderedText.startsWith(result.warnings[0].text)).toBe(true);expect(result.sources.length).toBeGreaterThan(0);
+ });
+ it.each([
+  [true,'No dizziness, fainting, or shoulder pain reported.'],
+  [false,'Shoulder pain is present.'],
+ ] as const)('preserves structured/narrative conflict for shoulder pain (%s)',(value,notes)=>{
+  const result=evaluateSafety(validateCase({...stablePregnancy,urgentFindings:{shoulderPain:value},additionalNotes:notes}));
+  expect(result.halt).toMatchObject({responseType:'DataConflict',fieldName:'earlyPregnancy.shoulderPain'});
+ });
  const clinicalFields={ageRange:'25-34',painLocation:'lower pelvis',painQuality:'aching',painSeverity:'mild',symptomTiming:'intermittent over several months',bowelUrinarySymptoms:'painful bowel movements',sexualPain:'pain during intercourse',menstrualHistory:'regular periods',fertilityStatus:'not currently trying to conceive',priorTreatments:'no previous treatment reported',familyHistory:'family history not assessed'};
  it('faithfully reports every submitted structured field in a successful AgentResponse',async()=>{
   const payload={moduleHint:Module1,caseType:'detailed',...clinicalFields,pregnancyPossible:false,pidDiagnosedOrPresumed:false};
