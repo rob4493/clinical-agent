@@ -1,3 +1,129 @@
+# One-test residual-uncertainty amendment — prepared, NOT approved or activated
+
+This section supersedes the prior independently-reviewed-Live-binding requirement
+ONLY for the explicitly approved version-2 one-test exception below. The normal
+restricted path still requires its original independent runtime-permission review.
+There is no new metadata cycle, endpoint, agent, credential or quota system.
+
+## Facts and uncertainties
+
+Operator-confirmed: Live Agent Endo v2.0.0, existing UUID
+c6698d4e-a08d-4b77-bf05-139ff3b4c695, EU-DE target, two visible original tools,
+no displayed collaborators. IAM issuance previously passed. Repository definitions
+are GET https://clinicalagent.netlify.app/api/v1/modules and POST
+https://clinicalagent.netlify.app/api/v1/analyze, with no declared authentication.
+These are declared/visible facts, not an immutable Live snapshot or effective
+permission proof. Live bindings, authentication/connection overrides, indirect
+workflows/actions, actual destinations and tool restrictions remain unverified.
+
+A single protected synthetic probe can proceed as explicit risk acceptance under
+an amended policy, NOT as a claim that those uncertainties were technically
+eliminated. Any actually discovered unapproved tool/destination/action remains a
+blocker pending separate review. Unknown possibilities are disclosed; known
+contradictory evidence cannot be dismissed as merely unknown.
+
+## Minimum record/code amendment
+
+No new activation flag is introduced. ORCHESTRATE_PROBE_EXCEPTION_ENABLED remains
+false by default; no hosted settings are changed. Both exception ACCESS_REVIEW and
+EXCEPTION_APPROVAL require version 2, rejecting older approval records. Ordinary
+restricted-mode review records remain version 1.
+
+ACCESS_REVIEW keeps the exact UUID, v2.0.0 target, configured EU-DE URL and the two
+expected repository operation descriptors. collaborators=[] means no collaborators
+displayed to the operator, not a proved permission boundary. delegatedAgents,
+workflows and otherActionPaths must each be the literal string unverified (not
+empty arrays presented as an exhaustive review). Add exactly:
+
+```json
+"verification": {
+  "liveBindings": "unverified",
+  "indirectActions": "unverified",
+  "toolRestrictions": "notEstablished",
+  "knownUnapprovedActions": "noneReported",
+  "privacyScope": "fixedSyntheticProbeAndUnverifiedDownstreamRisk"
+}
+```
+
+Evidence scope must be operatorVisibleInventoryAndRepositoryDefinitions;
+caseSubmission and downstreamInference remain possibleUnderException. Review
+reference/freshness and exact approval SHA-256 binding remain enforced. The privacy
+scope requires a fresh approval covering the fixed synthetic content AND the
+unverified downstream risk; prior general flags are not evidence of that approval.
+PRIVACY_VERIFIED and QUOTA_VERIFIED remain mandatory, with actual supporting
+review/evidence. TOOLS_VERIFIED and USAGE_VERIFIED must remain false in this path.
+No clinical privacy screening, safety warning, structured evidence, credential
+boundary, operator check, prompt, quota algorithm or transport behavior changes.
+
+## Exact additional operator acceptance — not yet obtained
+
+I authorize ONE fixed two-turn Blue Lantern attempt through protected Preview #4
+against the existing Live Agent Endo v2.0.0 and unchanged UUID. I understand that
+the visible tool inventory and repository OpenAPI do not establish the effective
+Live bindings or an exhaustive action graph. I explicitly accept:
+
+1. Unexpected tool execution, including the existing clinical-analysis tool.
+2. Model-invented synthetic case fields submitted without an explicit case request.
+3. Unverified actual destinations, indirect/delegated workflows and external actions.
+4. Use of existing IBM-side connection identities/credentials under unverified
+   bindings; this does not authorize Endo to export keys or tokens.
+5. Downstream clinical processing and optional presentation/model inference that
+   is not bounded by Endo's two agent-call reservations.
+6. IBM retention (previously reported as 30 days), operational logging, and unknown
+   downstream retention/access policies; no real patient information is supplied.
+7. Internal model/tool usage and potential costs without a hard spending ceiling;
+   the Trial/non-billable account assertion is not proof of a usage cap.
+8. Remote processing continuing after cancellation or expiry.
+
+I accept these risks for this attempt only: two application agent-call reservations
+maximum, one invocation, zero retries, no patient information, no caller text/cases/
+uploads, <=30 minutes within one UTC day, authenticated allowlisted operator only,
+immediate probe shutdown, no public conversation or Production activation. Known
+unapproved operations/destinations remain excluded pending separate review.
+
+The exact acceptedRisks set is the original six codes plus:
+- unverifiedLiveBindingsAndIndirectActions
+- unreviewedDownstreamDestinationsAndRetention
+- unverifiedConnectionCredentialUseAndExternalActions
+
+## Shortest future sequence — separate deployment AND execution approvals required
+
+1. Review/approve this local policy amendment, commit/push to existing draft PR #4,
+   and verify its automatic unpublished SSO-protected preview build. No merge.
+2. Confirm current trusted operator/session and correct serving commit/target.
+   Disabled GET proves closure only; after separately approved activation, GET
+   returns 400/inputRejected only after trusted preview/operator validation and
+   makes no IAM, quota or inference request.
+3. Inspect existing EndoOrchestrateProbeQuota records read-only for current UTC day:
+   no consumed daily slots or deterministic visit ordinal-zero/one tickets, and
+   existing frozen policy (if present) dailyLimit=2. No reset or substitute keys.
+   Read-only absence cannot guarantee future capacity; atomic reservation/readback
+   at the one POST remains authoritative. Stop if quota evidence is unavailable.
+4. Obtain the exact written acceptance above and scoped privacy approval. Prepare
+   fresh version-2 review/approval records bound to the actual trusted operator,
+   exact record hash, unchanged target and matching expiry <=30 minutes, not crossing
+   UTC midnight. Do not reuse prior attempt approvals or infer consent from flags.
+5. Only after separate activation authorization set Preview/Functions probe enabled,
+   exception enabled, kill switch false, TEST_UNTIL=approval expiry and the two
+   records. TOOLS_VERIFIED=false and USAGE_VERIFIED=false; privacy/quota flags true
+   only with their supporting evidence. Keep public/legacy/embedded inference
+   disabled, telemetry disabled, and Production unchanged. Rebuild if required.
+6. Run ONE existing same-origin POST {"action":"probe"}. The existing Function
+   performs both fixed messages, uses returned X-IBM-THREAD-ID for turn two without
+   replaying turn one, and returns only sanitized outcomes. No separate IAM retry,
+   arbitrary message, automatic retry or clinical-tool test is authorized.
+7. Immediately set probe enabled=false, exception enabled=false, kill switch=true,
+   TEST_UNTIL and exception approval blank; rebuild if necessary; verify authenticated
+   GET 404/disabled. Do not clear tickets or modify the agent/tools.
+
+Status now: PREPARED, NOT AUTHORIZED TO EXECUTE. Operator/session freshness,
+current-day unused quota, scoped privacy acceptance and the new explicit residual-
+uncertainty approval have not been checked or granted during this local task.
+
+---
+
+## Historical policy text (superseded only where explicitly amended above)
+
 # Phase 1: protected server-to-server Orchestrate probe
 
 Implemented and mocked offline; no live access, deployment or configuration change

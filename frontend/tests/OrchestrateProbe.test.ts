@@ -202,9 +202,10 @@ it('exhausted daily reservations reject before IAM without changing capacity',as
 // Synthetic approvals below exercise code only. No real approval or IBM access is implied.
 function exceptionFixture(){
  const f=fixture(),review=structuredClone(AccessReview);
- review.evidence.scope='independentlyReviewedLiveBindings';review.evidence.caseSubmission='possibleUnderException';review.evidence.downstreamInference='possibleUnderException';
+ Object.assign(review,{version:'2',delegatedAgents:'unverified',workflows:'unverified',otherActionPaths:'unverified',verification:{liveBindings:'unverified',indirectActions:'unverified',toolRestrictions:'notEstablished',knownUnapprovedActions:'noneReported',privacyScope:'fixedSyntheticProbeAndUnverifiedDownstreamRisk'}});
+ review.evidence.scope='operatorVisibleInventoryAndRepositoryDefinitions';review.evidence.caseSubmission='possibleUnderException';review.evidence.downstreamInference='possibleUnderException';
  const raw=JSON.stringify(review);f.environment.ORCHESTRATE_PROBE_ACCESS_REVIEW=raw;f.environment.ORCHESTRATE_PROBE_EXCEPTION_ENABLED='true';f.environment.ORCHESTRATE_PROBE_TOOLS_VERIFIED='false';f.environment.ORCHESTRATE_PROBE_USAGE_VERIFIED='false';
- const approval={version:'1',reference:'SyntheticOneTestApproval',test:'blueLanternTwoTurn',agentId:LiveProbeAgent,agentVersion:LiveProbeVersion,apiUrl:Settings.ORCHESTRATE_API_URL,previewId:'4',previewOrigin:Origin,operatorId:'operator',reviewHash:createHash('sha256').update(raw).digest('hex'),approvedAt:new Date(Now).toISOString(),expiresAt:Settings.ORCHESTRATE_PROBE_TEST_UNTIL,maxAgentCalls:2,maxAttempts:1,automaticRetries:0,noRealPatientData:true,acceptedRisks:[...ExceptionRisks]};
+ const approval={version:'2',reference:'SyntheticOneTestApproval',test:'blueLanternTwoTurn',agentId:LiveProbeAgent,agentVersion:LiveProbeVersion,apiUrl:Settings.ORCHESTRATE_API_URL,previewId:'4',previewOrigin:Origin,operatorId:'operator',reviewHash:createHash('sha256').update(raw).digest('hex'),approvedAt:new Date(Now).toISOString(),expiresAt:Settings.ORCHESTRATE_PROBE_TEST_UNTIL,maxAgentCalls:2,maxAttempts:1,automaticRetries:0,noRealPatientData:true,acceptedRisks:[...ExceptionRisks]};
  f.environment.ORCHESTRATE_PROBE_EXCEPTION_APPROVAL=JSON.stringify(approval);return {...f,approval,review};
 }
 it('admits one mocked v2.0.0 exception attempt without claiming technical tool or spending verification',async()=>{
@@ -263,4 +264,24 @@ it('requires a same-UTC-day approval window to preserve the existing single-atte
 it('rechecks exception revocation between turns and never retries or refunds',async()=>{
  const f=exceptionFixture();f.transport.mockImplementation(async address=>{if(address.includes('/identity/token'))return json({access_token:'SyntheticBearer',token_type:'Bearer',expires_in:3600});f.environment.ORCHESTRATE_PROBE_EXCEPTION_APPROVAL='';return json({thread_id:Thread,choices:[{index:0,finish_reason:'stop',message:{role:'assistant',content:'Blue Lantern acknowledged.'}}]});});
  const report=await (await f.handler(request(),Context)).json();expect(report.reason).toBe('disabled');expect(report.secondTurn).toBe('NOT_TESTED');expect(f.transport).toHaveBeenCalledTimes(2);
+});
+it.each(['oldApproval','oldReview','missingUncertainty','falseBindingVerification','falseIndirectVerification','falseRestrictionVerification','knownUnapprovedAction','falseNoWorkflows','wrongPrivacyScope','missingNewRisk'] as const)('rejects incomplete or misleading residual-uncertainty acceptance: %s',async scenario=>{
+ const f=exceptionFixture(),review:any=structuredClone(f.review),approval:any=structuredClone(f.approval);
+ if(scenario==='oldApproval')approval.version='1';
+ else if(scenario==='oldReview')review.version='1';
+ else if(scenario==='missingUncertainty')delete review.verification;
+ else if(scenario==='falseBindingVerification')review.verification.liveBindings='verified';
+ else if(scenario==='falseIndirectVerification')review.verification.indirectActions='verified';
+ else if(scenario==='falseRestrictionVerification')review.verification.toolRestrictions='verified';
+ else if(scenario==='knownUnapprovedAction')review.verification.knownUnapprovedActions='present';
+ else if(scenario==='falseNoWorkflows')review.workflows=[];
+ else if(scenario==='wrongPrivacyScope')review.verification.privacyScope='allProvidersVerified';
+ else approval.acceptedRisks=approval.acceptedRisks.filter((risk:string)=>risk!=='unverifiedLiveBindingsAndIndirectActions');
+ f.environment.ORCHESTRATE_PROBE_ACCESS_REVIEW=JSON.stringify(review);approval.reviewHash=createHash('sha256').update(f.environment.ORCHESTRATE_PROBE_ACCESS_REVIEW).digest('hex');f.environment.ORCHESTRATE_PROBE_EXCEPTION_APPROVAL=JSON.stringify(approval);
+ expect((await (await f.handler(request(),Context)).json()).reason).toBe('livePolicyRequired');expect(f.store).not.toHaveBeenCalled();expect(f.transport).not.toHaveBeenCalled();
+});
+it('records unknown Live bindings as risk acceptance without setting any technical verification flag',()=>{
+ const f=exceptionFixture();expect(liveAccessReviewValid(f.environment,Now,true)).toBe(true);expect(liveAccessReviewValid(f.environment,Now,false)).toBe(false);
+ const review=JSON.parse(f.environment.ORCHESTRATE_PROBE_ACCESS_REVIEW);expect(review.verification).toMatchObject({liveBindings:'unverified',indirectActions:'unverified',toolRestrictions:'notEstablished'});expect(review.workflows).toBe('unverified');
+ expect(f.environment.ORCHESTRATE_PROBE_TOOLS_VERIFIED).toBe('false');expect(f.environment.ORCHESTRATE_PROBE_USAGE_VERIFIED).toBe('false');
 });
