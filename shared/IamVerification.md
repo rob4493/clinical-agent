@@ -1,3 +1,50 @@
+# Tool-selection refinement — offline only
+
+Observed result: metadataInvalid / moduleListingDefinition / toolSelection.
+This establishes that IAM succeeded, the environment and release-status JSON
+were accepted, the generic agent matched the UUID and contained exactly two
+unique valid string tool references, and the tool inventory was an accepted
+bounded array of objects. It does NOT establish either tool detail was fetched.
+
+The failed condition was exactly one catalog record whose canonical name equals
+the approved tool name AND whose ID appears in the generic agent's tool list.
+The retained result cannot distinguish zero matches from duplicate matches.
+No raw response was retained; the exact hosted cause is not recoverable offline.
+
+Selection failures now add only a fixed selection object with zero/one/multiple
+cardinalities for canonical names, canonical-name+agent-reference intersection,
+exact expected display-name-only matches among referenced records, and agent
+references present in the catalog. Two booleans identify missing/non-string name
+fields and missing/invalid ID fields. These booleans are catalog-wide signals,
+not proof that a malformed unrelated record caused the selection failure. No IDs, names, URLs, provider excerpts or
+raw counts are exposed. referenceScope remains genericAgentNotLiveSnapshot.
+
+Interpretation:
+- Canonical names zero + display-name-only referenced one: the expected label is
+  exposed as display_name rather than the canonical name. Still rejected.
+- Canonical name present + referenced intersection zero: that named record's ID
+  is outside the generic agent references. Version/workspace/global visibility
+  differences are possible; this is not automatically a Draft/Live diagnosis.
+- Referenced intersection multiple: ambiguous duplicate records. Still rejected.
+- Agent references found zero: catalog coverage/reference mismatch. Still rejected.
+- Unsupported fields: schema assumptions need review. Still rejected.
+
+IBM ToolSpec documents name, id and display_name as separate fields. Its SDK
+calls generic agent/tool retrieval get_draft_by_id, so these are not immutable
+Live snapshot evidence. The SDK's list helper defaults include_global=true and
+normally adds include=global; our current GET /tools has no expansion query.
+Global/workspace coverage is therefore another plausible source of missing IDs,
+not a proven cause. This patch does not change queries, scope, selection policy,
+name normalization or version interpretation. It only removes coercion of invalid
+catalog IDs; they must already be valid strings. No arbitrary tool is substituted.
+
+A subsequent authorized attempt can identify the match category. Until then,
+Live bindings and the exact cause remain unverified. No IBM request, hosted
+configuration change, deployment, activation or quota operation was performed
+while preparing this correction.
+
+---
+
 # Offline failure-stage refinement and activation proposal
 
 Current operator instruction: leave hosted configuration unchanged. Shutdown is

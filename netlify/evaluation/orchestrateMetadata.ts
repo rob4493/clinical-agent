@@ -24,8 +24,32 @@ function bounded<T>(promise:Promise<T>,signal:AbortSignal):Promise<T>{
   promise.then(resolve,reject).finally(()=>signal.removeEventListener('abort',abort));
  });
 }
+type Cardinality='zero'|'one'|'multiple';
+export interface ToolSelectionReport {
+ canonicalNames:Cardinality;
+ canonicalNamesReferencedByAgent:Cardinality;
+ displayNameOnlyReferencedByAgent:Cardinality;
+ agentReferencesFoundInInventory:Cardinality;
+ missingOrNonStringNames:boolean;
+ missingOrInvalidIds:boolean;
+ referenceScope:'genericAgentNotLiveSnapshot';
+}
+const cardinality=(count:number):Cardinality=>count===0?'zero':count===1?'one':'multiple';
+const validToolId=(value:unknown):value is string=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(value);
+function selectionReport(catalog:ObjectValue[],references:string[],expectedName:string):ToolSelectionReport{
+ const referenced=(tool:ObjectValue)=>validToolId(tool.id)&&references.includes(tool.id);
+ return {
+  canonicalNames:cardinality(catalog.filter(tool=>tool.name===expectedName).length),
+  canonicalNamesReferencedByAgent:cardinality(catalog.filter(tool=>tool.name===expectedName&&referenced(tool)).length),
+  displayNameOnlyReferencedByAgent:cardinality(catalog.filter(tool=>tool.name!==expectedName&&tool.display_name===expectedName&&referenced(tool)).length),
+  agentReferencesFoundInInventory:cardinality(catalog.filter(referenced).length),
+  missingOrNonStringNames:catalog.some(tool=>typeof tool.name!=='string'||!tool.name),
+  missingOrInvalidIds:catalog.some(tool=>!validToolId(tool.id)),
+  referenceScope:'genericAgentNotLiveSnapshot'
+ };
+}
 export class MetadataFailure extends Error{
- constructor(readonly reason:'metadataUnauthorized'|'metadataForbidden'|'metadataUnavailable'|'metadataInvalid'|'metadataNetwork'|'metadataTimeout'|'metadataConfiguration',readonly stage:MetadataStage='metadataValidation',readonly check:MetadataCheck='unspecified'){super('Metadata verification unavailable.');}
+ constructor(readonly reason:'metadataUnauthorized'|'metadataForbidden'|'metadataUnavailable'|'metadataInvalid'|'metadataNetwork'|'metadataTimeout'|'metadataConfiguration',readonly stage:MetadataStage='metadataValidation',readonly check:MetadataCheck='unspecified',readonly selection?:ToolSelectionReport){super('Metadata verification unavailable.');}
 }
 
 /** Bounded JSON reader. Provider text, IDs, headers and exceptions never escape. */
@@ -82,8 +106,8 @@ export async function inspectOrchestrateMetadata(settings:Record<string,string|u
  const catalog=inventory.map(object),findings=[];
  for(const expected of ApprovedLiveOperations){
   stage=expected.operationId==='listModules'?'moduleListingDefinition':'clinicalAnalysisDefinition';
-  const matches=catalog.filter(tool=>tool.name===expected.tool&&references.includes(String(tool.id)));
-  if(matches.length!==1)throw new MetadataFailure('metadataInvalid','metadataValidation','toolSelection');
+  const matches=catalog.filter(tool=>tool.name===expected.tool&&validToolId(tool.id)&&references.includes(tool.id));
+  if(matches.length!==1)throw new MetadataFailure('metadataInvalid','metadataValidation','toolSelection',selectionReport(catalog,references,expected.tool));
   const tool=object(await get('/tools/'+id(matches[0].id)));
   if(tool.id!==matches[0].id||tool.name!==expected.tool)throw new MetadataFailure('metadataInvalid','metadataValidation','toolIdentity');
   const binding=object(tool.binding),openapi=object(binding.openapi);
@@ -104,7 +128,7 @@ export async function inspectOrchestrateMetadata(settings:Record<string,string|u
  recheck();
  return {status:'BLOCKED',reason:'liveSnapshotNotEstablished',authentication:'PASS',deployment:{liveEnvironment:'present',version:typeof live[0].current_version==='string'&&/^\d+\.\d+\.\d+$/.test(live[0].current_version)?match(live[0].current_version,LiveProbeVersion):'notExposed',release:match(release.deployment_status,'success')},liveAgentAssociation:'NOT_VERIFIED',genericAgentCollaborators:empty(draft.collaborators)?'noneDeclared':absent(draft.collaborators)?'notExposed':'present',tools:findings,indirectActions:'UNKNOWN'};
  }catch(error){
-  if(error instanceof MetadataFailure)throw new MetadataFailure(error.reason,error.stage==='metadataValidation'?stage:error.stage,error.check);
+  if(error instanceof MetadataFailure)throw new MetadataFailure(error.reason,error.stage==='metadataValidation'?stage:error.stage,error.check,error.selection);
   throw error;
  }
 }

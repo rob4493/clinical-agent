@@ -107,4 +107,27 @@ it.each(['contentType','invalidJson','responseTooLarge'] as const)('distinguishe
 it('does not claim IAM succeeded for a local target-validation failure',async()=>{
  const f=fixture({ORCHESTRATE_ENVIRONMENT:'draft'});expect(await (await f.handler(request(),Context)).json()).toMatchObject({stage:'configuration',check:'targetMismatch',authentication:'NOT_TESTED'});expect(f.transport).not.toHaveBeenCalled();
 });
+it.each(['displayNameOnly','nameOutsideAgentReferences','duplicateReferencedMatch','referencesAbsent','unsupportedFields','renamedCanonicalName'] as const)('classifies selection failure without accepting substitutes: %s',async scenario=>{
+ const f=fixture(),expected=ApprovedLiveOperations[0].tool;
+ if(scenario==='displayNameOnly'){(f.tools[0] as any).display_name=expected;(f.tools[0] as {name:string}).name='DifferentCanonicalName';}
+ else if(scenario==='nameOutsideAgentReferences')f.tools[0].id='unreferenced-tool';
+ else if(scenario==='duplicateReferencedMatch')f.replies.set('/tools',[...f.tools,structuredClone(f.tools[0])]);
+ else if(scenario==='referencesAbsent')f.replies.set('/tools',f.tools.map((tool,index)=>({...tool,id:'unreferenced-'+index,name:'OtherCanonicalName'})));
+ else if(scenario==='unsupportedFields')f.replies.set('/tools',[{id:{private:'SecretIdentifier'},display_name:expected},f.tools[1]]);
+ else (f.tools[0] as {name:string}).name='DifferentCanonicalName';
+ const report=await (await f.handler(request(),Context)).json();
+ expect(report).toMatchObject({status:'FAIL',reason:'metadataInvalid',stage:'moduleListingDefinition',check:'toolSelection',authentication:'PASS',selection:{referenceScope:'genericAgentNotLiveSnapshot'}});
+ const s=report.selection;
+ if(scenario==='displayNameOnly')expect(s).toMatchObject({canonicalNames:'zero',canonicalNamesReferencedByAgent:'zero',displayNameOnlyReferencedByAgent:'one'});
+ else if(scenario==='nameOutsideAgentReferences')expect(s).toMatchObject({canonicalNames:'one',canonicalNamesReferencedByAgent:'zero',agentReferencesFoundInInventory:'one'});
+ else if(scenario==='duplicateReferencedMatch')expect(s).toMatchObject({canonicalNames:'multiple',canonicalNamesReferencedByAgent:'multiple'});
+ else if(scenario==='referencesAbsent')expect(s).toMatchObject({canonicalNames:'zero',agentReferencesFoundInInventory:'zero'});
+ else if(scenario==='unsupportedFields')expect(s).toMatchObject({missingOrNonStringNames:true,missingOrInvalidIds:true});
+ else expect(s).toMatchObject({canonicalNames:'zero',agentReferencesFoundInInventory:'multiple',displayNameOnlyReferencedByAgent:'zero'});
+ expect(f.transport).toHaveBeenCalledTimes(5);expect(f.transport.mock.calls.some(([url])=>/\/tools\//.test(url))).toBe(false);
+ expect(JSON.stringify(report)).not.toMatch(/DifferentCanonicalName|OtherCanonicalName|unreferenced|SecretIdentifier|SyntheticBearer|tool-0|list_available|http/);
+});
+it('does not mistake duplicate unreferenced names for multiple agent-referenced matches',async()=>{
+ const f=fixture();f.replies.set('/tools',[...f.tools,{...f.tools[0],id:'unreferenced-tool'}]);expect(await (await f.handler(request(),Context)).json()).toMatchObject({status:'BLOCKED',reason:'liveSnapshotNotEstablished'});
+});
 const Settings={ORCHESTRATE_IAM_DIAGNOSTIC_ENABLED:'true',ORCHESTRATE_IAM_DIAGNOSTIC_KILL_SWITCH:'false',ORCHESTRATE_IAM_DIAGNOSTIC_UNTIL:new Date(Now+300000).toISOString(),ORCHESTRATE_EMBED_PREVIEW_ID:'4',ORCHESTRATE_EMBED_PREVIEW_ORIGIN:Origin,ORCHESTRATE_EMBED_OPERATOR_IDS:'operator',ORCHESTRATE_EMBED_PREVIEW_ENABLED:'false',ORCHESTRATE_EMBED_KILL_SWITCH:'true',OTEL_SDK_DISABLED:'true',ENDO_DEMO_KILL_SWITCH:'true',WATSONX_CONVERSATION_MODE:'disabled',ORCHESTRATE_ENABLED:'false',ORCHESTRATE_SYNTHETIC_AUTHORIZED:'false',ORCHESTRATE_DISCUSSION_AUTHORIZED:'false',ORCHESTRATE_HOSTED_CONTROLS_VERIFIED:'false',ENDO_DEMO_INFERENCE_ENABLED:'false',WATSONX_ENABLED:'false',WATSONX_CONFLICT_ASSIST_ENABLED:'false',WATSONX_GUIDED_FOLLOWUP_ENABLED:'false',ORCHESTRATE_PROBE_ENABLED:'false',ORCHESTRATE_PROBE_KILL_SWITCH:'true',ORCHESTRATE_PROBE_TEST_UNTIL:'',WATSONX_AI_AUTH_TYPE:'iam',WATSONX_AI_APIKEY:'SyntheticDiagnosticKey',WATSONX_AI_TIMEOUT_MS:'100'};

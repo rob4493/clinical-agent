@@ -63,7 +63,7 @@ export function createIamVerification(options:{settings?:()=>Settings;transport?
    if(request.signal.aborted)return new Response(null,{status:499});
    try{if(metadata&&settings().ORCHESTRATE_METADATA_DIAGNOSTIC_ENABLED!=='true')return result(404,'DISABLED','disabled');if(!permitted(settings(),context,request.url,clock()))return result(404,'DISABLED','disabled');if(!operator(settings(),context,clock()))return result(403,'FAIL','operatorRequired');}catch{return result(503,'FAIL','internal');}
    // A request failure before token transport is not evidence of an IAM timeout.
-   if(error instanceof MetadataFailure){const response=result(200,'FAIL',error.reason);return new Response(JSON.stringify({version:'1',status:'FAIL',reason:error.reason,stage:error.stage,check:error.check,authentication:iamAccepted?'PASS':'NOT_TESTED'}),{status:response.status,headers:response.headers});}
+   if(error instanceof MetadataFailure){const response=result(200,'FAIL',error.reason);return new Response(JSON.stringify({version:'1',status:'FAIL',reason:error.reason,stage:error.stage,check:error.check,authentication:iamAccepted?'PASS':'NOT_TESTED',...(error.selection?{selection:error.selection}:{})}),{status:response.status,headers:response.headers});}
    const brokerReason=classifyIamFailure(error);
    const reason:Reason=activeIamSignal?.aborted||deadline.aborted&&!!activeIamSignal?'iamTimeout':error instanceof NetworkFailure?'networkFailure':brokerReason==='iamRejected'?iamRejection??'iamRejected':brokerReason;
    return result(200,'FAIL',reason);
