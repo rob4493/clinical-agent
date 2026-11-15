@@ -465,3 +465,30 @@ Current result: BLOCKED. No independent v2.0.0 Live binding review or new explic
 exception acceptance has been obtained. No hosted setting, quota or IBM request
 was changed by this local preparation. Prior IAM success is not an end-to-end
 conversation result; this fixed probe cannot prove clinical-tool correctness.
+
+
+### Response rejection diagnostics (offline preparation)
+The protected probe retains `providerResponse` and may add `providerHttp`
+(`success` or `failure`) and a fixed `responseRejection` code. Codes distinguish
+HTTP rejection, content type, unavailable/read-failed/oversized body, invalid
+UTF-8/JSON, invalid shape, unexpected or missing fields, thread ID, metadata,
+choice cardinality/index, incompatible message content, finish reason, usage,
+and changed continuation thread. No field names, values, identifiers, exception
+causes, transcripts, or provider bodies are retained or logged. These additions
+occur only after the existing operator, activation, privacy and quota gates.
+Timeout classification remains authoritative when cancellation occurs.
+
+IBM's public [Chat With Agents schema](https://developer.watson-orchestrate.ibm.com/apis/orchestrate-agent/chat-with-agents)
+documents required id, object, created, model, choices and thread_id fields;
+choices are objects without documented inner properties on that page. Endo
+currently requires only choices and thread_id at the envelope level, but adds
+closed field sets, a literal chat.completion object, one choice at index zero,
+assistant/string-only content, stop-only finish reason, UUID-version checks,
+bounded text/body sizes and exact usage fields/arithmetic. Those are local
+restrictions, not all requirements established by that schema. Optional envelope
+metadata remains optional for backward compatibility. No acceptance rule is
+changed here; generic schema examples with empty choice objects remain rejected.
+Offline fixtures are synthetic, not evidence of actual hosted response structure.
+The failed attempt's exact rejection cannot be recovered from its generic code.
+Any future live verification requires separate authorization and unused tickets;
+never retry or reset the consumed attempt to obtain these new diagnostics.

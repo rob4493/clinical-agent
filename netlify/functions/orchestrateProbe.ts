@@ -2,7 +2,7 @@ import {createHash} from 'node:crypto';
 import {liveProbeAuthorizationValid} from '../evaluation/orchestrateProbePolicy';
 import Prompts from '../../shared/orchestratePrompts.json';
 import {OrchestrateTarget,isOrchestrateApiUrl} from '../evaluation/orchestrateTarget';
-import {createOrchestrateTransport,type OrchestrateTurn} from '../evaluation/orchestrateTransport';
+import {createOrchestrateTransport,OrchestrateResponseError,type ResponseRejection,type OrchestrateTurn} from '../evaluation/orchestrateTransport';
 import {createWatsonRuntime,type Transport} from '../evaluation/watsonShadow';
 import {createAdmission} from '../evaluation/demoAdmission';
 import {QuotaError,type QuotaStore} from '../evaluation/demoQuota';
@@ -47,7 +47,7 @@ async function fixedBody(request:Request,signal:AbortSignal){
 export function createProbe(options:{settings?:()=>Settings;transport?:Transport;store?:(signal:AbortSignal)=>Promise<QuotaStore>;clock?:()=>number}={}){
  const settings=options.settings??(()=>process.env),clock=options.clock??Date.now;
  return async function orchestrateProbe(request:Request,context:Context={}):Promise<Response>{
-  const report:{version:'1';status:'PASS'|'FAIL';authentication:Outcome;firstTurn:Outcome;secondTurn:Outcome;continuity:Outcome;reason:Reason}={version:'1',status:'FAIL',authentication:'NOT_TESTED',firstTurn:'NOT_TESTED',secondTurn:'NOT_TESTED',continuity:'NOT_TESTED',reason:'internal'};
+  const report:{version:'1';status:'PASS'|'FAIL';authentication:Outcome;firstTurn:Outcome;secondTurn:Outcome;continuity:Outcome;reason:Reason;responseRejection?:ResponseRejection;providerHttp?:'success'|'failure'}={version:'1',status:'FAIL',authentication:'NOT_TESTED',firstTurn:'NOT_TESTED',secondTurn:'NOT_TESTED',continuity:'NOT_TESTED',reason:'internal'};
   let reason:Reason|undefined;
   const deadline=AbortSignal.timeout(FunctionDeadline-ResponseReserve);
   const signal=AbortSignal.any([request.signal,deadline]);
@@ -100,7 +100,7 @@ export function createProbe(options:{settings?:()=>Settings;transport?:Transport
     // Only the new question is sent on turn two: replaying the name would not prove memory.
     const turn:OrchestrateTurn={messages:[{role:'user',content:prompt.text}],...(threadId?{threadId}:{})};expected=JSON.stringify(turn);
     let reply:{text:string;threadId:string};
-    try{reply=await provider.complete(turn,signal);}catch{if(!reason)reason=activeSignal?.aborted?'timeout':report.authentication==='NOT_TESTED'?'authenticationFailure':'providerResponse';if(reason==='authenticationFailure')report.authentication='FAIL';if(ordinal===0)report.firstTurn='FAIL';else report.secondTurn='FAIL';throw new Error();}
+    try{reply=await provider.complete(turn,signal);}catch(error){if(error instanceof OrchestrateResponseError){report.responseRejection=error.rejection;report.providerHttp=error.httpSuccess?'success':'failure';}if(!reason)reason=activeSignal?.aborted?'timeout':report.authentication==='NOT_TESTED'?'authenticationFailure':'providerResponse';if(reason==='authenticationFailure')report.authentication='FAIL';if(ordinal===0)report.firstTurn='FAIL';else report.secondTurn='FAIL';throw new Error();}
     await ownThread(factory,visit.visitId,reply.threadId,signal);
     if(reply.text!==(ordinal===0?'Blue Lantern acknowledged.':'Blue Lantern')){reason='continuityFailure';report.continuity='FAIL';if(ordinal===0)report.firstTurn='FAIL';else report.secondTurn='FAIL';throw new Error();}
     receipt=receipts.advance(visit,reply.threadId,prompt.id);

@@ -16,17 +16,38 @@ function bounded(text:unknown,limit:number):text is string{return typeof text===
 function wait<T>(operation:Promise<T>,signal:AbortSignal):Promise<T>{
  return new Promise((resolve,reject)=>{const abort=()=>reject(new OrchestrateError());if(signal.aborted){void operation.catch(()=>{});abort();return;}signal.addEventListener('abort',abort,{once:true});operation.then(resolve,reject).finally(()=>signal.removeEventListener('abort',abort));});
 }
+export type ResponseRejection='httpNotSuccessful'|'contentType'|'bodyUnavailable'|'bodyReadFailed'|'bodyTooLarge'|'invalidUtf8'|'invalidJson'|'invalidShape'|'unexpectedFields'|'missingRequiredFields'|'invalidThreadId'|'invalidMetadata'|'invalidChoices'|'incompatibleMessageContent'|'finishReason'|'usageValidation'|'threadMismatch';
+/** Fixed codes only: never retain provider content, keys, headers or exception causes. */
+export class OrchestrateResponseError extends OrchestrateError {
+ constructor(readonly rejection:ResponseRejection,readonly httpSuccess:boolean){super();}
+}
 async function readReply(response:Response,signal:AbortSignal){
- if(!response.ok||!/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type')||'')){void response.body?.cancel().catch(()=>{});throw new OrchestrateError();}
- const reader=response.body?.getReader();if(!reader)throw new OrchestrateError();let size=0;const parts:Uint8Array[]=[];
+ const reject=(code:ResponseRejection):never=>{throw new OrchestrateResponseError(code,response.ok);};
+ const fields=(value:unknown,names:string[],required=names):Record<string,unknown>=>{
+  if(!value||typeof value!=='object'||Array.isArray(value))return reject('invalidShape');
+  if(Object.keys(value).some(name=>!names.includes(name)))return reject('unexpectedFields');
+  if(required.some(name=>!Object.hasOwn(value,name)))return reject('missingRequiredFields');
+  return value as Record<string,unknown>;
+ };
+ if(!response.ok||!/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type')||'')){void response.body?.cancel().catch(()=>{});reject(!response.ok?'httpNotSuccessful':'contentType');}
+ let reader:ReadableStreamDefaultReader<Uint8Array>;
+ try{if(!response.body)return reject('bodyUnavailable');reader=response.body.getReader();}catch(error){if(error instanceof OrchestrateResponseError)throw error;return reject('bodyReadFailed');}
+ let size=0;const parts:Uint8Array[]=[];
  const cancel=()=>{void reader.cancel().catch(()=>{});};signal.addEventListener('abort',cancel,{once:true});
- try{for(;;){signal.throwIfAborted();const part=await wait(reader.read(),signal);if(part.done)break;size+=part.value.length;if(size>32768)throw new OrchestrateError();parts.push(part.value);}}
+ try{for(;;){signal.throwIfAborted();const part=await wait(reader.read(),signal);if(part.done)break;size+=part.value.length;if(size>32768)reject('bodyTooLarge');parts.push(part.value);}}
+ catch(error){if(error instanceof OrchestrateResponseError)throw error;return reject('bodyReadFailed');}
  finally{signal.removeEventListener('abort',cancel);void reader.cancel().catch(()=>{});reader.releaseLock();}
- const reply=exact(parseJson(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(parts))),['id','object','created','model','thread_id','choices','usage'],['choices','thread_id']);
- if(!Uuid.test(String(reply.thread_id))||reply.id!==undefined&&!bounded(reply.id,256)||reply.model!==undefined&&!bounded(reply.model,200)||reply.object!==undefined&&reply.object!=='chat.completion'||reply.created!==undefined&&(!Number.isSafeInteger(reply.created)||Number(reply.created)<0)||!Array.isArray(reply.choices)||reply.choices.length!==1)throw new OrchestrateError();
- const choice=exact(reply.choices[0],['index','finish_reason','message']),message=exact(choice.message,['role','content']);
- if(choice.index!==0||choice.finish_reason!=='stop'||message.role!=='assistant'||!bounded(message.content,16000))throw new OrchestrateError();
- if(reply.usage!==undefined){const usage=exact(reply.usage,['prompt_tokens','completion_tokens','total_tokens']);if(Object.values(usage).some(count=>!Number.isSafeInteger(count)||Number(count)<0)||Number(usage.total_tokens)!==Number(usage.prompt_tokens)+Number(usage.completion_tokens))throw new OrchestrateError();}
+ let text:string;try{text=new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(parts));}catch{return reject('invalidUtf8');}
+ let parsed:unknown;try{parsed=parseJson(text);}catch{return reject('invalidJson');}
+ const reply=fields(parsed,['id','object','created','model','thread_id','choices','usage'],['choices','thread_id']);
+ if(!Uuid.test(String(reply.thread_id)))reject('invalidThreadId');
+ if(reply.id!==undefined&&!bounded(reply.id,256)||reply.model!==undefined&&!bounded(reply.model,200)||reply.object!==undefined&&reply.object!=='chat.completion'||reply.created!==undefined&&(!Number.isSafeInteger(reply.created)||Number(reply.created)<0))reject('invalidMetadata');
+ if(!Array.isArray(reply.choices)||reply.choices.length!==1)return reject('invalidChoices');
+ const choice=fields(reply.choices[0],['index','finish_reason','message']),message=fields(choice.message,['role','content']);
+ if(choice.index!==0)reject('invalidChoices');
+ if(choice.finish_reason!=='stop')reject('finishReason');
+ if(message.role!=='assistant'||!bounded(message.content,16000))return reject('incompatibleMessageContent');
+ if(reply.usage!==undefined){try{const usage=fields(reply.usage,['prompt_tokens','completion_tokens','total_tokens']);if(Object.values(usage).some(count=>!Number.isSafeInteger(count)||Number(count)<0)||Number(usage.total_tokens)!==Number(usage.prompt_tokens)+Number(usage.completion_tokens))reject('usageValidation');}catch{return reject('usageValidation');}}
  return {text:message.content,threadId:String(reply.thread_id)};
 }
 
@@ -53,7 +74,7 @@ export function createOrchestrateTransport(gate:OrchestrateGate=ClosedGate,trans
    // not a model ID. The server-owned continuation belongs in IBM's header,
    // never an undocumented body field or a browser-provided ownership assertion.
    const response=await wait(transport(target.apiBase()+'/v1/orchestrate/'+target.agentId()+'/chat/completions',{method:'POST',redirect:'error',credentials:'omit',cache:'no-store',headers:{Accept:'application/json','Content-Type':'application/json',Authorization:'Bearer '+bearer,...(turn.threadId?{'X-IBM-THREAD-ID':turn.threadId}:{})},body:JSON.stringify({messages:turn.messages,stream:false}),signal:operation}),operation);
-   const reply=await readReply(response,operation);operation.throwIfAborted();if(turn.threadId&&reply.threadId!==turn.threadId)throw new OrchestrateError();return reply;
-  }catch{signal.throwIfAborted();throw new OrchestrateError();}
+   const reply=await readReply(response,operation);operation.throwIfAborted();if(turn.threadId&&reply.threadId!==turn.threadId)throw new OrchestrateResponseError('threadMismatch',true);return reply;
+  }catch(error){signal.throwIfAborted();if(error instanceof OrchestrateResponseError)throw error;throw new OrchestrateError();}
  }});
 }

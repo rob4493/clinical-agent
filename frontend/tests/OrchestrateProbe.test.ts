@@ -285,3 +285,12 @@ it('records unknown Live bindings as risk acceptance without setting any technic
  const review=JSON.parse(f.environment.ORCHESTRATE_PROBE_ACCESS_REVIEW);expect(review.verification).toMatchObject({liveBindings:'unverified',indirectActions:'unverified',toolRestrictions:'notEstablished'});expect(review.workflows).toBe('unverified');
  expect(f.environment.ORCHESTRATE_PROBE_TOOLS_VERIFIED).toBe('false');expect(f.environment.ORCHESTRATE_PROBE_USAGE_VERIFIED).toBe('false');
 });
+
+it('returns only fixed parser diagnostics after authorized admission and never retries',async()=>{
+ const {handler,transport}=fixture();
+ transport.mockImplementation(async address=>address.includes('/identity/token')?json({access_token:'SyntheticBearer',token_type:'Bearer',expires_in:3600}):json({thread_id:Thread,choices:[{index:0,finish_reason:'stop',message:{role:'assistant',content:[{text:'SyntheticPrivateOutput'}]}}]}));
+ const report=await (await handler(request(),Context)).json();
+ expect(report).toEqual({version:'1',status:'FAIL',authentication:'PASS',firstTurn:'FAIL',secondTurn:'NOT_TESTED',continuity:'NOT_TESTED',reason:'providerResponse',providerHttp:'success',responseRejection:'incompatibleMessageContent'});
+ expect(transport).toHaveBeenCalledTimes(2);
+ expect(JSON.stringify(report)).not.toMatch(/SyntheticPrivateOutput|SyntheticBearer|SyntheticServerKey/);expect(JSON.stringify(report)).not.toContain(Thread);
+});

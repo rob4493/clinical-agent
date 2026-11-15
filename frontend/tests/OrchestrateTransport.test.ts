@@ -54,3 +54,36 @@ it.each(['{"choices":[],"choices":[]}', 'x'.repeat(32769)])('rejects duplicate J
 it('rejects a provider changing an existing thread',async()=>{const http=transport();await expect(createOrchestrateTransport(gate(),http,Settings).complete({...Turn,threadId:'33333333-3333-4333-8333-333333333333'},signal())).rejects.toThrow(OrchestrateError);});
 it('cancels the provider transport on client disconnect and does not retry',async()=>{let providerSignal:AbortSignal|undefined;const abort=new AbortController(),http=transport();http.mockImplementation(async(address,options)=>{if(address.includes('/identity/token'))return json({access_token:'SyntheticBearer',token_type:'Bearer',expires_in:3600});providerSignal=options.signal as AbortSignal;return new Promise(()=>{});});const pending=createOrchestrateTransport(gate(),http,Settings).complete(Turn,abort.signal).catch(error=>error);await vi.waitFor(()=>expect(providerSignal).toBeDefined());abort.abort();expect(await pending).toBeInstanceOf(Error);expect(providerSignal?.aborted).toBe(true);expect(http).toHaveBeenCalledTimes(2);});
 it('bounds combined quota, IAM and model time without retrying',async()=>{vi.useFakeTimers();vi.spyOn(AbortSignal,'timeout').mockImplementation(duration=>{const abort=new AbortController();setTimeout(()=>abort.abort(),duration);return abort.signal;});let observed:AbortSignal|undefined;const http=vi.fn<Transport>(async(_address,options)=>{observed=options.signal as AbortSignal;return new Promise(()=>{});}),pending=createOrchestrateTransport(gate(),http,Settings).complete(Turn,signal()).catch(error=>error);await vi.advanceTimersByTimeAsync(101);expect(await pending).toBeInstanceOf(OrchestrateError);expect(observed?.aborted).toBe(true);expect(http).toHaveBeenCalledOnce();});
+
+// Public IBM schema leaves choice internals unspecified; these fixtures are not
+// captured IBM replies and do not establish hosted compatibility.
+it('accepts the documented response envelope with optional usage and JSON charset',async()=>{
+ const reply={...Reply,id:Thread,model:'synthetic-model',created:0,usage:{prompt_tokens:1,completion_tokens:2,total_tokens:3}};
+ const http=vi.fn<Transport>(async()=>new Response(JSON.stringify(reply),{headers:{'content-type':'application/json; charset=utf-8'}}));
+ await expect(createOrchestrateTransport(gate(),http,Settings,{authenticate:async()=> 'SyntheticBearer'}).complete(Turn,signal())).resolves.toEqual({text:Reply.choices[0].message.content,threadId:Thread});
+});
+it.each([
+ ['unexpectedFields',{...Reply,additional:'SyntheticPrivateValue'}],
+ ['missingRequiredFields',{choices:Reply.choices}],
+ ['invalidThreadId',{...Reply,thread_id:'invalid'}],
+ ['invalidMetadata',{...Reply,object:'other-documented-string'}],
+ ['invalidChoices',{...Reply,choices:[]}],
+ ['invalidShape',{...Reply,choices:[{index:0,finish_reason:'stop',message:null}]}],
+ ['missingRequiredFields',{...Reply,choices:[{}]}],
+ ['incompatibleMessageContent',{...Reply,choices:[{...Reply.choices[0],message:{role:'assistant',content:[{text:'SyntheticPrivateValue'}]}}]}],
+ ['finishReason',{...Reply,choices:[{...Reply.choices[0],finish_reason:'length'}]}],
+ ['usageValidation',{...Reply,usage:{prompt_tokens:1,completion_tokens:1,total_tokens:9}}],
+ ['usageValidation',{...Reply,usage:{extra:0}}]
+])('retains rejection and reports fixed parser code %s',async(code,reply)=>{
+ const http=vi.fn<Transport>(async()=>json(reply));
+ const failure=await createOrchestrateTransport(gate(),http,Settings,{authenticate:async()=> 'SyntheticBearer'}).complete(Turn,signal()).catch(error=>error);
+ expect(failure).toMatchObject({rejection:code,httpSuccess:true,message:'IBM conversation is unavailable. The case is unchanged.'});
+ expect(JSON.stringify(failure)).not.toContain('SyntheticPrivateValue');expect(http).toHaveBeenCalledOnce();
+});
+it.each(['invalidJson','invalidUtf8','bodyTooLarge','bodyReadFailed','bodyUnavailable','contentType','httpNotSuccessful'])('reports fixed reader code %s without retaining exceptions',async code=>{
+ const headers={'content-type':'application/json'};
+ const response=code==='invalidJson'?new Response('{', {headers}):code==='invalidUtf8'?new Response(new Uint8Array([255]),{headers}):code==='bodyTooLarge'?new Response('x'.repeat(32769),{headers}):code==='bodyReadFailed'?new Response(new ReadableStream({start(controller){controller.error(new Error('SyntheticPrivateValue'));}}),{headers}):code==='bodyUnavailable'?new Response(null,{headers}):code==='contentType'?new Response('{}'):new Response('{}',{status:503,headers});
+ const http=vi.fn<Transport>(async()=>response);
+ const failure=await createOrchestrateTransport(gate(),http,Settings,{authenticate:async()=> 'SyntheticBearer'}).complete(Turn,signal()).catch(error=>error);
+ expect(failure).toMatchObject({rejection:code,httpSuccess:code!=='httpNotSuccessful'});expect(JSON.stringify(failure)).not.toContain('SyntheticPrivateValue');
+});
