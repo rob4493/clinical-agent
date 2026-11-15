@@ -84,4 +84,27 @@ it('bounds stalled metadata transport, preserves cancellation and never retries'
 it('rejects expired or revoked authorization between metadata calls',async()=>{
  const f=fixture();const original=f.transport.getMockImplementation()!;f.transport.mockImplementation(async(url,init)=>{const response=await original(url,init);if(url.includes('/environment'))f.settings.ORCHESTRATE_IAM_DIAGNOSTIC_KILL_SWITCH='true';return response;});expect((await f.handler(request(),Context)).status).toBe(404);expect(f.transport).toHaveBeenCalledTimes(2);
 });
+it.each([
+ ['environmentList','environmentEnvelope'],['liveEnvironment','liveEnvironmentSelection'],['releaseStatus','objectExpected'],
+ ['agentDefinition','toolReferences'],['toolInventory','inventoryEnvelope'],['moduleListingDefinition','objectExpected'],
+ ['clinicalAnalysisDefinition','objectExpected'],['moduleListingConnection','connectionIdentity'],['clinicalAnalysisConnection','connectionIdentity']
+] as const)('returns a fixed stage and check for %s without provider data',async(stage,check)=>{
+ const f=fixture();
+ if(stage==='environmentList')f.replies.set('/agents/'+LiveProbeAgent+'/environment',{private:'SensitiveStagePayload'});
+ else if(stage==='liveEnvironment')f.replies.set('/agents/'+LiveProbeAgent+'/environment',[{name:'draft'}]);
+ else if(stage==='releaseStatus')f.replies.set('/agents/'+LiveProbeAgent+'/releases/status?environment_id=live-env',[]);
+ else if(stage==='agentDefinition')f.replies.set('/agents/'+LiveProbeAgent,{id:LiveProbeAgent,tools:[]});
+ else if(stage==='toolInventory')f.replies.set('/tools',{tools:f.tools});
+ else if(stage.endsWith('Definition')){const index=stage==='moduleListingDefinition'?0:1;f.replies.set('/tools/tool-'+index,{...f.tools[index],binding:{private:'SensitiveStagePayload'}});}
+ else {const index=stage==='moduleListingConnection'?0:1;(f.tools[index].binding.openapi as any).connection_id='connection-1';f.replies.set('/connections/applications?connection_id=connection-1',{app_id:'application-1'});f.replies.set('/connections/applications/application-1/configurations/live',{app_id:'application-1',environment:'draft',private:'SensitiveStagePayload'});}
+ const report=await (await f.handler(request(),Context)).json();expect(report).toEqual({version:'1',status:'FAIL',reason:'metadataInvalid',stage,check,authentication:'PASS'});expect(JSON.stringify(report)).not.toMatch(/SensitiveStagePayload|SyntheticBearer|SyntheticDiagnosticKey|connection-1|application-1|http/);
+ expect(f.transport.mock.calls.filter(([,init])=>init.method==='POST')).toHaveLength(1);
+});
+it.each(['contentType','invalidJson','responseTooLarge'] as const)('distinguishes fixed response-reader failure %s',async check=>{
+ const f=fixture();f.transport.mockImplementation(async url=>url.includes('/identity/token')?json({access_token:'SyntheticBearer',token_type:'Bearer',expires_in:3600}):new Response(check==='responseTooLarge'?'x'.repeat(262145):'not JSON',{headers:{'content-type':check==='contentType'?'text/html':'application/json'}}));
+ expect(await (await f.handler(request(),Context)).json()).toMatchObject({stage:'environmentList',check,authentication:'PASS'});expect(f.transport).toHaveBeenCalledTimes(2);
+});
+it('does not claim IAM succeeded for a local target-validation failure',async()=>{
+ const f=fixture({ORCHESTRATE_ENVIRONMENT:'draft'});expect(await (await f.handler(request(),Context)).json()).toMatchObject({stage:'configuration',check:'targetMismatch',authentication:'NOT_TESTED'});expect(f.transport).not.toHaveBeenCalled();
+});
 const Settings={ORCHESTRATE_IAM_DIAGNOSTIC_ENABLED:'true',ORCHESTRATE_IAM_DIAGNOSTIC_KILL_SWITCH:'false',ORCHESTRATE_IAM_DIAGNOSTIC_UNTIL:new Date(Now+300000).toISOString(),ORCHESTRATE_EMBED_PREVIEW_ID:'4',ORCHESTRATE_EMBED_PREVIEW_ORIGIN:Origin,ORCHESTRATE_EMBED_OPERATOR_IDS:'operator',ORCHESTRATE_EMBED_PREVIEW_ENABLED:'false',ORCHESTRATE_EMBED_KILL_SWITCH:'true',OTEL_SDK_DISABLED:'true',ENDO_DEMO_KILL_SWITCH:'true',WATSONX_CONVERSATION_MODE:'disabled',ORCHESTRATE_ENABLED:'false',ORCHESTRATE_SYNTHETIC_AUTHORIZED:'false',ORCHESTRATE_DISCUSSION_AUTHORIZED:'false',ORCHESTRATE_HOSTED_CONTROLS_VERIFIED:'false',ENDO_DEMO_INFERENCE_ENABLED:'false',WATSONX_ENABLED:'false',WATSONX_CONFLICT_ASSIST_ENABLED:'false',WATSONX_GUIDED_FOLLOWUP_ENABLED:'false',ORCHESTRATE_PROBE_ENABLED:'false',ORCHESTRATE_PROBE_KILL_SWITCH:'true',ORCHESTRATE_PROBE_TEST_UNTIL:'',WATSONX_AI_AUTH_TYPE:'iam',WATSONX_AI_APIKEY:'SyntheticDiagnosticKey',WATSONX_AI_TIMEOUT_MS:'100'};

@@ -30,7 +30,7 @@ async function fixedBody(request:Request,signal:AbortSignal){const reader=reques
 export function createIamVerification(options:{settings?:()=>Settings;transport?:Transport;clock?:()=>number}={}){
  const settings=options.settings??(()=>process.env),clock=options.clock??Date.now;
  return async function verifyIam(request:Request,context:Context={}):Promise<Response>{
-  const deadline=AbortSignal.timeout(settings().ORCHESTRATE_METADATA_DIAGNOSTIC_ENABLED==='true'?27000:FunctionDeadline),signal=AbortSignal.any([request.signal,deadline]);let activeIamSignal:AbortSignal|undefined;let iamRejection:Reason|undefined;let metadata=false;
+  const deadline=AbortSignal.timeout(settings().ORCHESTRATE_METADATA_DIAGNOSTIC_ENABLED==='true'?27000:FunctionDeadline),signal=AbortSignal.any([request.signal,deadline]);let activeIamSignal:AbortSignal|undefined;let iamRejection:Reason|undefined;let metadata=false,iamAccepted=false;
   try{
    if(request.signal.aborted)return new Response(null,{status:499});
    const e=settings(),address=new URL(request.url);
@@ -56,14 +56,14 @@ export function createIamVerification(options:{settings?:()=>Settings;transport?
    };
    // Fresh per invocation: success cannot come from a previously cached token.
    // The returned token is discarded and the broker is never kept globally.
-   const bearer=await createWatsonRuntime(transport,clock).authenticate(e,signal,OperationBudget);
+   const bearer=await createWatsonRuntime(transport,clock).authenticate(e,signal,OperationBudget);iamAccepted=true;
    if(metadata){recheck();const findings=await inspectOrchestrateMetadata(e,bearer,options.transport??fetch,signal,recheck);return new Response(JSON.stringify({version:'1',...findings}),{status:200,headers:{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Cross-Origin-Resource-Policy':'same-origin','Referrer-Policy':'no-referrer'}});}
    recheck();return result(200,'PASS','iamAccepted');
   }catch(error){
    if(request.signal.aborted)return new Response(null,{status:499});
    try{if(metadata&&settings().ORCHESTRATE_METADATA_DIAGNOSTIC_ENABLED!=='true')return result(404,'DISABLED','disabled');if(!permitted(settings(),context,request.url,clock()))return result(404,'DISABLED','disabled');if(!operator(settings(),context,clock()))return result(403,'FAIL','operatorRequired');}catch{return result(503,'FAIL','internal');}
    // A request failure before token transport is not evidence of an IAM timeout.
-   if(error instanceof MetadataFailure)return result(200,'FAIL',error.reason);
+   if(error instanceof MetadataFailure){const response=result(200,'FAIL',error.reason);return new Response(JSON.stringify({version:'1',status:'FAIL',reason:error.reason,stage:error.stage,check:error.check,authentication:iamAccepted?'PASS':'NOT_TESTED'}),{status:response.status,headers:response.headers});}
    const brokerReason=classifyIamFailure(error);
    const reason:Reason=activeIamSignal?.aborted||deadline.aborted&&!!activeIamSignal?'iamTimeout':error instanceof NetworkFailure?'networkFailure':brokerReason==='iamRejected'?iamRejection??'iamRejected':brokerReason;
    return result(200,'FAIL',reason);

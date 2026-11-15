@@ -1,3 +1,66 @@
+# Offline failure-stage refinement and activation proposal
+
+Current operator instruction: leave hosted configuration unchanged. Shutdown is
+not a prerequisite for offline work. No IBM request, hosted setting or deployment
+was changed while preparing this refinement. Existing expiry, kill switch,
+operator checks, request allowlist and all fail-closed gates remain enforced.
+
+The previously returned metadataInvalid establishes validated IAM issuance, but
+cannot identify which metadata response failed. No raw response was retained, so
+its exact cause cannot be recovered offline. Synthetic reproduction demonstrates
+that wrapped inventories, unexpected environment shapes, missing references and
+invalid OpenAPI bindings all previously collapsed to the same result. These are
+alternatives, not a diagnosis of the hosted payload.
+
+The existing endpoint now attaches only fixed stage/check fields to metadata
+failures, plus authentication PASS (only after broker success) or NOT_TESTED for
+pre-IAM configuration failures. No provider field name, value, URL, identifier,
+response excerpt, stack or secret is echoed. Reader failures distinguish content
+format, missing body, byte bound and invalid JSON. Schema checks retain their
+original restrictions; no envelope is guessed or silently accepted.
+
+Stages: configuration, environmentList, liveEnvironment, releaseStatus,
+agentDefinition, toolInventory, moduleListingDefinition,
+clinicalAnalysisDefinition, moduleListingConnection, clinicalAnalysisConnection.
+Unknown errors retain generic handling. Original IAM-only responses are unchanged.
+
+## Single-use activation proposal — design only, NOT implemented or authorized
+
+Use the same protected endpoint for a future explicit operator arm action. Its
+server-created approval would bind the exact preview deployment, operator,
+metadata-only operation and a <=10 minute expiry. It must never derive identity
+or allowed operations from request headers or caller parameters.
+
+Reuse the existing conditional-write/strong-readback storage adapter for one
+immutable authorization-consumption marker in an isolated metadata-authorization
+store. Claim that marker BEFORE IAM; only the winner may exchange a token.
+The authorization key must be derived from the existing approved expiry, site
+and fixed metadata operation, not a new per-click random ID, browser parameters,
+worker ID, operator change or deployment change. Store the authorized operator
+and expected deployment in the immutable arm record. Repeated arm clicks in the
+same approved window return that existing authorization; they cannot create a
+new allowance, including after consumption or a rebuild.
+
+Concurrent requests, failure, timeout and cancellation burn the authorization;
+there is no reset, refund, automatic retry or automatic re-arming. This marker is
+not a Blue Lantern or inference quota ticket. Existing quota stores stay untouched.
+Do not use process memory or a signed browser receipt alone for single-use.
+
+The operator could arm and execute once without editing variables again while
+the existing authorized environment window remains valid. Approval expiry must
+be min(now+10 minutes, existing ORCHESTRATE_IAM_DIAGNOSTIC_UNTIL, session expiry).
+The present environment expiry and kill switch remain hard ceilings. After that
+expiry, the current policy MUST reject every request. Removing future manual
+expiry edits entirely would require separate approval of a different master-window
+policy; this proposal does not silently extend or bypass the current expiry.
+
+This design requires separately reviewed storage writes and an arm contract, and
+is intentionally NOT included in the stage-reporting patch. It introduces no new
+credential, agent, endpoint or inference quota algorithm. For now, no POST should
+be repeated. Deployment and any new metadata attempt need separate authorization.
+
+---
+
 # Metadata-only extension — local preparation, Live Endo v2.0.0
 
 The existing verifyIam endpoint now supports a separately gated fixed action
