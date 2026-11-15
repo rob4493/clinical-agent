@@ -1,3 +1,35 @@
+# ID-first operation mapping — current local correction
+
+The diagnostic now resolves exactly the generic agent's two valid, unique tool
+IDs against inventory IDs, requiring one record per reference. Missing references
+or duplicate inventory IDs fail before tool-detail GETs. Only those two referenced
+definitions can be fetched. Names and display labels are not authorization keys.
+
+Each returned definition must retain the exact requested ID and a single OpenAPI
+binding. Associate it with exactly one approved operation by the exact HTTP method,
+path and single approved server https://clinicalagent.netlify.app. Explicit
+operation_id, when exposed, must agree; its absence remains notExposed rather than
+inventing an operation ID. Both distinct approved operations must be represented.
+Duplicate operations, extra references, wrong destinations/methods/paths, additional
+binding types, callbacks, plugins, context hooks, async operations and unexplained
+binding extensions fail closed. Explicit empty security is required; missing or
+nonempty security is not silently interpreted as no authentication. A referenced
+Live connection must have matching identity/environment, no declared authentication
+and the approved server; conflicting or missing fields remain blocked.
+
+The response reports only fixed operation labels, comparisons, stages and checks.
+No tool IDs, original names, headers or provider payloads are returned. Matching
+operations establish generic/shared definition identity only, NOT the immutable
+Live v2.0.0 snapshot. Final status remains BLOCKED/liveSnapshotNotEstablished and
+liveAgentAssociation NOT_VERIFIED. No tool or metadata request is invoked locally.
+
+This supersedes exact canonical-name selection and its temporary name-cardinality
+reporting below. Existing authentication, preview isolation, expiration, kill
+switches, request bounds and no-retry behavior are unchanged. No hosting settings,
+credentials, deployed tools, clinical content or quota records are changed.
+
+---
+
 # Tool-selection refinement — offline only
 
 Observed result: metadataInvalid / moduleListingDefinition / toolSelection.

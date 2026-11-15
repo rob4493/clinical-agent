@@ -5,8 +5,8 @@ import type {Transport} from './watsonShadow';
 
 type ObjectValue=Record<string,unknown>;
 type Match='matches'|'different'|'notExposed';
-export type MetadataStage='configuration'|'environmentList'|'liveEnvironment'|'releaseStatus'|'agentDefinition'|'toolInventory'|'moduleListingDefinition'|'clinicalAnalysisDefinition'|'moduleListingConnection'|'clinicalAnalysisConnection'|'metadataValidation';
-export type MetadataCheck='unspecified'|'targetMismatch'|'objectExpected'|'invalidReference'|'contentType'|'bodyMissing'|'responseTooLarge'|'invalidJson'|'environmentEnvelope'|'liveEnvironmentSelection'|'agentIdentity'|'toolReferences'|'duplicateReferences'|'inventoryEnvelope'|'toolSelection'|'toolIdentity'|'connectionIdentity'|'requestLimit'|'routeNotAllowed';
+export type MetadataStage='configuration'|'environmentList'|'liveEnvironment'|'releaseStatus'|'agentDefinition'|'toolInventory'|'moduleListingDefinition'|'clinicalAnalysisDefinition'|'moduleListingConnection'|'clinicalAnalysisConnection'|'metadataValidation'|'referencedToolDefinition'|'toolMapping';
+export type MetadataCheck='unspecified'|'targetMismatch'|'objectExpected'|'invalidReference'|'contentType'|'bodyMissing'|'responseTooLarge'|'invalidJson'|'environmentEnvelope'|'liveEnvironmentSelection'|'agentIdentity'|'toolReferences'|'duplicateReferences'|'inventoryEnvelope'|'toolSelection'|'toolIdentity'|'connectionIdentity'|'requestLimit'|'routeNotAllowed'|'referencedToolMissing'|'duplicateInventoryId'|'operationSignature'|'operationIdMismatch'|'duplicateApprovedOperation'|'unexpectedActions'|'authenticationMismatch'|'connectionDestinationMismatch';
 const object=(v:unknown):ObjectValue=>{if(!v||typeof v!=='object'||Array.isArray(v))throw new MetadataFailure('metadataInvalid','metadataValidation','objectExpected');return v as ObjectValue;};
 const id=(v:unknown):string=>{if(typeof v!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(v))throw new MetadataFailure('metadataInvalid','metadataValidation','invalidReference');return v;};
 const absent=(v:unknown)=>v===undefined||v===null;
@@ -24,32 +24,8 @@ function bounded<T>(promise:Promise<T>,signal:AbortSignal):Promise<T>{
   promise.then(resolve,reject).finally(()=>signal.removeEventListener('abort',abort));
  });
 }
-type Cardinality='zero'|'one'|'multiple';
-export interface ToolSelectionReport {
- canonicalNames:Cardinality;
- canonicalNamesReferencedByAgent:Cardinality;
- displayNameOnlyReferencedByAgent:Cardinality;
- agentReferencesFoundInInventory:Cardinality;
- missingOrNonStringNames:boolean;
- missingOrInvalidIds:boolean;
- referenceScope:'genericAgentNotLiveSnapshot';
-}
-const cardinality=(count:number):Cardinality=>count===0?'zero':count===1?'one':'multiple';
-const validToolId=(value:unknown):value is string=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(value);
-function selectionReport(catalog:ObjectValue[],references:string[],expectedName:string):ToolSelectionReport{
- const referenced=(tool:ObjectValue)=>validToolId(tool.id)&&references.includes(tool.id);
- return {
-  canonicalNames:cardinality(catalog.filter(tool=>tool.name===expectedName).length),
-  canonicalNamesReferencedByAgent:cardinality(catalog.filter(tool=>tool.name===expectedName&&referenced(tool)).length),
-  displayNameOnlyReferencedByAgent:cardinality(catalog.filter(tool=>tool.name!==expectedName&&tool.display_name===expectedName&&referenced(tool)).length),
-  agentReferencesFoundInInventory:cardinality(catalog.filter(referenced).length),
-  missingOrNonStringNames:catalog.some(tool=>typeof tool.name!=='string'||!tool.name),
-  missingOrInvalidIds:catalog.some(tool=>!validToolId(tool.id)),
-  referenceScope:'genericAgentNotLiveSnapshot'
- };
-}
 export class MetadataFailure extends Error{
- constructor(readonly reason:'metadataUnauthorized'|'metadataForbidden'|'metadataUnavailable'|'metadataInvalid'|'metadataNetwork'|'metadataTimeout'|'metadataConfiguration',readonly stage:MetadataStage='metadataValidation',readonly check:MetadataCheck='unspecified',readonly selection?:ToolSelectionReport){super('Metadata verification unavailable.');}
+ constructor(readonly reason:'metadataUnauthorized'|'metadataForbidden'|'metadataUnavailable'|'metadataInvalid'|'metadataNetwork'|'metadataTimeout'|'metadataConfiguration',readonly stage:MetadataStage='metadataValidation',readonly check:MetadataCheck='unspecified'){super('Metadata verification unavailable.');}
 }
 
 /** Bounded JSON reader. Provider text, IDs, headers and exceptions never escape. */
@@ -104,31 +80,50 @@ export async function inspectOrchestrateMetadata(settings:Record<string,string|u
  const inventory=await get('/tools');
  if(!Array.isArray(inventory)||inventory.length>200)throw new MetadataFailure('metadataInvalid','metadataValidation','inventoryEnvelope');
  const catalog=inventory.map(object),findings=[];
- for(const expected of ApprovedLiveOperations){
-  stage=expected.operationId==='listModules'?'moduleListingDefinition':'clinicalAnalysisDefinition';
-  const matches=catalog.filter(tool=>tool.name===expected.tool&&validToolId(tool.id)&&references.includes(tool.id));
-  if(matches.length!==1)throw new MetadataFailure('metadataInvalid','metadataValidation','toolSelection',selectionReport(catalog,references,expected.tool));
-  const tool=object(await get('/tools/'+id(matches[0].id)));
-  if(tool.id!==matches[0].id||tool.name!==expected.tool)throw new MetadataFailure('metadataInvalid','metadataValidation','toolIdentity');
+ // Resolve BOTH exact agent references before fetching definitions. Names are
+ // descriptive metadata, not operation identity or authority.
+ const resolved=references.map(reference=>{
+  const records=catalog.filter(tool=>tool.id===reference);
+  if(records.length===0)throw new MetadataFailure('metadataInvalid','metadataValidation','referencedToolMissing');
+  if(records.length!==1)throw new MetadataFailure('metadataInvalid','metadataValidation','duplicateInventoryId');
+  return reference;
+ });
+ const seen=new Set<string>();
+ for(const reference of resolved){
+  stage='referencedToolDefinition';
+  const tool=object(await get('/tools/'+reference));
+  if(tool.id!==reference)throw new MetadataFailure('metadataInvalid','metadataValidation','toolIdentity');
   const binding=object(tool.binding),openapi=object(binding.openapi);
   const allowed=['http_method','http_path','success_status_code','security','servers','connection_id','callback','acknowledgement','plugin_hook','context_request_body_path','context_response_body_path'];
   const extraBinding=Object.entries(binding).some(([key,value])=>key!=='openapi'&&!absent(value));
   const extensions=Object.keys(openapi).some(key=>!allowed.includes(key));
-  const indirect=extraBinding||extensions||tool.is_async===true||['callback','acknowledgement','plugin_hook','context_request_body_path','context_response_body_path'].some(key=>!absent(openapi[key]));
+  const indirect=extraBinding||extensions||!absent(tool.is_async)&&tool.is_async!==false||['actions','workflows','collaborators','delegated_agents'].some(key=>!absent(tool[key]))||['callback','acknowledgement','plugin_hook','context_request_body_path','context_response_body_path'].some(key=>!absent(openapi[key]));
+  if(indirect)throw new MetadataFailure('metadataInvalid','metadataValidation','unexpectedActions');
+  stage='toolMapping';
+  const candidates=ApprovedLiveOperations.filter(operation=>openapi.http_method===operation.method&&openapi.http_path===new URL(operation.url).pathname&&JSON.stringify(openapi.servers)===JSON.stringify(['https://clinicalagent.netlify.app']));
+  if(candidates.length!==1)throw new MetadataFailure('metadataInvalid','metadataValidation','operationSignature');
+  const expected=candidates[0];
+  if(!absent(tool.operation_id)&&tool.operation_id!==expected.operationId)throw new MetadataFailure('metadataInvalid','metadataValidation','operationIdMismatch');
+  if(seen.has(expected.operationId))throw new MetadataFailure('metadataInvalid','metadataValidation','duplicateApprovedOperation');
+  seen.add(expected.operationId);
+  if(!empty(openapi.security))throw new MetadataFailure('metadataInvalid','metadataValidation','authenticationMismatch');
   let connection:'notConfigured'|'liveMetadataRead'='notConfigured',liveAuthentication:Match='notExposed',liveServer:Match='notExposed';
   if(!absent(openapi.connection_id)&&openapi.connection_id!==''){
    stage=expected.operationId==='listModules'?'moduleListingConnection':'clinicalAnalysisConnection';
    const application=object(await get('/connections/applications?connection_id='+id(openapi.connection_id)));
    const config=object(await get('/connections/applications/'+id(application.app_id)+'/configurations/live'));
    if(config.environment!=='live'||config.app_id!==application.app_id)throw new MetadataFailure('metadataInvalid','metadataValidation','connectionIdentity');
-   connection='liveMetadataRead';liveAuthentication=match(config.security_scheme,'none');liveServer=match(config.server_url,'https://clinicalagent.netlify.app');
+   if(config.security_scheme!=='none'||!absent(config.auth_type)&&config.auth_type!=='none')throw new MetadataFailure('metadataInvalid','metadataValidation','authenticationMismatch');
+   if(config.server_url!=='https://clinicalagent.netlify.app')throw new MetadataFailure('metadataInvalid','metadataValidation','connectionDestinationMismatch');
+   connection='liveMetadataRead';liveAuthentication='matches';liveServer='matches';
   }
-  findings.push({tool:expected.operationId==='listModules'?'moduleListing':'clinicalAnalysis',scope:'sharedOrDraft',operationId:match(tool.operation_id,expected.operationId),method:match(openapi.http_method,expected.method),path:match(openapi.http_path,new URL(expected.url).pathname),servers:match(openapi.servers,['https://clinicalagent.netlify.app']),declaredAuthentication:empty(openapi.security)?'noneDeclared':absent(openapi.security)?'notExposed':'securityDeclared',connection,liveAuthentication,liveServer,indirectActions:indirect?'presentOrUnexplained':'notDeclared'});
+  findings.push({tool:expected.operationId==='listModules'?'moduleListing':'clinicalAnalysis',scope:'sharedOrDraft',operationId:match(tool.operation_id,expected.operationId),association:'validatedOperationSignature',method:'matches',path:'matches',servers:'matches',declaredAuthentication:'noneDeclared',connection,liveAuthentication,liveServer,indirectActions:'notDeclared'});
  }
+ findings.sort((a,b)=>a.tool==='moduleListing'?-1:b.tool==='moduleListing'?1:0);
  recheck();
  return {status:'BLOCKED',reason:'liveSnapshotNotEstablished',authentication:'PASS',deployment:{liveEnvironment:'present',version:typeof live[0].current_version==='string'&&/^\d+\.\d+\.\d+$/.test(live[0].current_version)?match(live[0].current_version,LiveProbeVersion):'notExposed',release:match(release.deployment_status,'success')},liveAgentAssociation:'NOT_VERIFIED',genericAgentCollaborators:empty(draft.collaborators)?'noneDeclared':absent(draft.collaborators)?'notExposed':'present',tools:findings,indirectActions:'UNKNOWN'};
  }catch(error){
-  if(error instanceof MetadataFailure)throw new MetadataFailure(error.reason,error.stage==='metadataValidation'?stage:error.stage,error.check,error.selection);
+  if(error instanceof MetadataFailure)throw new MetadataFailure(error.reason,error.stage==='metadataValidation'?stage:error.stage,error.check);
   throw error;
  }
 }

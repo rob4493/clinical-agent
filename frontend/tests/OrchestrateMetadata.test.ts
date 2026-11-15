@@ -57,12 +57,12 @@ it.each(['bad-id','extra-tool','different-host','callback','extra-binding','unkn
  else if(scenario==='version-reference')f.replies.set('/agents/'+LiveProbeAgent+'/environment',[{name:'live',id:'live-env',current_version:'internal-version-id'}]);
  else {const tool=f.tools[0] as any;if(scenario==='different-host')tool.binding.openapi.servers=['https://other.invalid'];else if(scenario==='callback')tool.binding.openapi.callback={callback_url:'https://other.invalid',method:'POST'};else if(scenario==='extra-binding')tool.binding.flow={flow_id:'secret-flow'};else tool.binding.openapi.unrecognizedAction='secret-action';}
  const r=await (await f.handler(request(),Context)).json();expect(r.status).not.toBe('PASS');
- if(['bad-id','extra-tool'].includes(scenario))expect(r.reason).toBe('metadataInvalid');else if(scenario==='different-host')expect(r.tools[0].servers).toBe('different');else if(scenario==='version-reference')expect(r.deployment.version).toBe('notExposed');else expect(r.tools[0].indirectActions).toBe('presentOrUnexplained');
+ if(['bad-id','extra-tool'].includes(scenario))expect(r.reason).toBe('metadataInvalid');else if(scenario==='different-host')expect(r.check).toBe('operationSignature');else if(scenario==='version-reference')expect(r.deployment.version).toBe('notExposed');else expect(r.check).toBe('unexpectedActions');
  expect(f.transport.mock.calls.some(([url])=>url.startsWith('https://other.invalid')||url.includes('/credentials'))).toBe(false);
 });
 it('reads referenced live connection configuration but never credential resources',async()=>{
- const f=fixture();(f.tools[0].binding.openapi as any).connection_id='connection-1';f.replies.set('/connections/applications?connection_id=connection-1',{app_id:'application-1'});f.replies.set('/connections/applications/application-1/configurations/live',{app_id:'application-1',environment:'live',security_scheme:'api_key',server_url:'https://other.invalid',app_config_data:{secret:'SensitiveNeverReturned'}});
- const r=await (await f.handler(request(),Context)).json();expect(r.tools[0]).toMatchObject({connection:'liveMetadataRead',liveAuthentication:'different',liveServer:'different'});expect(JSON.stringify(r)).not.toContain('SensitiveNeverReturned');expect(f.transport).toHaveBeenCalledTimes(9);
+ const f=fixture();(f.tools[0].binding.openapi as any).connection_id='connection-1';f.replies.set('/connections/applications?connection_id=connection-1',{app_id:'application-1'});f.replies.set('/connections/applications/application-1/configurations/live',{app_id:'application-1',environment:'live',security_scheme:'none',server_url:'https://clinicalagent.netlify.app',app_config_data:{secret:'SensitiveNeverReturned'}});
+ const r=await (await f.handler(request(),Context)).json();expect(r.tools[0]).toMatchObject({connection:'liveMetadataRead',liveAuthentication:'matches',liveServer:'matches'});expect(JSON.stringify(r)).not.toContain('SensitiveNeverReturned');expect(f.transport).toHaveBeenCalledTimes(9);
 });
 it.each(['oversize','duplicate','html','missing-live','wrong-agent'])('fails closed on malformed metadata: %s',async scenario=>{
  const f=fixture();if(scenario==='missing-live')f.replies.set('/agents/'+LiveProbeAgent+'/environment',[{name:'draft'}]);else if(scenario==='wrong-agent')f.replies.set('/agents/'+LiveProbeAgent,{id:'other',tools:[]});
@@ -97,7 +97,7 @@ it.each([
  else if(stage==='toolInventory')f.replies.set('/tools',{tools:f.tools});
  else if(stage.endsWith('Definition')){const index=stage==='moduleListingDefinition'?0:1;f.replies.set('/tools/tool-'+index,{...f.tools[index],binding:{private:'SensitiveStagePayload'}});}
  else {const index=stage==='moduleListingConnection'?0:1;(f.tools[index].binding.openapi as any).connection_id='connection-1';f.replies.set('/connections/applications?connection_id=connection-1',{app_id:'application-1'});f.replies.set('/connections/applications/application-1/configurations/live',{app_id:'application-1',environment:'draft',private:'SensitiveStagePayload'});}
- const report=await (await f.handler(request(),Context)).json();expect(report).toEqual({version:'1',status:'FAIL',reason:'metadataInvalid',stage,check,authentication:'PASS'});expect(JSON.stringify(report)).not.toMatch(/SensitiveStagePayload|SyntheticBearer|SyntheticDiagnosticKey|connection-1|application-1|http/);
+ const report=await (await f.handler(request(),Context)).json();expect(report).toEqual({version:'1',status:'FAIL',reason:'metadataInvalid',stage:['moduleListingDefinition','clinicalAnalysisDefinition'].includes(stage)?'referencedToolDefinition':stage,check,authentication:'PASS'});expect(JSON.stringify(report)).not.toMatch(/SensitiveStagePayload|SyntheticBearer|SyntheticDiagnosticKey|connection-1|application-1|http/);
  expect(f.transport.mock.calls.filter(([,init])=>init.method==='POST')).toHaveLength(1);
 });
 it.each(['contentType','invalidJson','responseTooLarge'] as const)('distinguishes fixed response-reader failure %s',async check=>{
@@ -107,27 +107,42 @@ it.each(['contentType','invalidJson','responseTooLarge'] as const)('distinguishe
 it('does not claim IAM succeeded for a local target-validation failure',async()=>{
  const f=fixture({ORCHESTRATE_ENVIRONMENT:'draft'});expect(await (await f.handler(request(),Context)).json()).toMatchObject({stage:'configuration',check:'targetMismatch',authentication:'NOT_TESTED'});expect(f.transport).not.toHaveBeenCalled();
 });
-it.each(['displayNameOnly','nameOutsideAgentReferences','duplicateReferencedMatch','referencesAbsent','unsupportedFields','renamedCanonicalName'] as const)('classifies selection failure without accepting substitutes: %s',async scenario=>{
- const f=fixture(),expected=ApprovedLiveOperations[0].tool;
- if(scenario==='displayNameOnly'){(f.tools[0] as any).display_name=expected;(f.tools[0] as {name:string}).name='DifferentCanonicalName';}
- else if(scenario==='nameOutsideAgentReferences')f.tools[0].id='unreferenced-tool';
- else if(scenario==='duplicateReferencedMatch')f.replies.set('/tools',[...f.tools,structuredClone(f.tools[0])]);
- else if(scenario==='referencesAbsent')f.replies.set('/tools',f.tools.map((tool,index)=>({...tool,id:'unreferenced-'+index,name:'OtherCanonicalName'})));
- else if(scenario==='unsupportedFields')f.replies.set('/tools',[{id:{private:'SecretIdentifier'},display_name:expected},f.tools[1]]);
- else (f.tools[0] as {name:string}).name='DifferentCanonicalName';
- const report=await (await f.handler(request(),Context)).json();
- expect(report).toMatchObject({status:'FAIL',reason:'metadataInvalid',stage:'moduleListingDefinition',check:'toolSelection',authentication:'PASS',selection:{referenceScope:'genericAgentNotLiveSnapshot'}});
- const s=report.selection;
- if(scenario==='displayNameOnly')expect(s).toMatchObject({canonicalNames:'zero',canonicalNamesReferencedByAgent:'zero',displayNameOnlyReferencedByAgent:'one'});
- else if(scenario==='nameOutsideAgentReferences')expect(s).toMatchObject({canonicalNames:'one',canonicalNamesReferencedByAgent:'zero',agentReferencesFoundInInventory:'one'});
- else if(scenario==='duplicateReferencedMatch')expect(s).toMatchObject({canonicalNames:'multiple',canonicalNamesReferencedByAgent:'multiple'});
- else if(scenario==='referencesAbsent')expect(s).toMatchObject({canonicalNames:'zero',agentReferencesFoundInInventory:'zero'});
- else if(scenario==='unsupportedFields')expect(s).toMatchObject({missingOrNonStringNames:true,missingOrInvalidIds:true});
- else expect(s).toMatchObject({canonicalNames:'zero',agentReferencesFoundInInventory:'multiple',displayNameOnlyReferencedByAgent:'zero'});
- expect(f.transport).toHaveBeenCalledTimes(5);expect(f.transport.mock.calls.some(([url])=>/\/tools\//.test(url))).toBe(false);
- expect(JSON.stringify(report)).not.toMatch(/DifferentCanonicalName|OtherCanonicalName|unreferenced|SecretIdentifier|SyntheticBearer|tool-0|list_available|http/);
+it('maps only referenced definitions by operation signatures despite unrelated names, labels and reversed reference order',async()=>{
+ const f=fixture();for(const tool of f.tools){(tool as {name:string}).name='DifferentCanonicalName';(tool as any).display_name='UnrelatedDisplayLabel';}
+ f.replies.set('/agents/'+LiveProbeAgent,{id:LiveProbeAgent,tools:['tool-1','tool-0'],collaborators:[]});
+ f.replies.set('/tools',[{...f.tools[0],id:'unreferenced-tool'},...f.tools]);
+ const r=await (await f.handler(request(),Context)).json();expect(r).toMatchObject({status:'BLOCKED',reason:'liveSnapshotNotEstablished',liveAgentAssociation:'NOT_VERIFIED'});
+ expect(r.tools.map((tool:any)=>tool.tool)).toEqual(['moduleListing','clinicalAnalysis']);
+ for(const tool of r.tools)expect(tool).toMatchObject({association:'validatedOperationSignature',scope:'sharedOrDraft',method:'matches',path:'matches',servers:'matches'});
+ expect(f.transport.mock.calls.filter(([url])=>url.includes('/tools/')).map(([url])=>url.slice(url.lastIndexOf('/')))).toEqual(['/tool-1','/tool-0']);
+ expect(JSON.stringify(r)).not.toMatch(/DifferentCanonicalName|UnrelatedDisplayLabel|unreferenced-tool|tool-0|tool-1|SyntheticBearer/);
 });
-it('does not mistake duplicate unreferenced names for multiple agent-referenced matches',async()=>{
- const f=fixture();f.replies.set('/tools',[...f.tools,{...f.tools[0],id:'unreferenced-tool'}]);expect(await (await f.handler(request(),Context)).json()).toMatchObject({status:'BLOCKED',reason:'liveSnapshotNotEstablished'});
+it.each(['missing','duplicate'] as const)('rejects %s inventory references before fetching any definitions',async scenario=>{
+ const f=fixture();f.replies.set('/tools',scenario==='missing'?[f.tools[1]]:[...f.tools,structuredClone(f.tools[0])]);
+ const r=await (await f.handler(request(),Context)).json();expect(r).toMatchObject({stage:'toolInventory',check:scenario==='missing'?'referencedToolMissing':'duplicateInventoryId',authentication:'PASS'});expect(f.transport).toHaveBeenCalledTimes(5);
+});
+it.each(['duplicateOperation','wrongMethod','wrongPath','wrongHost','multipleServers','operationId','security','missingSecurity','async','linkedAction','returnId'] as const)('rejects unsafe or ambiguous operation mapping: %s',async scenario=>{
+ const f=fixture(),tool=f.tools[0] as any;
+ if(scenario==='duplicateOperation')f.tools[1].binding.openapi={...tool.binding.openapi};
+ else if(scenario==='wrongMethod')tool.binding.openapi.http_method='DELETE';
+ else if(scenario==='wrongPath')tool.binding.openapi.http_path='/api/v1/unapproved';
+ else if(scenario==='wrongHost')tool.binding.openapi.servers=['https://other.invalid'];
+ else if(scenario==='multipleServers')tool.binding.openapi.servers.push('https://other.invalid');
+ else if(scenario==='operationId')tool.operation_id='unapprovedOperation';
+ else if(scenario==='security')tool.binding.openapi.security=[{type:'apiKey',name:'PrivateHeader'}];
+ else if(scenario==='missingSecurity')delete tool.binding.openapi.security;
+ else if(scenario==='async')tool.is_async=true;
+ else if(scenario==='linkedAction')tool.actions=['PrivateAction'];
+ else f.replies.set('/tools/tool-0',{...tool,id:'different-tool'});
+ const r=await (await f.handler(request(),Context)).json();
+ const expected=scenario==='duplicateOperation'?'duplicateApprovedOperation':scenario==='operationId'?'operationIdMismatch':['security','missingSecurity'].includes(scenario)?'authenticationMismatch':['async','linkedAction'].includes(scenario)?'unexpectedActions':scenario==='returnId'?'toolIdentity':'operationSignature';
+ expect(r).toMatchObject({status:'FAIL',reason:'metadataInvalid',check:expected});
+ expect(JSON.stringify(r)).not.toMatch(/PrivateHeader|PrivateAction|unapprovedOperation|other.invalid|different-tool|SyntheticBearer/);
+ expect(f.transport.mock.calls.some(([url])=>url.startsWith('https://other.invalid')||url.includes('/credentials'))).toBe(false);
+});
+it.each(['auth','destination'] as const)('rejects conflicting live connection %s',async scenario=>{
+ const f=fixture();(f.tools[0].binding.openapi as any).connection_id='connection-1';f.replies.set('/connections/applications?connection_id=connection-1',{app_id:'application-1'});
+ f.replies.set('/connections/applications/application-1/configurations/live',{app_id:'application-1',environment:'live',security_scheme:scenario==='auth'?'api_key':'none',server_url:scenario==='destination'?'https://other.invalid':'https://clinicalagent.netlify.app'});
+ expect(await (await f.handler(request(),Context)).json()).toMatchObject({stage:'moduleListingConnection',check:scenario==='auth'?'authenticationMismatch':'connectionDestinationMismatch'});
 });
 const Settings={ORCHESTRATE_IAM_DIAGNOSTIC_ENABLED:'true',ORCHESTRATE_IAM_DIAGNOSTIC_KILL_SWITCH:'false',ORCHESTRATE_IAM_DIAGNOSTIC_UNTIL:new Date(Now+300000).toISOString(),ORCHESTRATE_EMBED_PREVIEW_ID:'4',ORCHESTRATE_EMBED_PREVIEW_ORIGIN:Origin,ORCHESTRATE_EMBED_OPERATOR_IDS:'operator',ORCHESTRATE_EMBED_PREVIEW_ENABLED:'false',ORCHESTRATE_EMBED_KILL_SWITCH:'true',OTEL_SDK_DISABLED:'true',ENDO_DEMO_KILL_SWITCH:'true',WATSONX_CONVERSATION_MODE:'disabled',ORCHESTRATE_ENABLED:'false',ORCHESTRATE_SYNTHETIC_AUTHORIZED:'false',ORCHESTRATE_DISCUSSION_AUTHORIZED:'false',ORCHESTRATE_HOSTED_CONTROLS_VERIFIED:'false',ENDO_DEMO_INFERENCE_ENABLED:'false',WATSONX_ENABLED:'false',WATSONX_CONFLICT_ASSIST_ENABLED:'false',WATSONX_GUIDED_FOLLOWUP_ENABLED:'false',ORCHESTRATE_PROBE_ENABLED:'false',ORCHESTRATE_PROBE_KILL_SWITCH:'true',ORCHESTRATE_PROBE_TEST_UNTIL:'',WATSONX_AI_AUTH_TYPE:'iam',WATSONX_AI_APIKEY:'SyntheticDiagnosticKey',WATSONX_AI_TIMEOUT_MS:'100'};
