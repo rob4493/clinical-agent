@@ -41,7 +41,7 @@ async function readReply(response:Response,signal:AbortSignal){
  let parsed:unknown;try{parsed=parseJson(text);}catch{return reject('invalidJson');}
  const reply=fields(parsed,['id','object','created','model','thread_id','choices','usage'],['choices','thread_id']);
  if(!Uuid.test(String(reply.thread_id)))reject('invalidThreadId');
- if(reply.id!==undefined&&!bounded(reply.id,256)||reply.model!==undefined&&!bounded(reply.model,200)||reply.object!==undefined&&reply.object!=='chat.completion'||reply.created!==undefined&&(!Number.isSafeInteger(reply.created)||Number(reply.created)<0))reject('invalidMetadata');
+ if(reply.id!==undefined&&!bounded(reply.id,256)||reply.model!==undefined&&!bounded(reply.model,200)||reply.object!==undefined&&!bounded(reply.object,200)||reply.created!==undefined&&(!Number.isSafeInteger(reply.created)||Number(reply.created)<0))reject('invalidMetadata');
  if(!Array.isArray(reply.choices)||reply.choices.length!==1)return reject('invalidChoices');
  const choice=fields(reply.choices[0],['index','finish_reason','message']),message=fields(choice.message,['role','content']);
  if(choice.index!==0)reject('invalidChoices');

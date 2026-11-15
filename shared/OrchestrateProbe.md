@@ -492,3 +492,43 @@ Offline fixtures are synthetic, not evidence of actual hosted response structure
 The failed attempt's exact rejection cannot be recovered from its generic code.
 Any future live verification requires separate authorization and unused tickets;
 never retry or reset the consumed attempt to obtain these new diagnostics.
+
+
+### Narrow documented compatibility correction
+IBM documents response `object` as a string, not an enum. Accept bounded,
+nonempty control-free object metadata (maximum 200 characters), without using it
+for authorization, response text, thread ownership or tool dispatch. The old
+literal chat.completion requirement rejected other schema-permitted strings.
+Synthetic alternative strings in tests are compatibility examples, not observed
+IBM values. This does not establish the cause of the first failed attempt.
+All other parser checks, including message, finish reason, extra fields, usage,
+size bounds and continuation ownership, remain unchanged. The public choices
+schema is too underspecified to justify relaxing these checks speculatively.
+The preceding diagnostic-only section describes the earlier deployed behavior.
+
+### Next separately authorized attempt: managed settings, manual rebuilds
+No attempt or activation is authorized by this preparation. Before activation,
+read today's existing daily AND deterministic visit tickets without writes. A
+burned visit cannot be reused even if a daily slot remains. Require fresh explicit
+one-attempt authorization and current trusted operator/allowlist verification.
+Generate version-2 review and approval from the existing validated templates,
+using the same exact UTF-8 review string for SHA-256 and hosted configuration;
+use a fresh same-UTC-day expiry at most 30 minutes away. Preserve the disclosed
+unverified Live bindings and indirect actions; TOOLS_VERIFIED and USAGE_VERIFIED
+stay false. Do not manufacture technical verification from risk acceptance.
+
+The assistant manages the allowlisted Deploy Preview settings through the existing
+Netlify login, preserving scopes and all Production/all-context values. Use
+setEnvVarValue with a structured body for blank values; bare env:set with no
+value does not reliably clear an existing value. Never dump returned records.
+Arm cleanup before activation. Operator manually rebuilds Preview #4, confirms
+trusted authenticated GET 400/inputRejected and unexpired approval. If build
+finishes too late, abort and clean up; do not execute or silently extend approval.
+Execute the existing fixed POST once only after all gates and fresh quota pass.
+On result, failure, timeout or operator cancellation, immediately set preview
+probe/exception false, kill switch true, expiry/approval blank, and read back.
+Never restore earlier enabled values. Operator must manually rebuild again and
+confirm authenticated GET 404/disabled on the serving deployment. Configuration
+cleanup alone is not runtime shutdown verification. Runtime expiry remains the
+backstop if local cleanup is interrupted; report incomplete cleanup explicitly.
+No automatic retry, quota reset, public activation or IBM metadata call is allowed.

@@ -66,7 +66,7 @@ it.each([
  ['unexpectedFields',{...Reply,additional:'SyntheticPrivateValue'}],
  ['missingRequiredFields',{choices:Reply.choices}],
  ['invalidThreadId',{...Reply,thread_id:'invalid'}],
- ['invalidMetadata',{...Reply,object:'other-documented-string'}],
+ ['invalidMetadata',{...Reply,object:null}],
  ['invalidChoices',{...Reply,choices:[]}],
  ['invalidShape',{...Reply,choices:[{index:0,finish_reason:'stop',message:null}]}],
  ['missingRequiredFields',{...Reply,choices:[{}]}],
@@ -86,4 +86,13 @@ it.each(['invalidJson','invalidUtf8','bodyTooLarge','bodyReadFailed','bodyUnavai
  const http=vi.fn<Transport>(async()=>response);
  const failure=await createOrchestrateTransport(gate(),http,Settings,{authenticate:async()=> 'SyntheticBearer'}).complete(Turn,signal()).catch(error=>error);
  expect(failure).toMatchObject({rejection:code,httpSuccess:code!=='httpNotSuccessful'});expect(JSON.stringify(failure)).not.toContain('SyntheticPrivateValue');
+});
+
+it.each(['chat.completion','chat.completion.response','orchestrate.response'])('accepts bounded object metadata without interpreting it: %s',async object=>{
+ const http=vi.fn<Transport>(async()=>json({...Reply,object}));
+ await expect(createOrchestrateTransport(gate(),http,Settings,{authenticate:async()=> 'SyntheticBearer'}).complete(Turn,signal())).resolves.toEqual({text:Reply.choices[0].message.content,threadId:Thread});
+});
+it.each(['',null,{},7,'x'.repeat(201),'bad\u0000metadata'])('rejects invalid object metadata %#',async object=>{
+ const http=vi.fn<Transport>(async()=>json({...Reply,object}));
+ await expect(createOrchestrateTransport(gate(),http,Settings,{authenticate:async()=> 'SyntheticBearer'}).complete(Turn,signal())).rejects.toMatchObject({rejection:'invalidMetadata',httpSuccess:true});
 });
