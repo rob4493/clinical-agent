@@ -16,19 +16,70 @@ function bounded(text:unknown,limit:number):text is string{return typeof text===
 function wait<T>(operation:Promise<T>,signal:AbortSignal):Promise<T>{
  return new Promise((resolve,reject)=>{const abort=()=>reject(new OrchestrateError());if(signal.aborted){void operation.catch(()=>{});abort();return;}signal.addEventListener('abort',abort,{once:true});operation.then(resolve,reject).finally(()=>signal.removeEventListener('abort',abort));});
 }
-export type ResponseRejection='httpNotSuccessful'|'contentType'|'bodyUnavailable'|'bodyReadFailed'|'bodyTooLarge'|'invalidUtf8'|'invalidJson'|'invalidShape'|'unexpectedFields'|'missingRequiredFields'|'invalidThreadId'|'invalidMetadata'|'invalidChoices'|'incompatibleMessageContent'|'finishReason'|'usageValidation'|'threadMismatch';
+export type ResponseRejection='httpNotSuccessful'|'contentType'|'bodyUnavailable'|'bodyReadFailed'|'bodyTooLarge'|'invalidUtf8'|'invalidJson'|'invalidShape'|'unexpectedFields'|'missingRequiredFields'|'invalidThreadId'|'invalidMetadata'|'invalidChoices'|'incompatibleMessageContent'|'finishReason'|'usageValidation'|'threadMismatch'|'actionResponse'|'providerRefusal';
 /** Fixed codes only: never retain provider content, keys, headers or exception causes. */
 export class OrchestrateResponseError extends OrchestrateError {
  constructor(readonly rejection:ResponseRejection,readonly httpSuccess:boolean){super();}
 }
-async function readReply(response:Response,signal:AbortSignal){
- const reject=(code:ResponseRejection):never=>{throw new OrchestrateResponseError(code,response.ok);};
- const fields=(value:unknown,names:string[],required=names):Record<string,unknown>=>{
+/** Pure protocol normalization, NOT clinical validation or evidence grounding.
+ * Unknown JSON metadata is discarded, never rendered, replayed or executed.
+ * Only explicit assistant text is returned to the caller's independent validator.
+ */
+export function parseOrchestrateResponse(payload:unknown):{text:string;threadId:string}{
+ const reject=(code:ResponseRejection):never=>{throw new OrchestrateResponseError(code,true);};
+ const record=(value:unknown,required:string[]):Record<string,unknown>=>{
   if(!value||typeof value!=='object'||Array.isArray(value))return reject('invalidShape');
-  if(Object.keys(value).some(name=>!names.includes(name)))return reject('unexpectedFields');
   if(required.some(name=>!Object.hasOwn(value,name)))return reject('missingRequiredFields');
   return value as Record<string,unknown>;
  };
+ // Presence of an action field is rejected even when null/empty. No dispatcher
+ // exists here. This local rejection cannot prevent actions already run by IBM.
+ const actionKeys=new Set(['toolcall','toolcalls','toolcallid','functioncall','functioncalls','function','functions','action','actions','externalaction','externalactions','workflow','workflows','delegation','delegations','delegate','delegates','delegatedagents','collaborator','collaborators','collaboratoragents','requiredaction','stepdetails','stephistory','command','commands','execute','invoke','invocation','invocations','handoff','handoffs']);
+ const actionTypes=new Set(['toolcall','toolcalls','toolresponse','toolresult','functioncall','functioncalloutput','externalaction','workflow','workflowcall','delegation','agentcall','handoff','requiredaction']);
+ const normalized=(key:string)=>key.replace(/[_-]/g,'').toLowerCase();
+ let nodes=0;
+ function scan(value:unknown,depth=0):void{
+  if(depth>20||++nodes>4096)reject('invalidShape');
+  if(Array.isArray(value)){for(const item of value)scan(item,depth+1);return;}
+  if(value&&typeof value==='object'){
+   for(const [key,item] of Object.entries(value)){
+    const name=normalized(key);
+    if(actionKeys.has(name)||(['type','eventtype','finishreason'].includes(name)&&typeof item==='string'&&actionTypes.has(normalized(item)))||(name==='role'&&['tool','function'].includes(String(item))))reject('actionResponse');
+    scan(item,depth+1);
+   }
+  }
+ }
+ scan(payload);
+ const reply=record(payload,['choices','thread_id']);
+ if(typeof reply.thread_id!=='string'||!Uuid.test(reply.thread_id))return reject('invalidThreadId');
+ if(reply.id!==undefined&&!bounded(reply.id,256)||reply.model!==undefined&&!bounded(reply.model,200)||reply.object!==undefined&&!bounded(reply.object,200)||reply.created!==undefined&&(!Number.isSafeInteger(reply.created)||Number(reply.created)<0))reject('invalidMetadata');
+ if(!Array.isArray(reply.choices)||reply.choices.length!==1)return reject('invalidChoices');
+ const choice=record(reply.choices[0],['index','finish_reason','message']),message=record(choice.message,['role']);
+ if(choice.index!==0)reject('invalidChoices');
+ if(message.role!=='assistant')reject('incompatibleMessageContent');
+ if(message.refusal!==undefined&&message.refusal!==null){if(!bounded(message.refusal,16000))reject('incompatibleMessageContent');return reject('providerRefusal');}
+ if(choice.finish_reason==='content_filter')return reject('providerRefusal');
+ if(choice.finish_reason!=='stop')reject('finishReason');
+ if(!Object.hasOwn(message,'content'))return reject('missingRequiredFields');
+ let text:string;
+ if(typeof message.content==='string')text=message.content;
+ else if(Array.isArray(message.content)&&message.content.length>0&&message.content.length<=32){
+  // Conservative text-only adapter; never stringify arbitrary objects or forms.
+  // The cloud response schema does not enumerate content-part variants. These
+  // explicit typed-text parts are locally supported, not tenant-verified.
+  text=message.content.map(part=>{const block=record(part,[]);if(block.type==='refusal')return reject('providerRefusal');if(block.type!=='text'||!Object.hasOwn(block,'text')||!bounded(block.text,16000))return reject('incompatibleMessageContent');return block.text;}).join('');
+ }else return reject('incompatibleMessageContent');
+ if(!bounded(text,16000))return reject('incompatibleMessageContent');
+ if(reply.usage!==undefined){
+  const value=reply.usage;
+  if(!value||typeof value!=='object'||Array.isArray(value))return reject('usageValidation');
+  const usage=value as Record<string,unknown>;
+  if(['prompt_tokens','completion_tokens','total_tokens'].some(key=>!Object.hasOwn(usage,key)||!Number.isSafeInteger(usage[key])||Number(usage[key])<0)||Number(usage.total_tokens)!==Number(usage.prompt_tokens)+Number(usage.completion_tokens))reject('usageValidation');
+ }
+ return {text,threadId:reply.thread_id};
+}
+async function readReply(response:Response,signal:AbortSignal){
+ const reject=(code:ResponseRejection):never=>{throw new OrchestrateResponseError(code,response.ok);};
  if(!response.ok||!/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type')||'')){void response.body?.cancel().catch(()=>{});reject(!response.ok?'httpNotSuccessful':'contentType');}
  let reader:ReadableStreamDefaultReader<Uint8Array>;
  try{if(!response.body)return reject('bodyUnavailable');reader=response.body.getReader();}catch(error){if(error instanceof OrchestrateResponseError)throw error;return reject('bodyReadFailed');}
@@ -39,16 +90,7 @@ async function readReply(response:Response,signal:AbortSignal){
  finally{signal.removeEventListener('abort',cancel);void reader.cancel().catch(()=>{});reader.releaseLock();}
  let text:string;try{text=new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(parts));}catch{return reject('invalidUtf8');}
  let parsed:unknown;try{parsed=parseJson(text);}catch{return reject('invalidJson');}
- const reply=fields(parsed,['id','object','created','model','thread_id','choices','usage'],['choices','thread_id']);
- if(!Uuid.test(String(reply.thread_id)))reject('invalidThreadId');
- if(reply.id!==undefined&&!bounded(reply.id,256)||reply.model!==undefined&&!bounded(reply.model,200)||reply.object!==undefined&&!bounded(reply.object,200)||reply.created!==undefined&&(!Number.isSafeInteger(reply.created)||Number(reply.created)<0))reject('invalidMetadata');
- if(!Array.isArray(reply.choices)||reply.choices.length!==1)return reject('invalidChoices');
- const choice=fields(reply.choices[0],['index','finish_reason','message']),message=fields(choice.message,['role','content']);
- if(choice.index!==0)reject('invalidChoices');
- if(choice.finish_reason!=='stop')reject('finishReason');
- if(message.role!=='assistant'||!bounded(message.content,16000))return reject('incompatibleMessageContent');
- if(reply.usage!==undefined){try{const usage=fields(reply.usage,['prompt_tokens','completion_tokens','total_tokens']);if(Object.values(usage).some(count=>!Number.isSafeInteger(count)||Number(count)<0)||Number(usage.total_tokens)!==Number(usage.prompt_tokens)+Number(usage.completion_tokens))reject('usageValidation');}catch{return reject('usageValidation');}}
- return {text:message.content,threadId:String(reply.thread_id)};
+ return parseOrchestrateResponse(parsed);
 }
 
 /** Prepared Live-agent transport, not a public route or clinical output validator.

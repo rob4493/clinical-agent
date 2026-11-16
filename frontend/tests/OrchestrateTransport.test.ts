@@ -1,6 +1,6 @@
 // @vitest-environment node
 import {afterEach,expect,it,vi} from 'vitest';
-import {createOrchestrateTransport,type OrchestrateGate,type OrchestrateTurn} from '../../netlify/evaluation/orchestrateTransport';
+import {createOrchestrateTransport,parseOrchestrateResponse,type OrchestrateGate,type OrchestrateTurn} from '../../netlify/evaluation/orchestrateTransport';
 import {OrchestrateError} from '../../netlify/evaluation/orchestrateTarget';
 import type {Transport} from '../../netlify/evaluation/watsonShadow';
 const Settings={ORCHESTRATE_ENABLED:'true',ORCHESTRATE_API_URL:'https://api.dl.watson-orchestrate.ibm.com/instances/SyntheticTenant',ORCHESTRATE_AGENT_ID:'11111111-1111-4111-8111-111111111111',ORCHESTRATE_ENVIRONMENT:'live',WATSONX_AI_AUTH_TYPE:'iam',WATSONX_AI_APIKEY:'SyntheticExistingKey',WATSONX_AI_TIMEOUT_MS:'100'};
@@ -43,7 +43,7 @@ it.each([
 ])('rejects malformed/extraneous input before quota or fetch %#',async invalid=>{const policy=gate(),http=transport();await expect(createOrchestrateTransport(policy,http,Settings).complete(invalid as OrchestrateTurn,signal())).rejects.toThrow(OrchestrateError);expect(policy.reserve).not.toHaveBeenCalled();expect(http).not.toHaveBeenCalled();});
 it.each([401,403,429,500,503])('sanitizes provider failure %i without retries or logs',async status=>{const logs=[vi.spyOn(console,'log'),vi.spyOn(console,'warn'),vi.spyOn(console,'error')],http=transport();http.mockImplementation(async address=>address.includes('/identity/token')?json({access_token:'SyntheticBearer',token_type:'Bearer',expires_in:3600}):new Response('SyntheticPrivatePromptProviderOutput',{status}));await expect(createOrchestrateTransport(gate(),http,Settings).complete(Turn,signal())).rejects.toThrow('IBM conversation is unavailable. The case is unchanged.');expect(http).toHaveBeenCalledTimes(2);for(const log of logs)expect(log).not.toHaveBeenCalled();});
 it.each([
- {...Reply,unknown:'SyntheticProviderMetadata'}, {...Reply,thread_id:'malformed'}, {...Reply,choices:[]},
+ {...Reply,actions:[]}, {...Reply,thread_id:'malformed'}, {...Reply,choices:[]},
  {...Reply,choices:[...Reply.choices,...Reply.choices]},
  {...Reply,choices:[{...Reply.choices[0],finish_reason:'length'}]},
  {...Reply,choices:[{...Reply.choices[0],message:{role:'assistant',content:'Public',tool_calls:[]}}]},
@@ -63,7 +63,7 @@ it('accepts the documented response envelope with optional usage and JSON charse
  await expect(createOrchestrateTransport(gate(),http,Settings,{authenticate:async()=> 'SyntheticBearer'}).complete(Turn,signal())).resolves.toEqual({text:Reply.choices[0].message.content,threadId:Thread});
 });
 it.each([
- ['unexpectedFields',{...Reply,additional:'SyntheticPrivateValue'}],
+ ['actionResponse',{...Reply,additional:{tool_calls:[]}}],
  ['missingRequiredFields',{choices:Reply.choices}],
  ['invalidThreadId',{...Reply,thread_id:'invalid'}],
  ['invalidMetadata',{...Reply,object:null}],
@@ -95,4 +95,65 @@ it.each(['chat.completion','chat.completion.response','orchestrate.response'])('
 it.each(['',null,{},7,'x'.repeat(201),'bad\u0000metadata'])('rejects invalid object metadata %#',async object=>{
  const http=vi.fn<Transport>(async()=>json({...Reply,object}));
  await expect(createOrchestrateTransport(gate(),http,Settings,{authenticate:async()=> 'SyntheticBearer'}).complete(Turn,signal())).rejects.toMatchObject({rejection:'invalidMetadata',httpSuccess:true});
+});
+
+function extendedReply(level:string,extra:Record<string,unknown>){
+ return level==='envelope'?{...Reply,...extra}:level==='choice'?{...Reply,choices:[{...Reply.choices[0],...extra}]}:{...Reply,choices:[{...Reply.choices[0],message:{...Reply.choices[0].message,...extra}}]};
+}
+it.each(['envelope','choice','message'])('ignores unfamiliar inert metadata at %s without returning or executing it',async level=>{
+ const extra={future_version:'synthetic',metrics:{latency:12,flags:[true,null],details:{region:'synthetic'}},annotations:[{label:'unverified',url:'https://not-followed.invalid'}],private_metadata:'SyntheticPrivateValue',logprobs:{tokens:[{token:'synthetic',logprob:-1}]}};
+ const http=vi.fn<Transport>(async()=>json(extendedReply(level,extra)));
+ const result=await createOrchestrateTransport(gate(),http,Settings,{authenticate:async()=> 'SyntheticBearer'}).complete(Turn,signal());
+ expect(result).toEqual({text:Reply.choices[0].message.content,threadId:Thread});expect(Object.keys(result).sort()).toEqual(['text','threadId']);expect(http).toHaveBeenCalledOnce();expect(JSON.stringify(result)).not.toContain('SyntheticPrivateValue');
+});
+it('accepts harmless extended usage without relaxing required token counts',()=>{
+ const payload={...Reply,usage:{prompt_tokens:2,completion_tokens:3,total_tokens:5,prompt_tokens_details:{cached_tokens:1},completion_tokens_details:{reasoning_tokens:2}}};
+ expect(parseOrchestrateResponse(payload)).toEqual({text:Reply.choices[0].message.content,threadId:Thread});
+ for(const usage of [{...payload.usage,total_tokens:8},{...payload.usage,total_tokens:'5'},{prompt_tokens:2,completion_tokens:3,details:{total_tokens:5}}])expect(()=>parseOrchestrateResponse({...Reply,usage})).toThrow(OrchestrateError);
+});
+it.each(['envelope','choice','message'])('rejects action-bearing fields at %s, including empty/null and nested actions',async level=>{
+ for(const extra of [{tool_calls:[{function:{name:'SyntheticTool',arguments:'{}'}}]},{tool_calls:[]},{tool_calls:null},{function_call:{name:'SyntheticTool'}},{actions:[]},{workflows:[]},{delegated_agents:[]},{future:{payload:{type:'tool_call',name:'SyntheticTool'}}},{future:{required_action:{}}},{future:{'Tool-Calls':[]}}]){
+  const http=vi.fn<Transport>(async()=>json(extendedReply(level,extra)));
+  await expect(createOrchestrateTransport(gate(),http,Settings,{authenticate:async()=> 'SyntheticBearer'}).complete(Turn,signal())).rejects.toMatchObject({rejection:'actionResponse'});expect(http).toHaveBeenCalledOnce();
+ }
+});
+it.each(['Which earlier finding remains uncertain?','Could you clarify the reported timing?'])('normalizes clarification text without treating it as clinical evidence: %s',text=>{
+ expect(parseOrchestrateResponse({...Reply,choices:[{...Reply.choices[0],message:{role:'assistant',content:text}}]})).toEqual({text,threadId:Thread});
+});
+it('normalizes explicit typed text blocks in order and preserves exact whitespace',()=>{
+ const content=[{type:'text',text:'First sentence.\n',annotations:[{label:'discarded'}]},{type:'text',text:'Second sentence?'}];
+ expect(parseOrchestrateResponse({...Reply,choices:[{...Reply.choices[0],message:{role:'assistant',content}}]})).toEqual({text:'First sentence.\nSecond sentence?',threadId:Thread});
+});
+it.each([
+ {role:'assistant',content:null,refusal:'Synthetic refusal'},
+ {role:'assistant',refusal:'Synthetic refusal'},
+ {role:'assistant',content:'Partial prose',refusal:'Synthetic refusal'},
+ {role:'assistant',content:[{type:'refusal',refusal:'Synthetic refusal'}]}
+])('classifies refusals without returning refusal prose or calling a fallback %#',message=>{
+ try{parseOrchestrateResponse({...Reply,choices:[{...Reply.choices[0],message}]});throw new Error('Expected rejection');}catch(error){expect(error).toMatchObject({rejection:'providerRefusal'});expect(JSON.stringify(error)).not.toContain('Synthetic refusal');}
+});
+it('classifies content filtering separately from malformed JSON',()=>{
+ expect(()=>parseOrchestrateResponse({...Reply,choices:[{...Reply.choices[0],finish_reason:'content_filter',message:{role:'assistant',content:null}}]})).toThrow(OrchestrateError);
+ try{parseOrchestrateResponse({...Reply,choices:[{...Reply.choices[0],finish_reason:'content_filter'}]});}catch(error){expect(error).toMatchObject({rejection:'providerRefusal'});}
+});
+it.each([
+ [],[{text:'No explicit type'}],[{type:'image_url',image_url:{url:'https://not-followed.invalid'}}],[{type:'form',text:'Synthetic'}],
+ [{type:'text',text:{value:'Synthetic'}}],[{type:'text',text:''}],Array(33).fill({type:'text',text:'x'}),
+ [{type:'text',text:'x'.repeat(9000)},{type:'text',text:'x'.repeat(9000)}],
+ {type:'text',text:'Not an array'},null
+])('rejects unsupported, empty or oversized structured content %#',content=>{
+ expect(()=>parseOrchestrateResponse({...Reply,choices:[{...Reply.choices[0],message:{role:'assistant',content}}]})).toThrow(OrchestrateError);
+});
+it.each([
+ {...Reply,choices:[{index:0,finish_reason:'stop',message:{role:'assistant',refusal:null}}]},
+ {...Reply,thread_id:'invalid',future:{harmless:true}},
+ {...Reply,thread_id:[Thread]},
+ {...Reply,choices:[{...Reply.choices[0],message:{role:'tool',content:'Synthetic'}}]},
+ {...Reply,choices:[{...Reply.choices[0],finish_reason:'tool_calls'}]}
+])('metadata never excuses missing required fields, invalid threads or unsafe roles %#',reply=>{
+ expect(()=>parseOrchestrateResponse(reply)).toThrow(OrchestrateError);
+});
+it('does not mutate the input or give metadata clinical authority',()=>{
+ const payload=structuredClone({...Reply,unverified_evidence:{claim:'Invented claim',citations:['Synthetic citation']}}),before=JSON.stringify(payload);
+ const result=parseOrchestrateResponse(payload);expect(JSON.stringify(payload)).toBe(before);expect(result).toEqual({text:Reply.choices[0].message.content,threadId:Thread});
 });

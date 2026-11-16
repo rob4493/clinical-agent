@@ -532,3 +532,96 @@ confirm authenticated GET 404/disabled on the serving deployment. Configuration
 cleanup alone is not runtime shutdown verification. Runtime expiry remains the
 backstop if local cleanup is interrupted; report incomplete cleanup explicitly.
 No automatic retry, quota reset, public activation or IBM metadata call is allowed.
+
+
+### Test #2 extra-field compatibility preparation (not live verified)
+Test #2 reported IAM PASS, provider HTTP success and unexpectedFields; the exact
+property and failing envelope/choice/message level were not retained. This does
+not prove the payload was harmless, nor does it prove a clinical tool ran.
+IBM's public Chat With Agents page lists envelope fields and leaves choices as
+objects without documenting choice/message children or a closed property list.
+That page does not establish the actual extra fields returned by our tenant.
+Do not import another IBM product's schema as proof of Orchestrate behavior.
+
+The narrow local compatibility policy now permits only these ignored extras:
+- envelope: system_fingerprint, service_tier, model_version as null or nonempty,
+  control-free strings of at most 256 characters;
+- choice: logprobs only when null (no probability/token payload accepted);
+- message: refusal only when null (no refusal text treated as an answer).
+These are defensive compatibility allowances for inert completion metadata, not
+claims that IBM documents or emits these fields. All other extra properties and
+nested payloads remain rejected, including tool_calls and function_call even
+when empty or null. No arbitrary metadata map, action dispatcher or browser
+output is introduced. Extras are discarded: return only validated text/thread.
+Required fields, role, content type/size, stop completion, UUID/continuation,
+usage validation, duplicate-key rejection and 32 KiB body bound stay unchanged.
+
+A third live attempt can only test this compatibility hypothesis, not establish
+that Test #2's unknown property was one of these fields. Require separate approval,
+an authorized deployed patch, fresh read-only daily/visit capacity and current
+operator gate; never retry or reuse Test #2's consumed visit. Preserve the full
+version-2 residual-risk/privacy exception and mandatory shutdown/rebuild process.
+
+
+### Provider parsing versus clinical authorization (current local refactor)
+This section supersedes the prior closed-field and fixed metadata allowlists.
+parseOrchestrateResponse is a pure protocol normalizer. The bounded reader still
+requires JSON, strict duplicate-free parsing, valid UTF-8, a 32 KiB body and the
+existing abort/timeout behavior. The normalizer keeps required choice/message
+structure, one assistant choice, stop completion, validated UUID, text bounds and
+required nonnegative usage counts/arithmetic when usage is present. Returned
+values remain only text and threadId. The transport still enforces exact thread
+continuation, gate authorization, admission-before-IAM and zero retries.
+
+Unfamiliar JSON metadata at any level is ignored rather than copied to output,
+history, logs, browser receipts or instructions. Nested metadata is scanned with
+bounded depth/node counts for explicit tool/function/action/workflow/delegation
+signals. These responses are rejected even for null or empty action fields.
+There is no response-driven executor, fallback URL, dynamic tool lookup or eval.
+This cannot prevent or prove absence of tool execution already inside IBM.
+Known metadata does not acquire clinical authority from names such as validated,
+claim, citations or evidence. Unknown metadata is not a source of answer text.
+
+Documented extraction is choices[0].message.content as string: IBM's public Chat
+With Agents response page leaves choice internals unspecified, while IBM's ADK
+builder reference identifies that path. The normalizer additionally supports an
+explicit local text-only adapter: content arrays of up to 32 objects with
+{type: 'text', text: string}, concatenated exactly in order without invented
+separators. This is not proof that the EU-DE cloud endpoint emits those blocks.
+No runs/result/delta/SSE, image, audio, form, generic object/stringification or
+arbitrary JSON response dialect is guessed. JSON-encoded text remains text; it
+is never applied as a case, renderedText, tool command or clinical result.
+
+Non-null refusal text, refusal blocks and content_filter finish reason produce
+fixed providerRefusal failure with no provider prose. They do not trigger retries,
+fallback calls or a fabricated response. Clarification questions are ordinary
+unverified assistant text, not detected by punctuation or granted evidence status.
+
+Clinical checks stay outside protocol normalization. The current protected probe
+compares exact fixed acknowledgements and never displays provider transcripts.
+The disabled public controller still screens approved synthetic context using
+existing deterministic analysis and validates text with validateDiscussion before
+display, labelled AI discussion, not verified evidence. That screen is NOT a
+semantic grounding guarantee. The separate evidence-agent service's existing
+GroundingVerifier defaults to deny; this refactor neither connects nor bypasses
+it. A parsed response alone never authorizes clinical display or case mutation.
+All production/activation behavior and protected clinical files remain unchanged.
+No hosted test or automatic relaxation based on a failed response is authorized.
+
+
+### Final offline validation environment
+Use a fresh writable pytest --basetemp directory: the default Windows
+AppData/Local/Temp/pytest-of-rob44 directory returned WinError 5. No test or
+security assertion was disabled to resolve that fixture-setup problem.
+The documented source-only checks use MODULE_ROOT=backend/releaseModules.
+That inactive registry is not a substitute for the full historical suite's
+private evidence prerequisites. With MODULE_ROOT cleared, the full suite stops
+at conftest import with RegistryConfigError on both this candidate and unchanged
+pre-patch commit c0c15650e9ce02315936ef11ef501e4787fcd82d.
+Both snapshots lack the same six required knowledge assets: the Module 1 and
+Module 2 knowledge DOCX files, Module 2 maternal candidate policy, ACOG ectopic
+PDF and CDC warning HTML/PDF files. No replacements were generated, no package
+validation was bypassed and no clinical schema or review requirement was changed.
+The full historical suite therefore remains blocked by installation prerequisites;
+source-only checks and the separately reported frontend/Function checks are the
+applicable validation for this nonclinical response-adapter patch.
