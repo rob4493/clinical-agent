@@ -1,4 +1,5 @@
-import {createHash} from 'node:crypto';
+import {createHash,randomUUID} from 'node:crypto';
+import {CompetitionStore,competitionWindow,createCompetitionQuota,type CompetitionQuota,type CompetitionTicket} from '../evaluation/orchestrateCompetition';
 import {liveProbeAuthorizationValid} from '../evaluation/orchestrateProbePolicy';
 import Prompts from '../../shared/orchestratePrompts.json';
 import {OrchestrateTarget,isOrchestrateApiUrl} from '../evaluation/orchestrateTarget';
@@ -17,10 +18,11 @@ type Reason='completed'|'disabled'|'operatorRequired'|'inputRejected'|'configura
 const Origin='https://deploy-preview-4--clinicalagent.netlify.app';
 const FunctionDeadline=28000,ResponseReserve=1000;
 const StoreName='EndoOrchestrateProbeQuota';
-export const config={rateLimit:{windowLimit:3,windowSize:60,aggregateBy:['ip','domain'],action:'rate_limit'}};
+export const config={rateLimit:{windowLimit:60,windowSize:60,aggregateBy:['ip','domain'],action:'rate_limit'}};
 const json=(status:number,report:unknown)=>new Response(JSON.stringify(report),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Cross-Origin-Resource-Policy':'same-origin','Referrer-Policy':'no-referrer'}});
 
 function allowed(settings:Settings,now:number){
+ if(settings.ORCHESTRATE_COMPETITION_ENABLED==='true')return !!competitionWindow(settings,now);
  const expiry=Date.parse(settings.ORCHESTRATE_PROBE_TEST_UNTIL||'');
  const exception=settings.ORCHESTRATE_PROBE_EXCEPTION_ENABLED==='true';
  return settings.ORCHESTRATE_PROBE_ENABLED==='true'&&settings.ORCHESTRATE_PROBE_KILL_SWITCH==='false'&&settings.OTEL_SDK_DISABLED==='true'
@@ -42,17 +44,29 @@ async function fixedBody(request:Request,signal:AbortSignal){
 }
 
 /** Operator-only fixed nonclinical probe. No browser session tokens, prompts or provider
- * text are accepted/returned. Separate immutable tickets cap all probes at two calls/day.
+ * text are accepted/returned. Legacy tickets retain their two-call cap; the separate
+ * competition namespace permits bounded repeated attempts during an authorized window.
  */
 export function createProbe(options:{settings?:()=>Settings;transport?:Transport;store?:(signal:AbortSignal)=>Promise<QuotaStore>;clock?:()=>number}={}){
  const settings=options.settings??(()=>process.env),clock=options.clock??Date.now;
  return async function orchestrateProbe(request:Request,context:Context={}):Promise<Response>{
-  const report:{version:'1';status:'PASS'|'FAIL';authentication:Outcome;firstTurn:Outcome;secondTurn:Outcome;continuity:Outcome;reason:Reason;responseRejection?:ResponseRejection;providerHttp?:'success'|'failure'}={version:'1',status:'FAIL',authentication:'NOT_TESTED',firstTurn:'NOT_TESTED',secondTurn:'NOT_TESTED',continuity:'NOT_TESTED',reason:'internal'};
-  let reason:Reason|undefined;
+  const report:{version:'1';status:'PASS'|'FAIL';authentication:Outcome;firstTurn:Outcome;secondTurn:Outcome;continuity:Outcome;reason:Reason;responseRejection?:ResponseRejection;providerHttp?:'success'|'failure';accounting?:'incomplete'}={version:'1',status:'FAIL',authentication:'NOT_TESTED',firstTurn:'NOT_TESTED',secondTurn:'NOT_TESTED',continuity:'NOT_TESTED',reason:'internal'};
+  let reason:Reason|undefined,ledger:CompetitionQuota|undefined,sessionTicket:CompetitionTicket|undefined;
+  const callTickets:{ordinal:number;ticket:CompetitionTicket}[]=[],invoked=new Set<number>();
+  const finish=async(final:typeof report)=>{
+   if(ledger&&sessionTicket){
+    try{
+     const auditSignal=AbortSignal.timeout(750);
+     await Promise.all([ledger.record(sessionTicket,{status:final.status==='PASS'?'passed':'failed',reason:final.reason,invoked:invoked.size>0},auditSignal),
+      ...callTickets.map(({ordinal,ticket})=>ledger!.record(ticket,{status:(ordinal===0?final.firstTurn:final.secondTurn)==='PASS'?'passed':'failed',reason:(ordinal===0?final.firstTurn:final.secondTurn)==='PASS'?'completed':final.reason,invoked:invoked.has(ordinal)},auditSignal))]);
+    }catch{return json(200,{...final,status:'FAIL',reason:'quotaUnavailable',accounting:'incomplete'});}
+   }
+   return json(200,final);
+  };
   const deadline=AbortSignal.timeout(FunctionDeadline-ResponseReserve);
   const signal=AbortSignal.any([request.signal,deadline]);
   try{
-   const environment=settings(),address=new URL(request.url),operator=context.user;
+   const environment=settings(),address=new URL(request.url),operator=context.user,competition=environment.ORCHESTRATE_COMPETITION_ENABLED==='true';
    if(!allowed(environment,clock())||address.origin!==Origin||environment.ORCHESTRATE_EMBED_PREVIEW_ID!=='4'||environment.ORCHESTRATE_EMBED_PREVIEW_ORIGIN!==Origin||context.deploy?.context!=='deploy-preview'||context.deploy.published!==false||typeof context.deploy.id!=='string'||!/^[A-Za-z0-9-]{1,128}$/.test(context.deploy.id))return json(404,{...report,reason:'disabled'});
    if(!operator||!environment.ORCHESTRATE_EMBED_OPERATOR_IDS?.split(',').includes(operator.id)||!(operator.expiresAt instanceof Date)||!Number.isFinite(operator.expiresAt.getTime())||operator.expiresAt.getTime()<=clock())return json(403,{...report,reason:'operatorRequired'});
    if(request.method!=='POST'||address.search||request.headers.get('origin')!==Origin||request.headers.get('content-type')!=='application/json'||request.headers.get('sec-fetch-site')&&request.headers.get('sec-fetch-site')!=='same-origin')return json(400,{...report,reason:'inputRejected'});
@@ -61,21 +75,28 @@ export function createProbe(options:{settings?:()=>Settings;transport?:Transport
    // Private projections configure reused helpers only; no legacy/public flag is mutated.
    const providerEnvironment={ORCHESTRATE_ENABLED:'true',ORCHESTRATE_API_URL:environment.ORCHESTRATE_API_URL,ORCHESTRATE_AGENT_ID:environment.ORCHESTRATE_AGENT_ID,ORCHESTRATE_ENVIRONMENT:environment.ORCHESTRATE_ENVIRONMENT,WATSONX_AI_AUTH_TYPE:environment.WATSONX_AI_AUTH_TYPE,WATSONX_AI_TIMEOUT_MS:environment.WATSONX_AI_TIMEOUT_MS,WATSONX_AI_APIKEY:undefined as string|undefined};
    try{new OrchestrateTarget(providerEnvironment);}catch{return json(200,{...report,reason:!isOrchestrateApiUrl(environment.ORCHESTRATE_API_URL)?'incorrectEndpoint':'configuration'});}
-   if(!liveProbeAuthorizationValid(environment,clock(),operator.id))return json(404,{...report,reason:'livePolicyRequired'});
+   const competitionSession=competition?competitionWindow(environment,clock()):null;
+   const authorized=()=>{
+    if(!competition)return liveProbeAuthorizationValid(settings(),clock(),operator.id);
+    const current=competitionWindow(settings(),clock());
+    return !!current&&JSON.stringify(current)===JSON.stringify(competitionSession)&&settings().ORCHESTRATE_API_URL===providerEnvironment.ORCHESTRATE_API_URL&&settings().ORCHESTRATE_AGENT_ID===providerEnvironment.ORCHESTRATE_AGENT_ID;
+   };
+   if(!authorized())return json(404,{...report,reason:'livePolicyRequired'});
    const credential=environment.WATSONX_AI_APIKEY;
    if(!credential||credential.length>512||/\s|[\u0000-\u001f]/.test(credential))return json(200,{...report,reason:'configuration'});
    providerEnvironment.WATSONX_AI_APIKEY=credential;
-   const gated=()=>{if(!allowed(settings(),clock())||!liveProbeAuthorizationValid(settings(),clock(),operator.id)||operator.expiresAt.getTime()<=clock()){reason='disabled';throw new Error();}};
-   const factory=options.store??((operation:AbortSignal)=>netlifyQuota(StoreName,operation));
+   const gated=()=>{if((settings().ORCHESTRATE_COMPETITION_ENABLED==='true')!==competition||!allowed(settings(),clock())||!authorized()||!settings().ORCHESTRATE_EMBED_OPERATOR_IDS?.split(',').includes(operator.id)||operator.expiresAt.getTime()<=clock()){reason='disabled';throw new Error();}};
+   const factory=options.store??((operation:AbortSignal)=>netlifyQuota(competition?CompetitionStore:StoreName,operation));
    const policy=()=>{gated();return {ENDO_DEMO_INFERENCE_ENABLED:'true',ENDO_DEMO_KILL_SWITCH:'false',OTEL_SDK_DISABLED:'true',ENDO_DEMO_DAILY_LIMIT:'2'};};
-   const admission=createAdmission(factory,policy),visitId=dailyVisit(clock());
+   const admission=createAdmission(factory,policy),visitId=competition?randomUUID():dailyVisit(clock());
+   if(competition){ledger=createCompetitionQuota(factory,competitionWindow(environment,clock())!,clock);try{sessionTicket=await ledger.reserveSession(signal);}catch(failure){reason=failure instanceof QuotaError&&failure.category==='exhausted'?'quotaRejected':'quotaUnavailable';throw failure;}}
    const receipts=createReceipts(credential,clock),policyHash=createHash('sha256').update(JSON.stringify(Prompts.connectionProbe)).digest('hex');
    let receipt=receipts.start(policyHash),ordinal=0;
    let activeSignal:AbortSignal|undefined;
    const http:Transport=async(address,init)=>{
     gated();signal.throwIfAborted();const iam=address==='https://iam.cloud.ibm.com/identity/token';
     activeSignal=init.signal??undefined;
-    if(!iam)report.authentication='PASS';
+    if(!iam){report.authentication='PASS';invoked.add(ordinal);}
     try{
      const response=await (options.transport??fetch)(address,init);
      if(!response.ok){reason=iam||response.status===401?'authenticationFailure':response.status===403?'authorizationFailure':response.status===404?'endpointOrAgentUnavailable':'providerUnavailable';if(reason==='authenticationFailure')report.authentication='FAIL';}
@@ -87,7 +108,7 @@ export function createProbe(options:{settings?:()=>Settings;transport?:Transport
    const provider=createOrchestrateTransport({
     authorize:async turn=>{gated();return JSON.stringify(turn)===expected;},
     reserve:async operation=>{
-     try{await admission.run(visitId,ordinal,operation,async()=>undefined);}catch(failure){reason=reason??(failure instanceof QuotaError?(failure.category==='unavailable'?'quotaUnavailable':'quotaRejected'):'quotaUnavailable');throw failure;}
+     try{if(ledger)callTickets.push({ordinal,ticket:await ledger.reserveCall(operation)});else await admission.run(visitId,ordinal,operation,async()=>undefined);}catch(failure){reason=reason??(failure instanceof QuotaError?(failure.category==='unavailable'?'quotaUnavailable':'quotaRejected'):'quotaUnavailable');throw failure;}
     }
    },http,providerEnvironment,authentication);
    for(const prompt of Prompts.connectionProbe){
@@ -106,10 +127,11 @@ export function createProbe(options:{settings?:()=>Settings;transport?:Transport
     receipt=receipts.advance(visit,reply.threadId,prompt.id);
     if(ordinal===0)report.firstTurn='PASS';else report.secondTurn='PASS';ordinal++;
    }
-   gated();signal.throwIfAborted();return json(200,{...report,status:'PASS',continuity:'PASS',reason:'completed'});
+   gated();signal.throwIfAborted();return await finish({...report,status:'PASS',continuity:'PASS',reason:'completed'});
   }catch{
+   const result=await finish({...report,reason:deadline.aborted?'timeout':reason??'internal'});
    if(request.signal.aborted)return new Response(null,{status:499});
-   return json(200,{...report,reason:deadline.aborted?'timeout':reason??'internal'});
+   return result;
   }
  };
 }

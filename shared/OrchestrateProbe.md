@@ -1,3 +1,11 @@
+# Current competition development workflow
+
+See [CompetitionTesting.md](CompetitionTesting.md) for the prepared default-disabled
+Preview #4 development mode. It supersedes the one-attempt/two-call/per-attempt
+approval policy ONLY when explicitly activated. The historical mode below remains
+closed and its quota records are never read or modified by competition mode.
+No hosted activation or inference is authorized by this local preparation.
+
 # One-test residual-uncertainty amendment — prepared, NOT approved or activated
 
 This section supersedes the prior independently-reviewed-Live-binding requirement

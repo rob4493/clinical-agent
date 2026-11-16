@@ -1,4 +1,5 @@
 import type {Store} from '@netlify/blobs';
+import {CompetitionStore,validateCompetitionTicket} from '../../../netlify/evaluation/orchestrateCompetition';
 import {QuotaError,validateTicket,waitQuota,type QuotaStore} from '../../../netlify/evaluation/demoQuota';
 
 export type QuotaInitialization='sdkImportFailed'|'automaticConfigurationUnavailable'|'adapterRejected'|'initializationReady'|'initializationUnknown';
@@ -55,6 +56,7 @@ const NoopSpan:StorageSpan={
  * is accepted by this adapter. Do not import it from browser components.
  */
 export async function netlifyQuota(name:string,signal:AbortSignal,environment:Record<string,string|undefined>=process.env,transport:typeof fetch=fetch):Promise<QuotaStore>{
+ const validate=name===CompetitionStore?validateCompetitionTicket:validateTicket;
  const boundedFetch:typeof fetch=async(address,options)=>{
   // Supported SDK injection avoids its internal retry loop. Ambiguous storage
   // failures burn no model permission and never surface response bodies.
@@ -68,8 +70,8 @@ export async function netlifyQuota(name:string,signal:AbortSignal,environment:Re
  try{
   const store=await initializeStore(name,signal,environment,boundedFetch);
   return Object.freeze({
-   async set(key:string,content:string){signal.throwIfAborted();validateTicket(key,content);try{return await store.set(key,content,{onlyIfNew:true,span:NoopSpan});}catch{throw new QuotaError('unavailable');}},
-   async getWithMetadata(key:string){signal.throwIfAborted();validateTicket(key);try{return await store.getWithMetadata(key,{type:'json',consistency:'strong',span:NoopSpan});}catch{throw new QuotaError('unavailable');}}
+   async set(key:string,content:string){signal.throwIfAborted();validate(key,content);try{return await store.set(key,content,{onlyIfNew:true,span:NoopSpan});}catch{throw new QuotaError('unavailable');}},
+   async getWithMetadata(key:string){signal.throwIfAborted();validate(key);try{return await store.getWithMetadata(key,{type:'json',consistency:'strong',span:NoopSpan});}catch{throw new QuotaError('unavailable');}}
   });
  }catch{throw new QuotaError('unavailable');}
 }
