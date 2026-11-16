@@ -13,6 +13,15 @@ development window, Codex manages configuration using the existing Netlify login
 pwsh -NoProfile -File tools/competitionPreview.ps1 -Action Activate -Authorized -AcceptResidualRisks -DurationMinutes 240 -DailyCalls 50 -DailySessions 20
 ```
 
+The default remains 240 minutes; the maximum is 10,080 minutes (seven days).
+After separate seven-day editable-chat authorization, use the same command with
+`-EditableDiscussion -DurationMinutes 10080`. This sets a fixed absolute expiry,
+never auto-renews it, and does not change the UTC daily 50-call/20-conversation
+policy or reset tickets. The manual Disable command remains available at any time.
+Trusted operator authentication must still be valid on each request. Conversation
+receipts remain bounded by their original operator expiry: sign in again and start
+New conversation if necessary, without reopening the environment-variable window.
+
 The operator manually rebuilds **Preview #4 only**. Before any POST, require the
 matching commit, SSO protection, and the authenticated probe GET returning
 `400 / inputRejected`. This verifies trusted `context.user`, allowlist and future
@@ -57,7 +66,7 @@ booleans only; `-WhatIf` validates arguments offline without any network calls.
 The helper never invokes the probe, IAM, IBM, Blobs or Production deployments.
 
 Session expiry is automatically enforced before each provider boundary, with a
-maximum of four hours from the recorded start (including rebuild time). Expiry
+maximum of seven days from the recorded start (including rebuild time). Expiry
 does not itself erase Netlify values: Codex must run Disable when the session
 ends or is cancelled. Management-variable changes, including the kill switch,
 are deployment-bound; the manual rebuild is required for runtime confirmation.
@@ -70,7 +79,7 @@ Only these new Functions-scoped Deploy Preview keys are managed:
 
 - `ORCHESTRATE_COMPETITION_ENABLED` — false by default.
 - `ORCHESTRATE_COMPETITION_STARTED_AT` and `ORCHESTRATE_COMPETITION_UNTIL` — fresh
-  absolute UTC timestamps, no more than four hours apart, never a sliding window.
+  absolute UTC timestamps, no more than seven days apart, never a sliding window.
 - `ORCHESTRATE_COMPETITION_DAILY_CALL_LIMIT` — default 50, integer 1–1000.
 - `ORCHESTRATE_COMPETITION_DAILY_SESSION_LIMIT` — default 20, integer 1–200.
 

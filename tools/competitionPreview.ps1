@@ -2,7 +2,7 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
  [Parameter(Mandatory)][ValidateSet('Activate','Disable','Status')][string]$Action,
- [ValidateRange(1,240)][int]$DurationMinutes=240,
+ [ValidateRange(1,10080)][int]$DurationMinutes=240,
  [ValidateRange(1,1000)][int]$DailyCalls=50,
  [ValidateRange(1,200)][int]$DailySessions=20,
  [switch]$Authorized,

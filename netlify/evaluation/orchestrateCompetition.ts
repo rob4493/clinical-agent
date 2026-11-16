@@ -4,6 +4,7 @@ import {LiveProbeAgent} from './orchestrateProbePolicy';
 import {isOrchestrateApiUrl,type OrchestrateEnvironment} from './orchestrateTarget';
 
 export const CompetitionStore='EndoOrchestrateCompetitionV1';
+export const MaximumCompetitionDuration=7*24*60*60*1000;
 export interface CompetitionWindow {startedAt:number;until:number;dailyCalls:number;dailySessions:number}
 export function competitionWindow(env:OrchestrateEnvironment,now:number):CompetitionWindow|null{
  const integer=(value:string|undefined,fallback:number,max:number)=>value===undefined?fallback:/^[1-9]\d{0,3}$/.test(value)&&Number(value)<=max?Number(value):NaN;
@@ -14,7 +15,7 @@ export function competitionWindow(env:OrchestrateEnvironment,now:number):Competi
   ||env.ORCHESTRATE_EMBED_PREVIEW_ENABLED!=='false'||env.ORCHESTRATE_EMBED_KILL_SWITCH!=='true'
   ||env.ORCHESTRATE_AGENT_ID!==LiveProbeAgent||env.ORCHESTRATE_ENVIRONMENT!=='live'||!isOrchestrateApiUrl(env.ORCHESTRATE_API_URL)
   ||new URL(env.ORCHESTRATE_API_URL!).hostname!=='api.eu-de.watson-orchestrate.cloud.ibm.com'
-  ||![now,startedAt,until,dailyCalls,dailySessions].every(Number.isFinite)||startedAt>now||until<=now||until-startedAt>14400000||until<=startedAt)return null;
+  ||![now,startedAt,until,dailyCalls,dailySessions].every(Number.isFinite)||startedAt>now||until<=now||until-startedAt>MaximumCompetitionDuration||until<=startedAt)return null;
  return {startedAt,until,dailyCalls,dailySessions};
 }
 const Uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -61,7 +62,7 @@ export function createCompetitionQuota(factory:(signal:AbortSignal)=>Promise<Quo
   if(!observed||observed.etag!==written.etag||JSON.stringify(observed.data)!==content)throw new QuotaError('unavailable');return true;
  }
  async function reserve(kind:Ticket['kind'],signal:AbortSignal):Promise<Ticket>{
-  if(clock()<window.startedAt||clock()>=window.until||window.until-window.startedAt>14400000)throw new QuotaError('unavailable');
+  if(clock()<window.startedAt||clock()>=window.until||window.until-window.startedAt>MaximumCompetitionDuration)throw new QuotaError('unavailable');
   let exhausted=false;
   try{return await use(signal,async(store,operation)=>{
    const day=new Date(clock()).toISOString().slice(0,10),key='policy/'+day,content=JSON.stringify({version:'1',dailyCalls:window.dailyCalls,dailySessions:window.dailySessions});

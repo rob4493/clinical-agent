@@ -34,6 +34,11 @@ history digest. The browser cannot inspect or select a provider thread. No raw
 operator IDs, transcripts or case fields are written to operational storage.
 
 Immutable per-turn locks and strong readback prevent concurrent/replayed calls.
+Protected testing authorization can last up to seven days, with no automatic
+renewal. Each receipt still expires at the earlier of the window or its original
+trusted operator session expiry. Reauthentication and New conversation may be
+needed sooner; the seven-day setting never extends SSO or persists chat history.
+UTC daily quotas continue independently and existing tickets are never reset.
 Thread ownership uses the existing immutable owner records. Only the latest message
 is sent with X-IBM-THREAD-ID on continuation; earlier messages are not replayed.
 Maximum 12 user turns, 1,600 characters each, 24 KiB request, existing provider

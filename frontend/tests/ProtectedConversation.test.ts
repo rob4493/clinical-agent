@@ -18,14 +18,27 @@ function memory(){
  return {store,records};
 }
 
-function fixture(){
+function fixture(operatorContext=Context){
  const environment={...Settings},storage=memory();let now=Now;
  const transport=vi.fn<Transport>(async(address,init)=>address.includes('/identity/token')?json({access_token:'SyntheticBearer',token_type:'Bearer',expires_in:3600}):json({thread_id:new Headers(init.headers).get('X-IBM-THREAD-ID')||randomUUID(),choices:[{index:0,finish_reason:'stop',message:{role:'assistant',content:'This educational discussion cannot establish a diagnosis.'}}]}));
  const service=createProtectedConversation({environment,store:async()=>storage.store,transport,clock:()=>now});
- const start=()=>service.handle({version:'2',action:'start',syntheticOnly:true},Context,signal());
- const turn=(receipt:unknown,message='what is endometriosis?',history:string[]=[],context=Context)=>service.handle({version:'2',action:'turn',receipt,message,history},context,signal());
+ const start=()=>service.handle({version:'2',action:'start',syntheticOnly:true},operatorContext,signal());
+ const turn=(receipt:unknown,message='what is endometriosis?',history:string[]=[],context=operatorContext)=>service.handle({version:'2',action:'turn',receipt,message,history},context,signal());
  return {...storage,environment,transport,service,start,turn,setNow:(value:number)=>{now=value;}};
 }
+it.each([1,3,7])('maintains an operator-bound receipt/thread across a %s-day window and fails closed at expiry',async days=>{
+ const until=Now+days*86400000,operator={...Context,user:{...Context.user,expiresAt:new Date(until+60000)}},f=fixture(operator);
+ f.environment.ORCHESTRATE_COMPETITION_STARTED_AT=new Date(Now).toISOString();f.environment.ORCHESTRATE_COMPETITION_UNTIL=new Date(until).toISOString();
+ const started=await f.start(),one=await f.turn(started.receipt);f.setNow(until-1);const two=await f.turn(one.receipt,'could you explain more?',['what is endometriosis?']);expect(two.state).toBe('replied');
+ const calls=f.transport.mock.calls.filter(([url])=>!url.includes('/identity/token'));expect(calls).toHaveLength(2);expect(new Headers(calls[1][1].headers).get('X-IBM-THREAD-ID')).toMatch(/^[a-f0-9-]{36}$/);
+ f.setNow(until);const count=f.records.size;await expect(f.turn(two.receipt,'more',['what is endometriosis?','could you explain more?'])).rejects.toThrow();expect(f.records.size).toBe(count);expect(f.transport.mock.calls.filter(([url])=>!url.includes('/identity/token'))).toHaveLength(2);expect(f.environment.ORCHESTRATE_COMPETITION_UNTIL).toBe(new Date(until).toISOString());
+});
+it('does not extend a receipt past its original operator expiry even after a fresh sign-in',async()=>{
+ const day=86400000,original={...Context,user:{...Context.user,expiresAt:new Date(Now+day)}},f=fixture(original);
+ f.environment.ORCHESTRATE_COMPETITION_STARTED_AT=new Date(Now).toISOString();f.environment.ORCHESTRATE_COMPETITION_UNTIL=new Date(Now+7*day).toISOString();const start=await f.start();
+ f.setNow(Now+day);await expect(f.turn(start.receipt)).rejects.toThrow();const reauthenticated={...Context,user:{...Context.user,expiresAt:new Date(Now+7*day)}};
+ await expect(f.turn(start.receipt,'what is endometriosis?',[],reauthenticated)).rejects.toThrow();expect(f.transport).not.toHaveBeenCalled();expect(await f.service.handle({version:'2',action:'start',syntheticOnly:true},reauthenticated,signal())).toMatchObject({state:'started'});
+});
 it('sends edited first/follow-up text using server-owned thread, without replaying history',async()=>{
  const f=fixture(),started=await f.start(),first=await f.turn(started.receipt),second=await f.turn(first.receipt,'could you explain more?',['what is endometriosis?']);
  expect(first).toMatchObject({state:'replied'});expect(second).toMatchObject({state:'replied'});

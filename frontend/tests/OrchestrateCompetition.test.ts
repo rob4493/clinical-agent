@@ -5,7 +5,7 @@ import {spawnSync} from 'node:child_process';
 import {mkdtempSync,writeFileSync,unlinkSync,rmdirSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
-import {CompetitionStore,competitionWindow,createCompetitionQuota,validateCompetitionTicket} from '../../netlify/evaluation/orchestrateCompetition';
+import {MaximumCompetitionDuration,CompetitionStore,competitionWindow,createCompetitionQuota,validateCompetitionTicket} from '../../netlify/evaluation/orchestrateCompetition';
 import {netlifyQuota} from '../src/server/netlifyQuota';
 import {createProbe,config} from '../../netlify/functions/orchestrateProbe';
 import {QuotaError,validateTicket,type QuotaStore} from '../../netlify/evaluation/demoQuota';
@@ -29,6 +29,28 @@ function fixture(){
  return {...storage,environment,transport,factory,handler,setNow:(value:number)=>{now=value;}};
 }
 afterEach(()=>{vi.restoreAllMocks();vi.unstubAllGlobals();vi.unstubAllEnvs();});
+it.each([24,72,168])('accepts an explicitly bounded %s-hour window and stops exactly at expiry without renewal',hours=>{
+ const until=Now+hours*3600000,environment={...Settings,ORCHESTRATE_COMPETITION_STARTED_AT:new Date(Now).toISOString(),ORCHESTRATE_COMPETITION_UNTIL:new Date(until).toISOString()},before=JSON.stringify(environment);
+ expect(competitionWindow(environment,Now)?.until).toBe(until);expect(competitionWindow(environment,until-1)?.until).toBe(until);expect(competitionWindow(environment,until)).toBeNull();expect(competitionWindow(environment,until+86400000)).toBeNull();expect(JSON.stringify(environment)).toBe(before);
+});
+it('keeps 50 calls and 20 sessions per UTC day through a seven-day window without changing earlier tickets',async()=>{
+ const m=memory();let now=Now;const window=competitionWindow({...Settings,ORCHESTRATE_COMPETITION_STARTED_AT:new Date(Now).toISOString(),ORCHESTRATE_COMPETITION_UNTIL:new Date(Now+MaximumCompetitionDuration).toISOString()},now)!;
+ const quota=createCompetitionQuota(async()=>m.store,window,()=>now,()=>0);let previous=new Map(m.records);
+ for(let day=0;day<7;day++){
+  now=Now+day*86400000;const date=new Date(now).toISOString().slice(0,10);
+  for(let call=0;call<50;call++)await quota.reserveCall(signal());await expect(quota.reserveCall(signal())).rejects.toMatchObject({category:'exhausted'});
+  for(let session=0;session<20;session++)await quota.reserveSession(signal());await expect(quota.reserveSession(signal())).rejects.toMatchObject({category:'exhausted'});
+  expect([...m.records.keys()].filter(key=>key.startsWith('call/'+date+'/'))).toHaveLength(50);expect([...m.records.keys()].filter(key=>key.startsWith('session/'+date+'/'))).toHaveLength(20);
+  for(const [key,value] of previous)expect(m.records.get(key)).toEqual(value);previous=new Map(m.records);
+ }
+ now=window.until;const count=m.records.size;await expect(quota.reserveCall(signal())).rejects.toBeInstanceOf(QuotaError);expect(m.records.size).toBe(count);
+});
+it('rejects an over-seven-day quota window before opening storage',async()=>{
+ const factory=vi.fn(async()=>memory().store);await expect(createCompetitionQuota(factory,{startedAt:Now,until:Now+MaximumCompetitionDuration+1,dailyCalls:50,dailySessions:20},()=>Now,()=>0).reserveCall(signal())).rejects.toBeInstanceOf(QuotaError);expect(factory).not.toHaveBeenCalled();
+});
+it.skipIf(process.platform!=='win32').each([0,10081])('rejects an invalid %s-minute CLI duration before any operation',minutes=>{
+ const result=spawnSync('pwsh',['-NoProfile','-File',resolve('../tools/competitionPreview.ps1'),'-Action','Activate','-Authorized','-AcceptResidualRisks','-EditableDiscussion','-DurationMinutes',String(minutes),'-WhatIf'],{encoding:'utf8',timeout:10000});expect(result.status).not.toBe(0);expect(result.stdout).not.toContain('Dry run:');
+});
 it('defaults disabled, accepts a bounded four-hour window and needs no legacy approvals',()=>{
  expect(competitionWindow({},Now)).toBeNull();expect(competitionWindow(Settings,Now)).toMatchObject({dailyCalls:50,dailySessions:20});
  expect(competitionWindow({...Settings,ORCHESTRATE_COMPETITION_DAILY_CALL_LIMIT:undefined,ORCHESTRATE_COMPETITION_DAILY_SESSION_LIMIT:undefined},Now)).toMatchObject({dailyCalls:50,dailySessions:20});
@@ -37,7 +59,7 @@ it('defaults disabled, accepts a bounded four-hour window and needs no legacy ap
 it.each([
  {ORCHESTRATE_COMPETITION_ENABLED:'false'},{ORCHESTRATE_PROBE_KILL_SWITCH:'true'},
  {ORCHESTRATE_COMPETITION_UNTIL:new Date(Now).toISOString()},{ORCHESTRATE_COMPETITION_STARTED_AT:new Date(Now+1).toISOString()},
- {ORCHESTRATE_COMPETITION_UNTIL:new Date(Now+14400001).toISOString()},{ORCHESTRATE_COMPETITION_STARTED_AT:'invalid'},
+ {ORCHESTRATE_COMPETITION_UNTIL:new Date(Now+MaximumCompetitionDuration+1).toISOString()},{ORCHESTRATE_COMPETITION_STARTED_AT:'invalid'},
  {ORCHESTRATE_COMPETITION_DAILY_CALL_LIMIT:'0'},{ORCHESTRATE_COMPETITION_DAILY_CALL_LIMIT:'1001'},
  {ORCHESTRATE_COMPETITION_DAILY_SESSION_LIMIT:'201'},{ORCHESTRATE_COMPETITION_DAILY_SESSION_LIMIT:'1.5'},
  {ORCHESTRATE_ENABLED:'true'},{ENDO_DEMO_INFERENCE_ENABLED:'true'},{ENDO_DEMO_KILL_SWITCH:'false'},
@@ -128,7 +150,7 @@ it('keeps the shared legacy adapter validator restrictive and rejects sensitive 
  expect(()=>validateCompetitionTicket('outcome/call/2026-11-16/'+randomUUID(),JSON.stringify({status:'failed',reason:'SyntheticPrivateError',invoked:true}))).toThrow();
 });
 
-it.skipIf(process.platform!=='win32')('workflow preserves All scopes/global fallbacks, updates preview overrides and closes safely on denial',()=>{
+it.skipIf(process.platform!=='win32').each(['normal','editable','day','multiDay','sevenDay','deny','multi','multiDeny','multiChanged'])('workflow preserves scopes/global values, bounded duration and shutdown (%s)',mode=>{
  const directory=mkdtempSync(join(tmpdir(),'endo-competition-script-')),file=join(directory,'harness.ps1'),script=resolve('../tools/competitionPreview.ps1');
  const harness=`param([string]$ScriptPath,[string]$Mode)
 $ErrorActionPreference='Stop'
@@ -171,9 +193,10 @@ function global:netlify {
  default {throw 'Unexpected API operation'}
  }
 }
+$duration=switch($Mode){'day'{1440};'multiDay'{4320};'sevenDay'{10080};default{240}}
 $denied=$false
-try{& $ScriptPath -EditableDiscussion:($Mode -eq 'editable') -Action Activate -Authorized -AcceptResidualRisks -DurationMinutes 240 -DailyCalls 50 -DailySessions 20}catch{$denied=$true;if($_.Exception.Message -notmatch 'HTTP403' -and !($Mode -eq 'multiChanged' -and $_.Exception.Message -ceq 'Variable scopes or non-preview values changed; stop and review.')){throw}}
-if($Mode -eq 'deny' -or $Mode -eq 'multiDeny' -or $Mode -eq 'multiChanged'){if(!$denied){throw 'Expected write denial'}}else{if($denied -or $global:FakePreview.ORCHESTRATE_COMPETITION_ENABLED -cne 'true'){throw 'Activation failed'};if($global:FakePreview.ORCHESTRATE_COMPETITION_DAILY_CALL_LIMIT -cne '50' -or $global:FakePreview.ORCHESTRATE_COMPETITION_DAILY_SESSION_LIMIT -cne '20'){throw 'Limits mismatch'};if($Mode -eq 'editable' -and $global:FakePreview.ORCHESTRATE_DISCUSSION_AUTHORIZED -cne 'true'){throw 'Editable authorization missing'};& $ScriptPath -Action Disable}
+try{& $ScriptPath -EditableDiscussion:($Mode -in @('editable','day','multiDay','sevenDay')) -Action Activate -Authorized -AcceptResidualRisks -DurationMinutes $duration -DailyCalls 50 -DailySessions 20}catch{$denied=$true;if($_.Exception.Message -notmatch 'HTTP403' -and !($Mode -eq 'multiChanged' -and $_.Exception.Message -ceq 'Variable scopes or non-preview values changed; stop and review.')){throw}}
+if($Mode -eq 'deny' -or $Mode -eq 'multiDeny' -or $Mode -eq 'multiChanged'){if(!$denied){throw 'Expected write denial'}}else{if($denied -or $global:FakePreview.ORCHESTRATE_COMPETITION_ENABLED -cne 'true'){throw 'Activation failed'};if($global:FakePreview.ORCHESTRATE_COMPETITION_DAILY_CALL_LIMIT -cne '50' -or $global:FakePreview.ORCHESTRATE_COMPETITION_DAILY_SESSION_LIMIT -cne '20'){throw 'Limits mismatch'};if($Mode -eq 'editable' -and $global:FakePreview.ORCHESTRATE_DISCUSSION_AUTHORIZED -cne 'true'){throw 'Editable authorization missing'};$elapsed=([DateTimeOffset]::Parse($global:FakePreview.ORCHESTRATE_COMPETITION_UNTIL)-[DateTimeOffset]::Parse($global:FakePreview.ORCHESTRATE_COMPETITION_STARTED_AT)).TotalMinutes;if($elapsed -ne $duration){throw 'Session duration mismatch'};$frozenUntil=$global:FakePreview.ORCHESTRATE_COMPETITION_UNTIL;& $ScriptPath -Action Status;if($global:FakePreview.ORCHESTRATE_COMPETITION_UNTIL -cne $frozenUntil){throw 'Unexpected renewal'};& $ScriptPath -Action Disable}
 foreach($key in @('ORCHESTRATE_DISCUSSION_AUTHORIZED','ORCHESTRATE_COMPETITION_ENABLED','ORCHESTRATE_PROBE_ENABLED','ORCHESTRATE_PROBE_EXCEPTION_ENABLED')){if($global:FakePreview[$key] -cne 'false'){throw 'Shutdown gate failed'}}
 if($global:FakePreview.ORCHESTRATE_PROBE_KILL_SWITCH -cne 'true' -or $global:FakePreview.ORCHESTRATE_COMPETITION_UNTIL -cne '' -or $global:FakePreview.ORCHESTRATE_PROBE_EXCEPTION_APPROVAL -cne ''){throw 'Shutdown cleanup failed'}
 if($global:FakeProduction.SYNTHETIC_MARKER -cne 'unchanged' -or $global:Writes -lt 1){throw 'Production changed or no writes'}
@@ -183,7 +206,7 @@ if($Mode -like 'multi*' -and $global:Creates -ne 0){throw 'Existing variables we
 if($Mode -eq 'multi'){foreach($key in @('ORCHESTRATE_COMPETITION_ENABLED','ORCHESTRATE_COMPETITION_STARTED_AT','ORCHESTRATE_COMPETITION_UNTIL','ORCHESTRATE_COMPETITION_DAILY_CALL_LIMIT','ORCHESTRATE_COMPETITION_DAILY_SESSION_LIMIT')){if(!$global:FakeOverrides.ContainsKey($key)){throw 'Missing preview override'}}}
 Write-Output 'MockedWorkflowPassed'
 `;
- try{writeFileSync(file,harness);for(const mode of ['normal','editable','deny','multi','multiDeny','multiChanged']){const result=spawnSync('pwsh',['-NoProfile','-File',file,'-ScriptPath',script,'-Mode',mode],{encoding:'utf8',timeout:15000});expect(result.status,result.stderr).toBe(0);expect(result.stdout).toContain('MockedWorkflowPassed');expect(result.stdout+result.stderr).not.toContain('SyntheticPrivateProviderPayload');}}
+ try{writeFileSync(file,harness);const result=spawnSync('pwsh',['-NoProfile','-File',file,'-ScriptPath',script,'-Mode',mode],{encoding:'utf8',timeout:15000});expect(result.status,result.stderr).toBe(0);expect(result.stdout).toContain('MockedWorkflowPassed');expect(result.stdout+result.stderr).not.toContain('SyntheticPrivateProviderPayload');}
  finally{unlinkSync(file);rmdirSync(directory);}
 });
 
