@@ -132,7 +132,7 @@ it.skipIf(process.platform!=='win32')('workflow preserves All scopes/global fall
  const directory=mkdtempSync(join(tmpdir(),'endo-competition-script-')),file=join(directory,'harness.ps1'),script=resolve('../tools/competitionPreview.ps1');
  const harness=`param([string]$ScriptPath,[string]$Mode)
 $ErrorActionPreference='Stop'
-$global:FakePreview=@{ORCHESTRATE_ENABLED='false';ENDO_DEMO_INFERENCE_ENABLED='false';ENDO_DEMO_KILL_SWITCH='true';ORCHESTRATE_EMBED_PREVIEW_ENABLED='false';ORCHESTRATE_EMBED_KILL_SWITCH='true';OTEL_SDK_DISABLED='true';ORCHESTRATE_AGENT_ID='c6698d4e-a08d-4b77-bf05-139ff3b4c695';ORCHESTRATE_ENVIRONMENT='live';WATSONX_AI_AUTH_TYPE='iam';ORCHESTRATE_API_URL='https://api.eu-de.watson-orchestrate.cloud.ibm.com/instances/SyntheticTenant';ORCHESTRATE_EMBED_PREVIEW_ID='4';ORCHESTRATE_EMBED_PREVIEW_ORIGIN='https://deploy-preview-4--clinicalagent.netlify.app';ORCHESTRATE_EMBED_OPERATOR_IDS='synthetic-operator';ORCHESTRATE_PROBE_KILL_SWITCH='true'}
+$global:FakePreview=@{ORCHESTRATE_DISCUSSION_AUTHORIZED='false';ORCHESTRATE_ENABLED='false';ENDO_DEMO_INFERENCE_ENABLED='false';ENDO_DEMO_KILL_SWITCH='true';ORCHESTRATE_EMBED_PREVIEW_ENABLED='false';ORCHESTRATE_EMBED_KILL_SWITCH='true';OTEL_SDK_DISABLED='true';ORCHESTRATE_AGENT_ID='c6698d4e-a08d-4b77-bf05-139ff3b4c695';ORCHESTRATE_ENVIRONMENT='live';WATSONX_AI_AUTH_TYPE='iam';ORCHESTRATE_API_URL='https://api.eu-de.watson-orchestrate.cloud.ibm.com/instances/SyntheticTenant';ORCHESTRATE_EMBED_PREVIEW_ID='4';ORCHESTRATE_EMBED_PREVIEW_ORIGIN='https://deploy-preview-4--clinicalagent.netlify.app';ORCHESTRATE_EMBED_OPERATOR_IDS='synthetic-operator';ORCHESTRATE_PROBE_KILL_SWITCH='true'}
 $global:FakeProduction=@{ORCHESTRATE_ENABLED='false';SYNTHETIC_MARKER='unchanged'}
 $global:FakeDenied=$false;$global:Writes=0;$global:Creates=0
 $global:FakeGlobal=@{};$global:FakeScopes=@{};$global:FakeOverrides=@{}
@@ -172,9 +172,9 @@ function global:netlify {
  }
 }
 $denied=$false
-try{& $ScriptPath -Action Activate -Authorized -AcceptResidualRisks -DurationMinutes 240 -DailyCalls 50 -DailySessions 20}catch{$denied=$true;if($_.Exception.Message -notmatch 'HTTP403' -and !($Mode -eq 'multiChanged' -and $_.Exception.Message -ceq 'Variable scopes or non-preview values changed; stop and review.')){throw}}
-if($Mode -eq 'deny' -or $Mode -eq 'multiDeny' -or $Mode -eq 'multiChanged'){if(!$denied){throw 'Expected write denial'}}else{if($denied -or $global:FakePreview.ORCHESTRATE_COMPETITION_ENABLED -cne 'true'){throw 'Activation failed'};if($global:FakePreview.ORCHESTRATE_COMPETITION_DAILY_CALL_LIMIT -cne '50' -or $global:FakePreview.ORCHESTRATE_COMPETITION_DAILY_SESSION_LIMIT -cne '20'){throw 'Limits mismatch'};& $ScriptPath -Action Disable}
-foreach($key in @('ORCHESTRATE_COMPETITION_ENABLED','ORCHESTRATE_PROBE_ENABLED','ORCHESTRATE_PROBE_EXCEPTION_ENABLED')){if($global:FakePreview[$key] -cne 'false'){throw 'Shutdown gate failed'}}
+try{& $ScriptPath -EditableDiscussion:($Mode -eq 'editable') -Action Activate -Authorized -AcceptResidualRisks -DurationMinutes 240 -DailyCalls 50 -DailySessions 20}catch{$denied=$true;if($_.Exception.Message -notmatch 'HTTP403' -and !($Mode -eq 'multiChanged' -and $_.Exception.Message -ceq 'Variable scopes or non-preview values changed; stop and review.')){throw}}
+if($Mode -eq 'deny' -or $Mode -eq 'multiDeny' -or $Mode -eq 'multiChanged'){if(!$denied){throw 'Expected write denial'}}else{if($denied -or $global:FakePreview.ORCHESTRATE_COMPETITION_ENABLED -cne 'true'){throw 'Activation failed'};if($global:FakePreview.ORCHESTRATE_COMPETITION_DAILY_CALL_LIMIT -cne '50' -or $global:FakePreview.ORCHESTRATE_COMPETITION_DAILY_SESSION_LIMIT -cne '20'){throw 'Limits mismatch'};if($Mode -eq 'editable' -and $global:FakePreview.ORCHESTRATE_DISCUSSION_AUTHORIZED -cne 'true'){throw 'Editable authorization missing'};& $ScriptPath -Action Disable}
+foreach($key in @('ORCHESTRATE_DISCUSSION_AUTHORIZED','ORCHESTRATE_COMPETITION_ENABLED','ORCHESTRATE_PROBE_ENABLED','ORCHESTRATE_PROBE_EXCEPTION_ENABLED')){if($global:FakePreview[$key] -cne 'false'){throw 'Shutdown gate failed'}}
 if($global:FakePreview.ORCHESTRATE_PROBE_KILL_SWITCH -cne 'true' -or $global:FakePreview.ORCHESTRATE_COMPETITION_UNTIL -cne '' -or $global:FakePreview.ORCHESTRATE_PROBE_EXCEPTION_APPROVAL -cne ''){throw 'Shutdown cleanup failed'}
 if($global:FakeProduction.SYNTHETIC_MARKER -cne 'unchanged' -or $global:Writes -lt 1){throw 'Production changed or no writes'}
 foreach($key in $global:OriginalGlobal.Keys){if($Mode -eq 'multiChanged' -and $key -eq 'ORCHESTRATE_COMPETITION_DAILY_CALL_LIMIT'){if($global:FakeGlobal[$key] -cne '999'){throw 'Global-change detection fixture failed'};continue};if($global:FakeGlobal[$key] -cne $global:OriginalGlobal[$key]){throw 'Global fallback changed'}}
@@ -183,7 +183,7 @@ if($Mode -like 'multi*' -and $global:Creates -ne 0){throw 'Existing variables we
 if($Mode -eq 'multi'){foreach($key in @('ORCHESTRATE_COMPETITION_ENABLED','ORCHESTRATE_COMPETITION_STARTED_AT','ORCHESTRATE_COMPETITION_UNTIL','ORCHESTRATE_COMPETITION_DAILY_CALL_LIMIT','ORCHESTRATE_COMPETITION_DAILY_SESSION_LIMIT')){if(!$global:FakeOverrides.ContainsKey($key)){throw 'Missing preview override'}}}
 Write-Output 'MockedWorkflowPassed'
 `;
- try{writeFileSync(file,harness);for(const mode of ['normal','deny','multi','multiDeny','multiChanged']){const result=spawnSync('pwsh',['-NoProfile','-File',file,'-ScriptPath',script,'-Mode',mode],{encoding:'utf8',timeout:15000});expect(result.status,result.stderr).toBe(0);expect(result.stdout).toContain('MockedWorkflowPassed');expect(result.stdout+result.stderr).not.toContain('SyntheticPrivateProviderPayload');}}
+ try{writeFileSync(file,harness);for(const mode of ['normal','editable','deny','multi','multiDeny','multiChanged']){const result=spawnSync('pwsh',['-NoProfile','-File',file,'-ScriptPath',script,'-Mode',mode],{encoding:'utf8',timeout:15000});expect(result.status,result.stderr).toBe(0);expect(result.stdout).toContain('MockedWorkflowPassed');expect(result.stdout+result.stderr).not.toContain('SyntheticPrivateProviderPayload');}}
  finally{unlinkSync(file);rmdirSync(directory);}
 });
 

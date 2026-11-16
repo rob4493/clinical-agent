@@ -24,7 +24,11 @@ type Ticket={kind:'session'|'call';day:string;reservationId:string};
 
 /** Only this versioned store accepts competition operational records. No patient,
  * prompt, transcript, operator identity, credential or provider ID is permitted. */
+export function validateChatLock(key:string,content?:string){
+ if(!/^chat\/lock\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/(?:[0-9]|1[01])$/.test(key)||content!==undefined&&content!=='{"consumed":true}')throw new QuotaError('unavailable');
+}
 export function validateCompetitionTicket(key:string,content?:string):void{
+ if(key.startsWith('chat/lock/')){validateChatLock(key,content);return;}
  if(key.startsWith('thread/')){validateTicket(key,content);return;}
  if(!/^(?:policy\/\d{4}-\d{2}-\d{2}|(?:session|call)\/\d{4}-\d{2}-\d{2}\/(?:0|[1-9]\d{0,2})|outcome\/(?:session|call)\/\d{4}-\d{2}-\d{2}\/[0-9a-f-]{36})$/.test(key))throw new QuotaError('unavailable');
  if(content===undefined)return;

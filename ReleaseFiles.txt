@@ -137,6 +137,7 @@ frontend/src/App.tsx
 frontend/src/ConflictDialog.tsx
 frontend/src/DemoCases.ts
 frontend/src/Disclosure.tsx
+frontend/src/EditableConversation.tsx
 frontend/src/FindingIcon.tsx
 frontend/src/GuidedFollowup.tsx
 frontend/src/OrchestrateChat.tsx
@@ -185,6 +186,7 @@ frontend/tests/Dialogue.test.tsx
 frontend/tests/DocumentApi.test.ts
 frontend/tests/DocumentWorker.test.ts
 frontend/tests/Documents.test.ts
+frontend/tests/EditableConversation.test.tsx
 frontend/tests/EmbedSession.test.ts
 frontend/tests/EmbeddedActivation.test.tsx
 frontend/tests/EmbeddedLifecycle.test.ts
@@ -205,6 +207,7 @@ frontend/tests/OrchestrateProbe.test.ts
 frontend/tests/OrchestrateTarget.test.ts
 frontend/tests/OrchestrateTransport.test.ts
 frontend/tests/PreviewRelease.test.ts
+frontend/tests/ProtectedConversation.test.ts
 frontend/tests/QuotaVerification.test.ts
 frontend/tests/RequestPolicy.test.ts
 frontend/tests/ResponsePresentation.test.tsx
@@ -257,6 +260,7 @@ netlify/evaluation/orchestrateTransport.ts
 netlify/evaluation/packages.ts
 netlify/evaluation/policy.json
 netlify/evaluation/presentationProjector.ts
+netlify/evaluation/protectedConversation.ts
 netlify/evaluation/requestPolicy.ts
 netlify/evaluation/retrieval.ts
 netlify/evaluation/reviewSeal.ts
@@ -293,6 +297,7 @@ shared/OperatorContextVerification.md
 shared/OrchestrateProbe.md
 shared/Preview4Update.md
 shared/PreviewVerification.md
+shared/ProtectedConversation.md
 shared/README.md
 shared/ResponsePresentation.md
 shared/VisualFindings.md

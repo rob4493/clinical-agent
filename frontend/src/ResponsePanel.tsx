@@ -12,12 +12,12 @@ function Citation({ statement, onCite, sourcesOpen }: { statement: Statement; on
   return <>{statement.text}{statement.numbers.length > 0 && <button type="button" className="citation citationButton" onClick={onCite} aria-expanded={sourcesOpen} aria-controls="reviewSources" aria-label={`View cited sources ${statement.numbers.join(',')}`}>[{statement.numbers.join(',')}]</button>}</>;
 }
 
-export default function ResponsePanel({ review, synthetic = false, pending = false, competition = false, findings = [], followup }: { followup?: ReactNode; findings?: FindingCard[]; review: Review | null; synthetic?: boolean; pending?: boolean; competition?: boolean }) {
+export default function ResponsePanel({ review, synthetic = false, pending = false, competition = false, findings = [], followup, conversation }: { conversation?: ReactNode; followup?: ReactNode; findings?: FindingCard[]; review: Review | null; synthetic?: boolean; pending?: boolean; competition?: boolean }) {
   const [sourceId, setSourceId] = useState<string | null>(null);
   const [sourcesOpen, setSourcesOpen] = useState(false);
   useEffect(() => { setSourceId(null); setSourcesOpen(false); }, [review]);
   function openSources() { setSourcesOpen(true); }
-  if (!review) return <section id="evidenceWorkspace" tabIndex={-1} className="card responseCard" aria-labelledby="reviewTitle" aria-busy={pending}><h2 id="reviewTitle">Evidence review</h2><p className="muted">{pending ? 'Checking the case and reviewing selected evidence…' : 'Your response will appear here after submission.'}</p><div className="emptyReview"><strong>{pending ? 'Analysis in progress' : 'Ready for your case'}</strong><span>{synthetic ? 'Review the case before submitting.' : 'Guided by independent clinical judgment.'}</span></div></section>;
+  if (!review) return <section id="evidenceWorkspace" tabIndex={-1} className="card responseCard" aria-labelledby="reviewTitle" aria-busy={pending}><h2 id="reviewTitle">Evidence review</h2><p className="muted">{pending ? 'Checking the case and reviewing selected evidence…' : 'Your response will appear here after submission.'}</p><div className="emptyReview"><strong>{pending ? 'Analysis in progress' : 'Ready for your case'}</strong><span>{synthetic ? 'Review the case before submitting.' : 'Guided by independent clinical judgment.'}</span></div><div key="conversation">{conversation}</div></section>;
   const presentation = review.considerations.length ? { tone: 'supported', label: 'Evidence-supported response' }
     : review.heading === 'Resolve conflicting information' ? { tone: 'conflict', label: 'Analysis paused · conflicting information' }
     : review.heading === 'Clarification required' ? { tone: 'clarification', label: 'Analysis paused · clarification needed' }
@@ -33,6 +33,7 @@ export default function ResponsePanel({ review, synthetic = false, pending = fal
 </>}
     <VisualFindings findings={successfulReview(review) ? review.warnings.length ? neutralFindings(review) : findings.length ? findings : neutralFindings(review) : []} reviewedSummary={review.warnings.length || review.scopeNotice || review.messages.length ? undefined : review.reviewedSummary} summary={summary ? <Citation sourcesOpen={sourcesOpen} onCite={openSources} statement={summary} /> : undefined} onCite={openSources} sourcesOpen={sourcesOpen} />
     {!review.considerations.length && review.messages.map((message,index)=><p key={index}>{message}</p>)}
+    <div key="conversation">{conversation}</div>
     {followup}
     {concise.next && <section aria-labelledby="nextTitle"><h3 id="nextTitle">Next consideration</h3><p><Citation sourcesOpen={sourcesOpen} onCite={openSources} statement={concise.next} /></p></section>}
     {concise.points.length > 0 && <Disclosure resetKey={review} label={`Clinical considerations (${concise.points.length})`}><ul className="keyPoints">{concise.points.map((statement, index) => <li key={index}><Citation sourcesOpen={sourcesOpen} onCite={openSources} statement={statement} /></li>)}</ul></Disclosure>}

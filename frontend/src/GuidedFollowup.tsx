@@ -1,4 +1,3 @@
-import EmbeddedChat from './embedded/EmbeddedChat';
 import {readReview,type Review} from './api';
 import {applyObservations,interpretDialogue,canonicalCase,nextQuestion,MessageLimit,TurnLimit,type Dialogue} from '../../shared/conversation';
 import {useEffect,useRef,useState} from 'react';
@@ -12,7 +11,7 @@ export default function GuidedFollowup({clarification,mode:offered,caseInput,onC
  const [draft,setDraft]=useState(''),[messages,setMessages]=useState<{speaker:'Endo'|'Clinician';text:string}[]>([]),[interpreted,setInterpreted]=useState<Dialogue|null>(null),[submittedMessage,setSubmittedMessage]=useState(''),[selectedIds,setSelectedIds]=useState<string[]>([]),[rejectedIds,setRejectedIds]=useState<string[]>([]),[conversationConflict,setConversationConflict]=useState(false),[structured,setStructured]=useState(false);
  const [turns,setTurns]=useState<string[]>([]);
  const [localMode,setLocalMode]=useState(false);
- const [agentStatus,setAgentStatus]=useState('IBM authorization pending. No message has been sent to IBM.');
+ const agentStatus='Use Continue with Endo AI for separate IBM discussion. Guided collection never sends case details to IBM.';
  const composer=useRef<HTMLTextAreaElement>(null),history=useRef<HTMLDivElement>(null);
  useEffect(()=>{history.current?.lastElementChild?.scrollIntoView?.({block:'nearest'});},[messages,interpreted]);
  const trigger=useRef<HTMLButtonElement>(null),controller=useRef<AbortController|null>(null),busy=useRef(false),alive=useRef(true);
@@ -62,7 +61,7 @@ export default function GuidedFollowup({clarification,mode:offered,caseInput,onC
  {open&&<div className="assistantConversation">
  <div role={urgentPreview?"alert":undefined}>{urgentPreview?.warnings.map((warning,index)=><p key={index}><strong>Urgent assessment: </strong>{warning.text} {warning.numbers.length?"["+warning.numbers.join(",")+"]":""}</p>)}{urgentPreview?.messages.map((message,index)=><p key={index}>{message}</p>)}{urgentPreview&&<p>Based on the proposed answer. The original case has not been changed. {urgentPreview.warnings.length>0?'Do not delay urgent assessment for this workflow.':'The source-coverage limitation remains in effect.'}</p>}</div>
  <p className="conversationProvider" role="note">{localMode?'Local fallback · Limited supported-field collection, not IBM conversation. Messages stay in Endo.':agentStatus}</p>
- {!localMode&&<><EmbeddedChat onStatus={setAgentStatus}/><p className="fieldHint">IBM chat requires verified session security, tool restrictions, privacy/retention approval and enforceable usage limits. Your case and uploads are not connected.</p><button id="agentFallback" type="button" disabled={pending} onClick={()=>{setLocalMode(true);requestAnimationFrame(()=>composer.current?.focus());}}>Use local fallback</button></>}
+ {!localMode&&<><p className="fieldHint">Structured field collection stays separate from AI discussion. Your case and uploads are not automatically shared.</p><button id="agentFallback" type="button" disabled={pending} onClick={()=>{setLocalMode(true);requestAnimationFrame(()=>composer.current?.focus());}}>Use local fallback</button></>}
  {localMode&&<p className="fieldHint">Use de-identified information only. Changes require your confirmation; reanalysis is separate.</p>}
  {localMode&&mode.kind==='conflict'&&<button type="button" onClick={()=>{close();onConflict();}}>Review conflict</button>}
  {mode.questionId&&localMode&&<><div className="conversationHistory" role="log" aria-label="Follow-up conversation" aria-live="polite" ref={history}>{messages.map((entry,index)=><article key={index} className={'conversationMessage '+entry.speaker.toLowerCase()}><strong>{entry.speaker}</strong><p>{entry.text}</p></article>)}</div>

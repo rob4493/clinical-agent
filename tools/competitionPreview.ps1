@@ -6,7 +6,8 @@ param(
  [ValidateRange(1,1000)][int]$DailyCalls=50,
  [ValidateRange(1,200)][int]$DailySessions=20,
  [switch]$Authorized,
- [switch]$AcceptResidualRisks
+ [switch]$AcceptResidualRisks,
+ [switch]$EditableDiscussion
 )
 $ErrorActionPreference='Stop'
 $siteId='b1f36feb-3225-4a27-9dff-de780d166161'
@@ -57,7 +58,7 @@ $records=@(Invoke-Netlify 'getEnvVars' @{account_id=$site.account_id;site_id=$si
 $originalKeys=@($records.key);$originalConfigurationHash=Configuration-Hash $records $originalKeys
 $existing=@{};foreach($entry in $records){$existing[$entry.key]=$entry.scopes}
 function Set-Preview([string]$key,[string]$value){
- if($key -notmatch '^ORCHESTRATE_(?:COMPETITION_(?:ENABLED|STARTED_AT|UNTIL|DAILY_CALL_LIMIT|DAILY_SESSION_LIMIT)|PROBE_(?:ENABLED|KILL_SWITCH|EXCEPTION_ENABLED|TEST_UNTIL|EXCEPTION_APPROVAL))$'){throw 'Configuration key not permitted.'}
+ if($key -notmatch '^ORCHESTRATE_(?:DISCUSSION_AUTHORIZED|COMPETITION_(?:ENABLED|STARTED_AT|UNTIL|DAILY_CALL_LIMIT|DAILY_SESSION_LIMIT)|PROBE_(?:ENABLED|KILL_SWITCH|EXCEPTION_ENABLED|TEST_UNTIL|EXCEPTION_APPROVAL))$'){throw 'Configuration key not permitted.'}
  if($existing.ContainsKey($key)){
   if('functions' -notin @($existing[$key]) -and 'all' -notin @($existing[$key])){throw 'Existing variable does not include Functions; no scope is changed.'}
   $null=Invoke-Netlify 'setEnvVarValue' @{account_id=$site.account_id;site_id=$siteId;key=$key;body=@{context='deploy-preview';value=$value}}
@@ -67,14 +68,17 @@ function Set-Preview([string]$key,[string]$value){
  }
 }
 $closed=[ordered]@{ORCHESTRATE_COMPETITION_ENABLED='false';ORCHESTRATE_PROBE_KILL_SWITCH='true';ORCHESTRATE_COMPETITION_STARTED_AT='';ORCHESTRATE_COMPETITION_UNTIL='';ORCHESTRATE_PROBE_ENABLED='false';ORCHESTRATE_PROBE_EXCEPTION_ENABLED='false';ORCHESTRATE_PROBE_TEST_UNTIL='';ORCHESTRATE_PROBE_EXCEPTION_APPROVAL=''}
+if($existing.ContainsKey('ORCHESTRATE_DISCUSSION_AUTHORIZED')){$closed['ORCHESTRATE_DISCUSSION_AUTHORIZED']='false'}
 try{
  if($Action -eq 'Activate'){
+  if($EditableDiscussion -and !$existing.ContainsKey('ORCHESTRATE_DISCUSSION_AUTHORIZED')){throw 'Existing editable discussion authorization setting is required.'}
   foreach($pair in @(@('ORCHESTRATE_ENABLED','false'),@('ENDO_DEMO_INFERENCE_ENABLED','false'),@('ENDO_DEMO_KILL_SWITCH','true'),@('ORCHESTRATE_EMBED_PREVIEW_ENABLED','false'),@('ORCHESTRATE_EMBED_KILL_SWITCH','true'),@('OTEL_SDK_DISABLED','true'))){if($preview.($pair[0]) -cne $pair[1]){throw 'Existing public/embedded inference or privacy gates are not safely closed.'}}
   if($preview.ORCHESTRATE_AGENT_ID -cne 'c6698d4e-a08d-4b77-bf05-139ff3b4c695' -or $preview.ORCHESTRATE_ENVIRONMENT -cne 'live' -or $preview.WATSONX_AI_AUTH_TYPE -cne 'iam' -or $preview.ORCHESTRATE_API_URL -cnotmatch '^https://api\.eu-de\.watson-orchestrate\.cloud\.ibm\.com/instances/[A-Za-z0-9][A-Za-z0-9-]{0,127}$' -or $preview.ORCHESTRATE_EMBED_PREVIEW_ID -cne '4' -or $preview.ORCHESTRATE_EMBED_PREVIEW_ORIGIN -cne 'https://deploy-preview-4--clinicalagent.netlify.app' -or [string]::IsNullOrWhiteSpace($preview.ORCHESTRATE_EMBED_OPERATOR_IDS)){throw 'Existing target or Preview #4/operator pins are invalid.'}
   # Close first, then configure the session, then enable last. No old quota is touched.
   foreach($key in $closed.Keys){Set-Preview $key $closed[$key]}
   $now=[DateTimeOffset]::UtcNow;$expires=$now.AddMinutes($DurationMinutes).ToString('yyyy-MM-ddTHH:mm:ss.fffZ')
   $desired=[ordered]@{ORCHESTRATE_COMPETITION_STARTED_AT=$now.ToString('yyyy-MM-ddTHH:mm:ss.fffZ');ORCHESTRATE_COMPETITION_UNTIL=$expires;ORCHESTRATE_COMPETITION_DAILY_CALL_LIMIT=[string]$DailyCalls;ORCHESTRATE_COMPETITION_DAILY_SESSION_LIMIT=[string]$DailySessions;ORCHESTRATE_PROBE_KILL_SWITCH='false';ORCHESTRATE_COMPETITION_ENABLED='true'}
+  if($EditableDiscussion){$desired['ORCHESTRATE_DISCUSSION_AUTHORIZED']='true'}
  }else{
   $desired=[ordered]@{};foreach($key in $closed.Keys){$desired[$key]=$closed[$key]}
   # Verify write access to both limit keys without changing the effective limits.
@@ -89,7 +93,7 @@ try{
  $finalSite=Invoke-Netlify 'getSite' @{site_id=$siteId}
  if($finalSite.published_deploy.commit_ref -cne $productionCommit -or (Environment-Hash (Read-Environment 'production')) -cne $productionHash){throw 'Production baseline changed; stop and review.'}
  Write-Output 'Preview overrides saved and read back; Production, global values and scopes unchanged.'
- if($Action -eq 'Activate'){Write-Output ('Session expiry UTC: '+$expires);Write-Output 'MANUAL REBUILD REQUIRED: protected Preview #4. Require trusted operator GET 400/inputRejected before any separately authorized POST.'}
+ if($Action -eq 'Activate'){Write-Output ('Session expiry UTC: '+$expires);if($EditableDiscussion){Write-Output 'MANUAL REBUILD REQUIRED: protected Preview #4. Require trusted operator conversation GET version 2 / available before explicitly sending synthetic messages.'}else{Write-Output 'MANUAL REBUILD REQUIRED: protected Preview #4. Require trusted operator GET 400/inputRejected before any separately authorized POST.'}}
  else{Write-Output 'MANUAL REBUILD REQUIRED: protected Preview #4. Confirm authenticated GET 404/disabled. Configuration cleanup is not runtime shutdown proof.'}
 }catch{
  $failure=if($_.Exception.Message -cmatch '^Netlify operation failed: [A-Za-z]+ / (?:HTTP403|HTTP422|unavailable)$' -or $_.Exception.Message -cin @('Variable scopes or non-preview values changed; stop and review.','Production baseline changed; stop and review.')){$_.Exception.Message}else{'Competition configuration validation failed.'}
