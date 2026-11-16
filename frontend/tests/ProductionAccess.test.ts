@@ -2,7 +2,7 @@
 import {expect,it,vi} from 'vitest';
 import {randomUUID} from 'node:crypto';
 import type {Transport} from '../../netlify/evaluation/watsonShadow';
-import {createConverse} from '../../netlify/functions/converse';
+import {createConverse,config} from '../../netlify/functions/converse';
 import {createVisitorAccess,isProductionRequest,productionWindow,ProductionOrigin,VisitorCookie} from '../../netlify/evaluation/productionAccess';
 import {createProductionConversation} from '../../netlify/evaluation/productionConversation';
 import {validateConversationTicket,type ConversationWindow} from '../../netlify/evaluation/conversationQuota';
@@ -19,6 +19,11 @@ function fixture(){
 }
 it('defaults disabled, permits only an approved bounded window and never interprets a flag as proof of remote enforcement',()=>{
  expect(productionWindow({},Now)).toBeNull();expect(productionWindow(Settings,Now)).toMatchObject({dailyCalls:50,dailySessions:20} satisfies Partial<ConversationWindow>);
+});
+it('binds the rate rule to the exact application route and blocks alternate Function URLs',async()=>{
+ expect(config.path).toBe('/api/v1/conversation');expect(config.rateLimit).toMatchObject({windowLimit:12,windowSize:60,aggregateBy:['ip','domain']});
+ const f=fixture(),request=new Request(ProductionOrigin+'/.netlify/functions/converse',{method:'POST',headers:{Origin:ProductionOrigin,'Content-Type':'application/json'},body:JSON.stringify({version:'2',action:'start',syntheticOnly:true,accessCode:Settings.ENDO_CHAT_ACCESS_CODE})});
+ expect(isProductionRequest(request,Context)).toBe(false);expect((await f.handler(request,Context)).status).toBe(404);expect(f.records.size).toBe(0);expect(f.provider).not.toHaveBeenCalled();
 });
 it.each([
  {ENDO_CHAT_ENABLED:'false'},{ENDO_CHAT_KILL_SWITCH:'true'},{ENDO_CHAT_TOOL_POLICY:'unverified'},{ENDO_CHAT_SESSION_SECRET:''},{ENDO_CHAT_ACCESS_CODE:''},{WATSONX_AI_APIKEY:''},

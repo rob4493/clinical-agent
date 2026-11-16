@@ -23,7 +23,7 @@ export function productionWindow(env:OrchestrateEnvironment,now:number):Conversa
 }
 export function isProductionRequest(request:Request,context:DeployContext){
  const url=new URL(request.url);
- return url.origin===ProductionOrigin&&!url.search&&context.deploy?.context==='production'&&context.deploy.published===true&&typeof context.deploy.id==='string'&&/^[A-Za-z0-9-]{1,128}$/.test(context.deploy.id);
+ return url.origin===ProductionOrigin&&url.pathname==='/api/v1/conversation'&&!url.search&&context.deploy?.context==='production'&&context.deploy.published===true&&typeof context.deploy.id==='string'&&/^[A-Za-z0-9-]{1,128}$/.test(context.deploy.id);
 }
 export function createVisitorAccess(env:OrchestrateEnvironment,clock:()=>number=Date.now){
  const signature=(text:string)=>createHmac('sha256',env.ENDO_CHAT_SESSION_SECRET!).update('Endo visitor v1\0'+text).digest();
