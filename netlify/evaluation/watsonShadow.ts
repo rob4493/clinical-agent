@@ -45,6 +45,21 @@ class ShadowConfig {
  model(){return this.#model;}
 }
 
+/** Reuses the existing IAM broker for a service other than direct-model text/chat.
+ * No model/project configuration is required to authenticate an Orchestrate call.
+ */
+class IamCredential {
+ #key:string;#timeout:number;
+ constructor(environment:Environment,budget:number){
+  const key=environment.WATSONX_AI_APIKEY,timeout=environment.WATSONX_AI_TIMEOUT_MS??String(DefaultShadowTimeout);
+  if(environment.WATSONX_AI_AUTH_TYPE!=='iam'||!key||key.length>512||/\s|[\u0000-\u001f]/.test(key)||!/^\d+$/.test(timeout)||Number(timeout)<MinimumShadowTimeout||Number(timeout)>MaximumShadowTimeout||!Number.isInteger(budget)||budget<MinimumShadowTimeout||budget>MaximumShadowTimeout)throw new ShadowFault('configuration');
+  this.#key=key;this.#timeout=Math.min(Number(timeout),budget);
+ }
+ fingerprint(){return createHash('sha256').update(this.#key).digest('hex');}
+ timeout(){return this.#timeout;}
+ authentication(){return new URLSearchParams({grant_type:'urn:ibm:params:oauth:grant-type:apikey',apikey:this.#key}).toString();}
+}
+
 function abortable<T>(operation:Promise<T>,signal:AbortSignal):Promise<T> {
  // Observe a transport already started by the caller even if cancellation won the race.
  if(signal.aborted){void operation.catch(()=>{});signal.throwIfAborted();}
@@ -130,7 +145,7 @@ async function readCompletion(response:Response,signal:AbortSignal,config:Shadow
 export function createWatsonRuntime(transport:Transport=(input,init)=>fetch(input,init),clock:()=>number=Date.now) {
  let token:{identity:string;secret:string;expires:number}|undefined;
  let pending:{identity:string;controller:AbortController;promise:Promise<string>;waiters:number}|undefined;
- async function accessToken(config:ShadowConfig,signal:AbortSignal):Promise<string> {
+ async function accessToken(config:Pick<ShadowConfig,'fingerprint'|'timeout'|'authentication'>,signal:AbortSignal):Promise<string> {
   const identity=config.fingerprint();
   if(token?.identity===identity&&token.expires>clock())return token.secret;
   // A credential rotation cannot inherit the previous credential's in-flight refresh.
@@ -217,7 +232,13 @@ export function createWatsonRuntime(transport:Transport=(input,init)=>fetch(inpu
    throw new ShadowFault(reason);
   }
  };
- return {shadow,request};
+ // Server-only extension: the caller must authorize projection/quota before this
+ // method. Existing shadow/reviewed paths keep their original configuration gates.
+ const authenticate=async(environment:Environment,signal:AbortSignal,budget:number):Promise<string>=>{
+  const config=new IamCredential(environment,budget);
+  return accessToken(config,AbortSignal.any([signal,AbortSignal.timeout(config.timeout())]));
+ };
+ return {shadow,request,authenticate};
 }
 
 /** Compatibility factory: ordinary presentation eligibility and validation remain unchanged. */
