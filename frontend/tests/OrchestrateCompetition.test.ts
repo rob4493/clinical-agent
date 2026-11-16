@@ -128,13 +128,22 @@ it('keeps the shared legacy adapter validator restrictive and rejects sensitive 
  expect(()=>validateCompetitionTicket('outcome/call/2026-11-16/'+randomUUID(),JSON.stringify({status:'failed',reason:'SyntheticPrivateError',invoked:true}))).toThrow();
 });
 
-it.skipIf(process.platform!=='win32')('workflow manages only preview configuration and closes safely after a mocked write denial',()=>{
+it.skipIf(process.platform!=='win32')('workflow preserves All scopes/global fallbacks, updates preview overrides and closes safely on denial',()=>{
  const directory=mkdtempSync(join(tmpdir(),'endo-competition-script-')),file=join(directory,'harness.ps1'),script=resolve('../tools/competitionPreview.ps1');
  const harness=`param([string]$ScriptPath,[string]$Mode)
 $ErrorActionPreference='Stop'
 $global:FakePreview=@{ORCHESTRATE_ENABLED='false';ENDO_DEMO_INFERENCE_ENABLED='false';ENDO_DEMO_KILL_SWITCH='true';ORCHESTRATE_EMBED_PREVIEW_ENABLED='false';ORCHESTRATE_EMBED_KILL_SWITCH='true';OTEL_SDK_DISABLED='true';ORCHESTRATE_AGENT_ID='c6698d4e-a08d-4b77-bf05-139ff3b4c695';ORCHESTRATE_ENVIRONMENT='live';WATSONX_AI_AUTH_TYPE='iam';ORCHESTRATE_API_URL='https://api.eu-de.watson-orchestrate.cloud.ibm.com/instances/SyntheticTenant';ORCHESTRATE_EMBED_PREVIEW_ID='4';ORCHESTRATE_EMBED_PREVIEW_ORIGIN='https://deploy-preview-4--clinicalagent.netlify.app';ORCHESTRATE_EMBED_OPERATOR_IDS='synthetic-operator';ORCHESTRATE_PROBE_KILL_SWITCH='true'}
 $global:FakeProduction=@{ORCHESTRATE_ENABLED='false';SYNTHETIC_MARKER='unchanged'}
-$global:FakeDenied=$false;$global:Writes=0
+$global:FakeDenied=$false;$global:Writes=0;$global:Creates=0
+$global:FakeGlobal=@{};$global:FakeScopes=@{};$global:FakeOverrides=@{}
+if($Mode -like 'multi*'){
+ foreach($key in @('ORCHESTRATE_COMPETITION_ENABLED','ORCHESTRATE_PROBE_ENABLED','ORCHESTRATE_PROBE_EXCEPTION_ENABLED')){$global:FakePreview[$key]='false'}
+ foreach($key in @('ORCHESTRATE_COMPETITION_STARTED_AT','ORCHESTRATE_COMPETITION_UNTIL','ORCHESTRATE_PROBE_TEST_UNTIL','ORCHESTRATE_PROBE_EXCEPTION_APPROVAL')){$global:FakePreview[$key]=''}
+ $global:FakePreview['ORCHESTRATE_COMPETITION_DAILY_CALL_LIMIT']='50';$global:FakePreview['ORCHESTRATE_COMPETITION_DAILY_SESSION_LIMIT']='20'
+ foreach($key in $global:FakePreview.Keys){$global:FakeGlobal[$key]=$global:FakePreview[$key];$global:FakeProduction[$key]=$global:FakePreview[$key]}
+}
+foreach($key in $global:FakePreview.Keys){$global:FakeScopes[$key]=if($Mode -like 'multi*'){@('builds','functions','post_processing','runtime')}else{@('functions')}}
+$global:OriginalGlobal=$global:FakeGlobal.Clone();$global:OriginalScopes=$global:FakeScopes.Clone()
 function global:netlify {
  $global:LASTEXITCODE=0;$a=@($args)
  if($a[0] -eq 'env:list'){$idx=[Array]::IndexOf($a,'--context');if($a[$idx+1] -eq 'production'){$global:FakeProduction|ConvertTo-Json -Compress}else{$global:FakePreview|ConvertTo-Json -Compress};return}
@@ -142,27 +151,39 @@ function global:netlify {
  $idx=[Array]::IndexOf($a,'--data');$data=$a[$idx+1]|ConvertFrom-Json -DateKind String
  switch($a[1]) {
  'getSite' {@{name='clinicalagent';account_id='synthetic-account';sso_login=$true;sso_login_context='non_production';published_deploy=@{commit_ref='synthetic-main'}}|ConvertTo-Json -Depth 5 -Compress}
- 'getEnvVars' {ConvertTo-Json -InputObject @($global:FakePreview.Keys|ForEach-Object {@{key=$_;scopes=@('functions')}}) -Depth 5 -Compress}
+  'getEnvVars' {
+  $rows=@(foreach($key in $global:FakePreview.Keys){
+   $values=@();if($global:FakeGlobal.ContainsKey($key)){
+    if($global:FakeOverrides.ContainsKey($key)){foreach($context in @('dev','branch-deploy','production')){$values+=@{context=$context;value=$global:FakeGlobal[$key]}}}else{$values+=@{context='all';value=$global:FakeGlobal[$key]}}
+   }
+   if($global:FakeOverrides.ContainsKey($key)){$values+=@{context='deploy-preview';value=$global:FakeOverrides[$key]}}elseif(!$global:FakeGlobal.ContainsKey($key)){$values+=@{context='deploy-preview';value=$global:FakePreview[$key]}}
+   @{key=$key;scopes=$global:FakeScopes[$key];values=$values}
+  });ConvertTo-Json -InputObject $rows -Depth 8 -Compress
+ }
  'setEnvVarValue' {
   if($data.site_id -cne 'b1f36feb-3225-4a27-9dff-de780d166161' -or $data.body.context -cne 'deploy-preview'){throw 'Scope escape'}
-  if($Mode -eq 'deny' -and !$global:FakeDenied -and $data.key -eq 'ORCHESTRATE_COMPETITION_UNTIL' -and $data.body.value -ne ''){$global:FakeDenied=$true;$global:LASTEXITCODE=1;Write-Output '403 Forbidden SyntheticPrivateProviderPayload';return}
-  $global:FakePreview[$data.key]=$data.body.value;$global:Writes++;Write-Output '{}'
+  if(($Mode -eq 'deny' -or $Mode -eq 'multiDeny') -and !$global:FakeDenied -and $data.key -eq 'ORCHESTRATE_COMPETITION_UNTIL' -and $data.body.value -ne ''){$global:FakeDenied=$true;$global:LASTEXITCODE=1;Write-Output '403 Forbidden SyntheticPrivateProviderPayload';return}
+  $global:FakePreview[$data.key]=$data.body.value;$global:FakeOverrides[$data.key]=$data.body.value;$global:Writes++;if($Mode -eq 'multiChanged' -and $data.key -eq 'ORCHESTRATE_COMPETITION_ENABLED' -and $data.body.value -eq 'true'){$global:FakeGlobal['ORCHESTRATE_COMPETITION_DAILY_CALL_LIMIT']='999'};Write-Output '{}'
  }
  'createEnvVars' {
-  foreach($item in @($data.body)){if($data.site_id -cne 'b1f36feb-3225-4a27-9dff-de780d166161' -or @($item.scopes).Count -ne 1 -or $item.scopes[0] -cne 'functions' -or $item.values[0].context -cne 'deploy-preview'){throw 'Scope escape'};$global:FakePreview[$item.key]=$item.values[0].value;$global:Writes++};Write-Output '[]'
+  foreach($item in @($data.body)){if($global:FakePreview.ContainsKey($item.key)){throw 'Duplicate variable creation'};if($data.site_id -cne 'b1f36feb-3225-4a27-9dff-de780d166161' -or @($item.scopes).Count -ne 1 -or $item.scopes[0] -cne 'functions' -or $item.values[0].context -cne 'deploy-preview'){throw 'Scope escape'};$global:FakePreview[$item.key]=$item.values[0].value;$global:FakeOverrides[$item.key]=$item.values[0].value;$global:FakeScopes[$item.key]=@($item.scopes);$global:Creates++;$global:Writes++};Write-Output '[]'
  }
  default {throw 'Unexpected API operation'}
  }
 }
 $denied=$false
-try{& $ScriptPath -Action Activate -Authorized -AcceptResidualRisks -DurationMinutes 240 -DailyCalls 50 -DailySessions 20}catch{$denied=$true;if($_.Exception.Message -notmatch 'HTTP403'){throw}}
-if($Mode -eq 'deny'){if(!$denied){throw 'Expected write denial'}}else{if($denied -or $global:FakePreview.ORCHESTRATE_COMPETITION_ENABLED -cne 'true'){throw 'Activation failed'};if($global:FakePreview.ORCHESTRATE_COMPETITION_DAILY_CALL_LIMIT -cne '50' -or $global:FakePreview.ORCHESTRATE_COMPETITION_DAILY_SESSION_LIMIT -cne '20'){throw 'Limits mismatch'};& $ScriptPath -Action Disable}
+try{& $ScriptPath -Action Activate -Authorized -AcceptResidualRisks -DurationMinutes 240 -DailyCalls 50 -DailySessions 20}catch{$denied=$true;if($_.Exception.Message -notmatch 'HTTP403' -and !($Mode -eq 'multiChanged' -and $_.Exception.Message -ceq 'Variable scopes or non-preview values changed; stop and review.')){throw}}
+if($Mode -eq 'deny' -or $Mode -eq 'multiDeny' -or $Mode -eq 'multiChanged'){if(!$denied){throw 'Expected write denial'}}else{if($denied -or $global:FakePreview.ORCHESTRATE_COMPETITION_ENABLED -cne 'true'){throw 'Activation failed'};if($global:FakePreview.ORCHESTRATE_COMPETITION_DAILY_CALL_LIMIT -cne '50' -or $global:FakePreview.ORCHESTRATE_COMPETITION_DAILY_SESSION_LIMIT -cne '20'){throw 'Limits mismatch'};& $ScriptPath -Action Disable}
 foreach($key in @('ORCHESTRATE_COMPETITION_ENABLED','ORCHESTRATE_PROBE_ENABLED','ORCHESTRATE_PROBE_EXCEPTION_ENABLED')){if($global:FakePreview[$key] -cne 'false'){throw 'Shutdown gate failed'}}
 if($global:FakePreview.ORCHESTRATE_PROBE_KILL_SWITCH -cne 'true' -or $global:FakePreview.ORCHESTRATE_COMPETITION_UNTIL -cne '' -or $global:FakePreview.ORCHESTRATE_PROBE_EXCEPTION_APPROVAL -cne ''){throw 'Shutdown cleanup failed'}
 if($global:FakeProduction.SYNTHETIC_MARKER -cne 'unchanged' -or $global:Writes -lt 1){throw 'Production changed or no writes'}
+foreach($key in $global:OriginalGlobal.Keys){if($Mode -eq 'multiChanged' -and $key -eq 'ORCHESTRATE_COMPETITION_DAILY_CALL_LIMIT'){if($global:FakeGlobal[$key] -cne '999'){throw 'Global-change detection fixture failed'};continue};if($global:FakeGlobal[$key] -cne $global:OriginalGlobal[$key]){throw 'Global fallback changed'}}
+foreach($key in $global:OriginalScopes.Keys){if(($global:FakeScopes[$key] -join ',') -cne ($global:OriginalScopes[$key] -join ',')){throw 'Variable scopes changed'}}
+if($Mode -like 'multi*' -and $global:Creates -ne 0){throw 'Existing variables were duplicated'}
+if($Mode -eq 'multi'){foreach($key in @('ORCHESTRATE_COMPETITION_ENABLED','ORCHESTRATE_COMPETITION_STARTED_AT','ORCHESTRATE_COMPETITION_UNTIL','ORCHESTRATE_COMPETITION_DAILY_CALL_LIMIT','ORCHESTRATE_COMPETITION_DAILY_SESSION_LIMIT')){if(!$global:FakeOverrides.ContainsKey($key)){throw 'Missing preview override'}}}
 Write-Output 'MockedWorkflowPassed'
 `;
- try{writeFileSync(file,harness);for(const mode of ['normal','deny']){const result=spawnSync('pwsh',['-NoProfile','-File',file,'-ScriptPath',script,'-Mode',mode],{encoding:'utf8',timeout:15000});expect(result.status,result.stderr).toBe(0);expect(result.stdout).toContain('MockedWorkflowPassed');expect(result.stdout+result.stderr).not.toContain('SyntheticPrivateProviderPayload');}}
+ try{writeFileSync(file,harness);for(const mode of ['normal','deny','multi','multiDeny','multiChanged']){const result=spawnSync('pwsh',['-NoProfile','-File',file,'-ScriptPath',script,'-Mode',mode],{encoding:'utf8',timeout:15000});expect(result.status,result.stderr).toBe(0);expect(result.stdout).toContain('MockedWorkflowPassed');expect(result.stdout+result.stderr).not.toContain('SyntheticPrivateProviderPayload');}}
  finally{unlinkSync(file);rmdirSync(directory);}
 });
 

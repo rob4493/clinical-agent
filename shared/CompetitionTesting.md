@@ -144,3 +144,22 @@ Production deployment. Then request one session authorization before running
 Activate. Codex manages variables; the operator handles each requested preview
 rebuild. Never use the historical one-shot tickets to obtain extra competition
 capacity or vice versa.
+
+
+### Existing All-scope variables
+Existing multi-scope/All-context variables are supported when Functions is one
+of their scopes. The helper writes only Deploy Preview-specific value overrides
+using setEnvVarValue. It never rewrites an existing variable's scopes, All/global
+fallback, Production value or other non-preview context. It detects existing
+keys and does not create duplicates. New keys, if absent, still use Functions
+scope and a Deploy Preview value only.
+Before/after checks compare effective Production configuration plus the original
+variables' scopes and all non-preview values (including global fallbacks).
+Disable also writes back the effective call/session limits as preview overrides,
+without changing those limits or any quota records. This verifies update access
+to all five competition keys while keeping the session disabled. Existing All
+scopes are an accepted configuration, not an activation/deployment blocker.
+Netlify may materialize an All value into the built-in dev/branch-deploy/
+preview/production records when an override is added. Preservation checks compare
+those equivalent non-preview values and unchanged scopes, not record IDs or the
+All-versus-expanded storage format. Explicit custom-branch values remain checked.
