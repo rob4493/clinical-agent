@@ -1,6 +1,13 @@
 {
   "provenance": "Offline synthetic reconstructions of the operator-reported visible title; not captured IBM responses. The visible title alone does not determine the original Markdown syntax.",
   "table": "| Consideration | Uncertainty |\n| --- | --- |\n| Fictional possibility | Not established |",
+  "majorSections": [
+    {"number":1,"title":"Differential considerations","body":"| Consideration | Uncertainty |\n| --- | --- |\n| Fictional possibility | Not established |","category":"differential"},
+    {"number":2,"title":"Patient history (as reported)","body":"Reported fictional history remains unverified.","category":"history"},
+    {"number":3,"title":"Symptoms and clinical features","body":"- Reported feature\n- Unknown accompanying feature","category":"symptoms"},
+    {"number":4,"title":"Relevant investigations","body":"| Existing information | Status |\n| --- | --- |\n| Fictional record | Unknown |","category":"investigations"},
+    {"number":5,"title":"Follow-up questions and uncertainties","body":"What information remains unknown?","category":"followup"}
+  ],
   "variants": [
     {"id":"markdownHeading","title":"## 1. Differential considerations","astType":"heading"},
     {"id":"boldParagraph","title":"**1. Differential considerations**","astType":"paragraph"},

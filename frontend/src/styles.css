@@ -209,6 +209,8 @@ footer {display:flex;justify-content:space-between;gap:var(--space4);padding:var
 .discussionReference { overflow-wrap:anywhere; color:inherit; text-decoration:none; }
 .ibmDiscussion [aria-busy=true] { opacity:.85; }
 .discussionSection { margin:1rem 0; min-width:0; }
+.discussionSectionControls { display:flex; flex-wrap:wrap; gap:.5rem; margin:.5rem 0 1rem; }
+.discussionSectionControls button { min-height:44px; padding:.35rem .7rem; font-size:.85rem; }
 .discussionSummary,.discussionStaticTitle { display:grid; grid-template-columns:1rem minmax(0,1fr) 1rem; gap:.6rem; align-items:center; color:#71374f; }
 .discussionSummary { list-style:none; cursor:pointer; min-height:44px; border-radius:.3rem; }
 .discussionSummary::-webkit-details-marker { display:none; }
