@@ -134,3 +134,9 @@ frontend/tests/ProtectedConversation.test.ts
 netlify/evaluation/protectedConversation.ts
 shared/ProtectedConversation.md
 ```
+
+## Bounded discussion output and sanitized rejection categories
+
+Provider protocol validation remains separate from the educational-discussion screen. Discussion is bounded to 16,000 characters within the unchanged 32,768-byte provider response limit. The entire answer is screened; unsafe tails are never silently truncated. References, percentages, ordinary stage terminology and harmless presentation syntax are inert text, never fetched, rendered as HTML, verified, or promoted to canonical evidence. Paragraph boundaries remain available to statement checks.
+
+Failures expose only fixed outputStage/outputRejection or responseRejection codes. Categories distinguish length/characters, executable markup, unsafe references, secrets, actions, medication doses, patient-specific staging/risk, definitive diagnosis/exclusion and prescribing. No provider text, identifiers, tokens or exception details are returned or logged. This conservative heuristic screen does not establish medical accuracy and can still reject qualified clinical language; AI discussion remains explicitly unverified. A live retest requires separate authorization, consumes existing quota normally, and must not retry automatically.

@@ -80,7 +80,7 @@ export function createProtectedConversation(options:{store:(signal:AbortSignal)=
    let passed=false;
    try{
     const reply=await provider.complete(turn,signal);guard();await ownThread(options.store,session.id,reply.threadId,signal);
-    const text=validateDiscussion(reply.text);guard();passed=true;
+    const text=validateDiscussion(reply.text,[env.WATSONX_AI_APIKEY!]);guard();passed=true;
     return {version:'2',state:'replied',text,label:'AI-generated discussion — not independently verified clinical evidence',receipt:seal({...session,ordinal:session.ordinal+1,thread:reply.threadId,history:digest(JSON.stringify(messages))})};
    }catch(error){if(reservationFailure instanceof QuotaError)throw reservationFailure;if(error instanceof OrchestrateResponseError&&error.rejection==='providerRefusal')return {version:'2',state:'refused',detail:'The agent declined this request. No case changes were made.'};throw error;}
    finally{

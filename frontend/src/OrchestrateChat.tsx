@@ -1,3 +1,4 @@
+import {DiscussionTextLimit,hasExecutableMarkup,isDiscussionRejection,isProviderRejection} from '../../shared/discussionContract';
 import {useEffect,useRef,useState} from 'react';
 import PromptCatalog from '../../shared/orchestratePrompts.json';
 import {CompetitionNotice,readReview,type Review} from './api';
@@ -17,13 +18,15 @@ export default function OrchestrateChat({onFallback,onEnd}:Props){
   const abort=new AbortController(),current=++generation.current;controller.current=abort;const timer=setTimeout(()=>abort.abort(),18000);
   try{const response=await wait(fetch('/api/v1/conversation',{method:'POST',credentials:'same-origin',redirect:'error',cache:'no-store',signal:abort.signal,headers:{Accept:'application/json','Content-Type':'application/json'},body:JSON.stringify(payload)}),abort.signal);
    const reply=await wait(response.json(),abort.signal);if(!alive.current||abort.signal.aborted||generation.current!==current)return null;
+   if(!response.ok&&reply?.code==='outputRejected')throw new Error('output:'+(isDiscussionRejection(reply.outputRejection)?reply.outputRejection:'unclassifiedOutput'));
+   if(!response.ok&&reply?.code==='providerResponse')throw new Error('protocol:'+(isProviderRejection(reply.responseRejection)?reply.responseRejection:'unclassifiedProtocol'));
    if(!response.ok)throw new Error(reply?.code==='quotaExceeded'?'limit':'unavailable');
    if(reply?.version!=='1'||!['started','replied','safetyHalt'].includes(reply.state))throw new Error('unavailable');
    if(reply.state==='safetyHalt'){setReceipt('');setSafety(readReview(reply.analysis,false,'competition'));setStatus('Deterministic safety screening paused this fictional conversation. The current case is unchanged.');return null;}
    if(reply.state==='started'&&JSON.stringify(reply.prompts)!==JSON.stringify(PromptCatalog.prompts))throw new Error('unavailable');
-   if(typeof reply.receipt!=='string'||reply.receipt.length>4096||reply.state==='replied'&&(typeof reply.text!=='string'||!reply.text.trim()||reply.text.length>4000||/[<>]/.test(reply.text)))throw new Error('unavailable');
+   if(typeof reply.receipt!=='string'||reply.receipt.length>4096||reply.state==='replied'&&(typeof reply.text!=='string'||!reply.text.trim()||reply.text.length>DiscussionTextLimit||hasExecutableMarkup(reply.text)))throw new Error('unavailable');
    return reply;
-  }catch(failure){if(alive.current&&generation.current===current&&!abort.signal.aborted)setStatus(failure instanceof Error&&failure.message==='limit'?'The demonstration usage limit has been reached. No case changes were made.':'IBM conversation is unavailable or its response could not be accepted. The case is unchanged.');else if(alive.current&&generation.current===current)setStatus('The request was cancelled. No case changes were made.');return null;}
+  }catch(failure){if(alive.current&&generation.current===current&&!abort.signal.aborted)setStatus(failure instanceof Error&&failure.message.startsWith('output:')?'Response withheld by the discussion screen ('+failure.message.slice(7)+').':failure instanceof Error&&failure.message.startsWith('protocol:')?'IBM response failed protocol validation ('+failure.message.slice(9)+').':failure instanceof Error&&failure.message==='limit'?'The demonstration usage limit has been reached. No case changes were made.':'IBM conversation is unavailable or its response could not be accepted. The case is unchanged.');else if(alive.current&&generation.current===current)setStatus('The request was cancelled. No case changes were made.');return null;}
   finally{clearTimeout(timer);if(controller.current===abort)controller.current=null;}
  }
  useEffect(()=>{alive.current=true;void request({version:'1',action:'start'}).then(reply=>{if(!alive.current)return;if(reply?.state==='started'){setReceipt(reply.receipt);setStatus('Ready for an approved fictional prompt. No model response has been requested yet.');}setPending(false);requestAnimationFrame(()=>composer.current?.focus());});return()=>{alive.current=false;generation.current++;controller.current?.abort();};},[]);

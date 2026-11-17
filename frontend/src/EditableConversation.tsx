@@ -1,3 +1,4 @@
+import {DiscussionTextLimit,hasExecutableMarkup,isDiscussionRejection,isProviderRejection} from '../../shared/discussionContract';
 import {useEffect,useRef,useState} from 'react';
 
 /** Session-only UI. No case data, uploads, provider thread IDs or credentials. */
@@ -11,10 +12,12 @@ export default function EditableConversation(){
   try{
    const response=await fetch('/api/v1/conversation',{method:'POST',credentials:'same-origin',redirect:'error',cache:'no-store',signal:abort.signal,headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(payload)});
    const reply=await response.json();if(!alive.current||abort.signal.aborted)throw new Error();
+   if(!response.ok&&reply?.code==='outputRejected')throw new Error('output:'+(isDiscussionRejection(reply.outputRejection)?reply.outputRejection:'unclassifiedOutput'));
+   if(!response.ok&&reply?.code==='providerResponse')throw new Error('protocol:'+(isProviderRejection(reply.responseRejection)?reply.responseRejection:'unclassifiedProtocol'));
    if(!response.ok)throw new Error(reply?.code==='quotaExceeded'?'quota':reply?.code==='inputRejected'?'privacy':'unavailable');
    if(reply?.version!=='2'||!['started','replied','safetyHalt','structuredRequired','refused'].includes(reply.state))throw new Error();
    if(['started','replied'].includes(reply.state)&&(typeof reply.receipt!=='string'||!reply.receipt||reply.receipt.length>2048))throw new Error();
-   if(reply.state==='replied'&&(typeof reply.text!=='string'||!reply.text.trim()||reply.text.length>4000||/[<>]/.test(reply.text)))throw new Error();
+   if(reply.state==='replied'&&(typeof reply.text!=='string'||!reply.text.trim()||reply.text.length>DiscussionTextLimit||hasExecutableMarkup(reply.text)))throw new Error();
    if(reply.state==='safetyHalt'&&(!Array.isArray(reply.warnings)||reply.warnings.some((text:unknown)=>typeof text!=='string'||text.length>2000)))throw new Error();
    return reply;
   }finally{clearTimeout(timeout);controller.current=null;}
@@ -34,7 +37,7 @@ export default function EditableConversation(){
     // Keep the submitted draft and transcript; an explicit reset is required.
     setConsent(false);
    }
-  }catch(error){if(alive.current){setReceipt('');setConsent(false);setStatus(error instanceof Error&&error.message==='quota'?'The demonstration usage limit has been reached.':error instanceof Error&&error.message==='privacy'?'Request rejected. Check privacy, permitted content and session validity. Your draft is preserved.':'Conversation unavailable or timed out. Your draft is preserved. No automatic retry was made.');}}
+  }catch(error){if(alive.current){setReceipt('');setConsent(false);setStatus(error instanceof Error&&error.message.startsWith('output:')?'Response withheld by the discussion screen ('+error.message.slice(7)+'). Your draft is preserved; no automatic retry was made.':error instanceof Error&&error.message.startsWith('protocol:')?'IBM response failed protocol validation ('+error.message.slice(9)+'). Your draft is preserved; no automatic retry was made.':error instanceof Error&&error.message==='quota'?'The demonstration usage limit has been reached.':error instanceof Error&&error.message==='privacy'?'Request rejected. Check privacy, permitted content and session validity. Your draft is preserved.':'Conversation unavailable or timed out. Your draft is preserved. No automatic retry was made.');}}
   finally{busy.current=false;if(alive.current)setPending(false);}
  }
  function reset(){if(busy.current)return;setReceipt('');setMessages([]);setHistory([]);setWarnings([]);setConsent(false);setStatus('New conversation. No previous context will be sent.');}
@@ -44,7 +47,7 @@ export default function EditableConversation(){
   {warnings.length>0&&<div role="alert">{warnings.map(text=><p key={text}>{text}</p>)}</div>}
   <div id="editableEndoConversation" hidden={!open}>
    <h3>Endo AI discussion</h3><p>Explore the findings, ask follow-up questions, or discuss general clinical education. Structured review remains separate.</p>
-   <p role="note">AI-generated discussion, not independently verified clinical evidence. Synthetic/de-identified examples only. Not a diagnosis or prescription. Case details and documents are not automatically shared.</p>
+   <p role="note">AI-generated discussion, not independently verified clinical evidence. Synthetic/de-identified examples only. Not a diagnosis or prescription. Case details and documents are not automatically shared. AI references and statistics are unverified and shown as plain text.</p>
    <div className="conversationHistory" role="log" aria-label="IBM conversation">{messages.map((message,index)=><article key={index} className={'conversationMessage '+(message.role==='user'?'clinician':'endo')}><strong>{message.role==='user'?'Clinician':'Endo · AI-generated'}</strong><p style={{whiteSpace:'pre-wrap'}}>{message.text}</p></article>)}</div>
    <label><input type="checkbox" checked={consent} disabled={pending||stopped} onChange={event=>setConsent(event.target.checked)}/>This conversation contains fictional, de-identified information only.</label>
    <form className="conversationComposer" onSubmit={event=>{event.preventDefault();void send();}}><label htmlFor="editableEndoMessage">Ask Endo</label><textarea id="editableEndoMessage" rows={3} maxLength={1600} value={draft} disabled={pending||stopped} onChange={event=>setDraft(event.target.value)}/><button type="submit" disabled={pending||!consent||!draft.trim()||stopped}>{pending?'Waiting…':'Send to Endo'}</button></form>

@@ -35,6 +35,6 @@ export function createConverse(service:Pick<ReturnType<typeof createChat>,'capab
   const payload=await readBody(request,signal),version=payload&&typeof payload==='object'?(payload as {version?:unknown}).version:undefined;
   if(version==='2'&&address.origin!=='https://deploy-preview-4--clinicalagent.netlify.app')throw new ChatError('unavailable');
   const result=version==='2'?await protectedService.handle(payload,context,signal):await service.handle(payload,signal);signal.throwIfAborted();return json(result);
- }catch(failure){if(request.signal.aborted)return new Response(null,{status:499,headers:Headers});const safe=chatFailure(failure instanceof InputError?new ChatError('inputRejected'):failure);return json({version:'1',code:safe.code,detail:'Conversation is unavailable or the request was not permitted. The case is unchanged.'},safe.status);}
+ }catch(failure){if(request.signal.aborted)return new Response(null,{status:499,headers:Headers});const safe=chatFailure(failure instanceof InputError?new ChatError('inputRejected'):failure);return json({version:'1',code:safe.code,...(safe.outputStage?{outputStage:safe.outputStage}:{}),...(safe.outputRejection?{outputRejection:safe.outputRejection}:{}),...(safe.responseRejection?{responseRejection:safe.responseRejection}:{}),detail:'Conversation is unavailable or the request was not permitted. The case is unchanged.'},safe.status);}
 };}
 export default createConverse();

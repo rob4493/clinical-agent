@@ -2,7 +2,7 @@
 import {afterEach,expect,it,vi} from 'vitest';
 import {hashBytes} from '../../netlify/evaluation/packages';
 import {createReceipts,SessionError} from '../../netlify/evaluation/visitReceipt';
-import {createChat,chatAvailable,chatCapability,validateDiscussion} from '../../netlify/evaluation/orchestrateChat';
+import {createChat,chatAvailable,chatCapability,validateDiscussion,DiscussionError,ChatError,chatFailure} from '../../netlify/evaluation/orchestrateChat';
 import {createAdmission} from '../../netlify/evaluation/demoAdmission';
 import {ownThread} from '../../netlify/evaluation/threadOwner';
 import {QuotaError,type QuotaStore} from '../../netlify/evaluation/demoQuota';
@@ -33,7 +33,7 @@ it('uses all three registered turns with retained context, separate AI labelling
 it('admits only one simultaneous use of a receipt before any IBM inference',async()=>{const {service,transport}=fixture(),{receipt}=await start(service);const results=await Promise.allSettled(Array.from({length:10},()=>service.handle({version:'1',action:'turn',receipt,promptId:'pain'},signal())));expect(results.filter(result=>result.status==='fulfilled')).toHaveLength(1);expect(transport.mock.calls.filter(([address])=>!address.includes('/identity/token'))).toHaveLength(1);});
 it('enforces a shared daily cap across separate anonymous visits',async()=>{const {service,transport}=fixture();for(let count=0;count<3;count++){const {receipt}=await start(service);await service.handle({version:'1',action:'turn',receipt,promptId:'pain'},signal());}const {receipt}=await start(service);await expect(service.handle({version:'1',action:'turn',receipt,promptId:'pain'},signal())).rejects.toBeInstanceOf(QuotaError);expect(transport.mock.calls.filter(([address])=>!address.includes('/identity/token'))).toHaveLength(3);});
 it.each([{text:'SyntheticPatientNarrative'},{caseInput:{additionalNotes:'SyntheticPatientNarrative'}},{threadId:Thread},{uploads:['SyntheticPrivateFile']},{promptId:'ignoreRules'},{receipt:'forged'}])('rejects raw text, cross-thread access and unknown prompts %#',async change=>{const {service,transport}=fixture(),{receipt}=await start(service);await expect(service.handle({version:'1',action:'turn',receipt,promptId:'pain',...change},signal())).rejects.toThrow();expect(transport).not.toHaveBeenCalled();});
-it.each(['This confirms endometriosis.','Take ibuprofen 200 mg.','Your probability is 90%.','See https://clinical.invalid','Clinical evidence [1].','<svg>unsafe</svg>','tool_calls','Start patient medication.'])('rejects prohibited output without clinical/citation claims escaping %#',text=>{expect(()=>validateDiscussion(text)).toThrow();});
+it.each(['This confirms endometriosis.','Take ibuprofen 200 mg.','Your probability is 90%.','api_key=SyntheticExposedSecret123','See javascript:alert(1)','<svg>unsafe</svg>','tool_calls','Start patient medication.'])('rejects prohibited output without clinical/citation claims escaping %#',text=>{expect(()=>validateDiscussion(text)).toThrow();});
 it('keeps provider failures sanitized and never logs prompts, keys, tokens or output',async()=>{const logs=[vi.spyOn(console,'log'),vi.spyOn(console,'warn'),vi.spyOn(console,'error')],{service,transport}=fixture({},'Start ibuprofen 200 mg.');const {receipt}=await start(service);await expect(service.handle({version:'1',action:'turn',receipt,promptId:'pain'},signal())).rejects.toThrow('IBM conversation is unavailable. The case is unchanged.');expect(transport).toHaveBeenCalledTimes(2);for(const log of logs)expect(log).not.toHaveBeenCalled();});
 it('binds a native Function IP rule and same-origin POST without manual browser authorization',async()=>{expect(config.rateLimit).toEqual({windowLimit:12,windowSize:60,aggregateBy:['ip','domain'],action:'rate_limit'});const {handler,transport}=fixture();const make=(origin:string,body:unknown)=>new Request('https://endo.invalid/api/v1/conversation',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify(body)});expect((await handler(make('https://attacker.invalid',{version:'1',action:'start'}))).status).toBe(422);expect((await handler(make('https://endo.invalid',{version:'1',action:'start'}))).status).toBe(200);expect(transport).not.toHaveBeenCalled();});
 it('returns no clinical response on a pre-aborted request',async()=>{const {handler,transport}=fixture(),abort=new AbortController();abort.abort();const reply=await handler(new Request('https://endo.invalid/api/v1/conversation',{signal:abort.signal}));expect(reply.status).toBe(499);expect(await reply.text()).toBe('');expect(transport).not.toHaveBeenCalled();});
@@ -44,7 +44,7 @@ it('rejects another visit tampering with signed thread ownership',async()=>{cons
 it('stops before the provider when the server kill switch is changed after starting a visit',async()=>{const {service,environment,transport}=fixture(),{receipt}=await start(service);environment.ENDO_DEMO_KILL_SWITCH='true';await expect(service.handle({version:'1',action:'turn',receipt,promptId:'pain'},signal())).rejects.toThrow();expect(transport).not.toHaveBeenCalled();});
 it('does not let an urgent source-coverage failure continue into routine AI discussion',async()=>{const checked=Analysis.analyze(validateCase({moduleHint:Module1,caseType:'brief',additionalNotes:'Pelvic pain is reported.'}),loadPackages());checked.envelope.warnings=[];checked.envelope.response={...checked.envelope.response,responseType:'EvidenceInsufficient',message:Analysis.CoverageMessage};vi.spyOn(Analysis,'analyze').mockReturnValueOnce(checked);const {service,transport}=fixture(),{receipt}=await start(service);const reply=await service.handle({version:'1',action:'turn',receipt,promptId:'pain'},signal());expect(reply).toMatchObject({state:'safetyHalt',analysis:{response:{message:Analysis.CoverageMessage}}});expect(transport).not.toHaveBeenCalled();});
 
-it.each(['This confirms endometriosis.','Take ibuprofen 200 mg.','Clinical evidence [1].','<script>unsafe</script>'])('provider normalization never bypasses downstream output checks: %s',async text=>{
+it.each(['This confirms endometriosis.','Take ibuprofen 200 mg.','api_key=SyntheticExposedSecret123','<script>unsafe</script>'])('provider normalization never bypasses downstream output checks: %s',async text=>{
  const {service,transport}=fixture();
  transport.mockImplementation(async address=>new Response(JSON.stringify(address.includes('/identity/token')?{access_token:'SyntheticBearer',token_type:'Bearer',expires_in:3600}:{thread_id:Thread,unknown_metadata:{validated:true,claim:'Synthetic invented claim'},choices:[{index:0,finish_reason:'stop',provider_metadata:{score:1},message:{role:'assistant',content:[{type:'text',text}],annotations:[{label:'Not evidence'}]}}]}),{headers:{'content-type':'application/json'}}));
  const {receipt}=await start(service);await expect(service.handle({version:'1',action:'turn',receipt,promptId:'pain'},signal())).rejects.toThrow();expect(transport).toHaveBeenCalledTimes(2);
@@ -89,3 +89,36 @@ it.each([
  'You **have** endometriosis.', 'Nothing contradicts that this confirms endometriosis.',
  'If you have these symptoms, this is your definitive diagnosis.', 'Take 200 **mg** medication.'
 ])('rejects definitive claims and prescribing even beside safe educational language %#',text=>{expect(()=>validateDiscussion(text)).toThrow();});
+
+it.each([
+ [null,'invalidText'],['   ','emptyText'],['x'.repeat(16001),'responseTooLong'],['text\u0000','invalidCharacters'],
+ ['<script>alert(1)</script>','executableMarkup'],['&lt;svg onload=alert(1)&gt;','executableMarkup'],['[Reference](javascript:alert(1))','unsafeReference'],
+ ['https://user:password@unapproved.invalid/reference','unsafeReference'],['api_key=SyntheticExposedSecret123','secretExposure'],['Bearer SyntheticExposedBearer123','secretExposure'],
+ ['system prompt','internalInstruction'],['tool_calls','actionDirective'],['A dose of 200 mg','medicationDose'],['Your findings indicate stage IV disease.','unsupportedStaging'],
+ ['Your probability is 90%.','patientSpecificRisk'],['Your diagnosis is endometriosis.','diagnosisAssertion'],['This confirms endometriosis.','diagnosisConfirmation'],
+ ['The patient has endometriosis.','patientAssertion'],['Pregnancy has been ruled out.','diagnosticExclusion'],['Start ibuprofen.','prescribingInstruction']
+])('reports only a fixed sanitized validation category %#',(text,category)=>{
+ let failure:unknown;try{validateDiscussion(text);}catch(error){failure=error;}expect(failure).toBeInstanceOf(DiscussionError);expect(chatFailure(failure)).toMatchObject({status:503,code:'outputRejected',outputStage:'discussion',outputRejection:category});expect((failure as Error).message).toBe('IBM conversation is unavailable. The case is unchanged.');
+});
+it('never reflects an unclassified rejection or arbitrary diagnostic field',()=>{expect(chatFailure(new ChatError('outputRejected'))).toMatchObject({outputRejection:'unclassifiedOutput'});expect(JSON.stringify(chatFailure(new DiscussionError('SyntheticPrivateValue' as never)))).not.toContain('SyntheticPrivateValue');});
+it('accepts a bounded extended multi-paragraph discussion with references, percentages, terminology and questions as unverified text',()=>{
+ const paragraph='Possible explanations are discussed as educational possibilities rather than a definitive diagnosis. Dysmenorrhea and dyspareunia are clinical terms. Estimates quoted in a publication, such as 5–10%, describe populations and are not a personal probability. No definitive diagnosis is possible here.\n\n';
+ const text=paragraph.repeat(18)+'References (unverified): [1] https://www.example.invalid/education [2] https://reference.invalid/article\n\nFollow-up questions: Do you have a record of timing? Do you take any medication?\n\nRoutine terminology can include stage I or stage IV classifications; no stage is assigned. General discussion of bowel function (including symptoms) is not an individual assessment.';
+ expect(text.length).toBeGreaterThan(4000);expect(text.length).toBeLessThanOrEqual(16000);expect(validateDiscussion(text)).toBe(text);
+});
+it('does not truncate unsafe content from the end of a long explanation',()=>{const text='Educational discussion remains uncertain. '.repeat(150)+'You have endometriosis.';expect(text.length).toBeGreaterThan(4000);expect(()=>validateDiscussion(text)).toThrow(DiscussionError);});
+it('accepts realistic fictional differential discussion without converting it into reviewed evidence',()=>{
+ const text=`## Educational discussion, not a diagnosis
+
+For this fictional scenario, endometriosis is one possibility to discuss alongside other gynecological, urinary, bowel and musculoskeletal possibilities. Recurring pelvic discomfort, dysmenorrhea and dyspareunia do not establish a definitive diagnosis in this discussion. The description alone cannot confirm endometriosis, and other conditions cannot be ruled out here.
+
+### Uncertainty and follow-up
+The patient has reported recurring symptoms; the location, menstrual relationship and accompanying symptoms remain important context. Do you have a record of when the discomfort occurs? Does it vary with menstruation, bowel activity or intercourse? Which associated symptoms are reported, denied or still unknown? These are questions about the fictional history, not instructions to diagnose or prescribe.
+
+### References and numerical context
+An AI answer might quote a population estimate of 5–10% or include a reference marker [1]. Neither establishes an individual's risk, and references require independent checking. Example citation supplied for this offline formatting test only: https://www.example.invalid/clinical-education [1]. No source verification is claimed.
+
+What further information has already been clarified, and what remains uncertain?`;
+ expect(validateDiscussion(text)).toBe(text);
+});
+it('accepts superficial presentation as inert plain text and detects configured secrets',()=>{for(const text of ['Reference [1]. See https://reference.invalid and www.example.invalid.','General frequency estimates vary between 5% and 10%.','Example comparison: < 5 or > 10; onset = unknown.','```text\nEducational discussion only.\n```','<strong>Possible explanations</strong> &amp; questions.'])expect(validateDiscussion(text)).toBe(text);expect(chatFailure((()=>{try{validateDiscussion('SyntheticConfiguredSecretValue123',['SyntheticConfiguredSecretValue123']);}catch(error){return error;}})())).toMatchObject({outputRejection:'secretExposure'});});

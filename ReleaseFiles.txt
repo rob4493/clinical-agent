@@ -313,6 +313,7 @@ shared/conflictAssistance.ts
 shared/conflictFixture.json
 shared/conflictReview.ts
 shared/conversation.ts
+shared/discussionContract.ts
 shared/documentBridge.ts
 shared/followupModes.ts
 shared/guidedFollowup.ts
