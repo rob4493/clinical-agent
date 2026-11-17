@@ -107,6 +107,53 @@ it('accepts a bounded extended multi-paragraph discussion with references, perce
  expect(text.length).toBeGreaterThan(4000);expect(text.length).toBeLessThanOrEqual(16000);expect(validateDiscussion(text)).toBe(text);
 });
 it('does not truncate unsafe content from the end of a long explanation',()=>{const text='Educational discussion remains uncertain. '.repeat(150)+'You have endometriosis.';expect(text.length).toBeGreaterThan(4000);expect(()=>validateDiscussion(text)).toThrow(DiscussionError);});
+it.each([
+ 'Ectopic pregnancy cannot be ruled out.',
+ 'Ectopic pregnancy cannot yet be ruled out.',
+ 'Ectopic pregnancy cannot be safely ruled out.',
+ 'Ectopic pregnancy cannot be completely ruled out.',
+ 'Ectopic pregnancy cannot reliably be ruled out.',
+ 'Ectopic pregnancy can not be fully ruled out.',
+ 'Ectopic pregnancy could not be conclusively ruled out.',
+ "Ectopic pregnancy can't yet be ruled out.",
+ 'Ectopic pregnancy has not been definitively ruled out.',
+ 'Ectopic pregnancy has not yet been ruled out.',
+ 'Ectopic pregnancy hasn’t been reliably ruled out.',
+ 'Ectopic pregnancy is not ruled out.',
+ 'Ectopic pregnancy cannot be\nruled out from this discussion.',
+ 'Ectopic pregnancy cannot be **fully** ruled out.',
+ 'Ectopic pregnancy has not been excluded.',
+ 'Ectopic pregnancy has not yet been definitively excluded.',
+ 'There is insufficient information to rule out ectopic pregnancy.',
+ 'There is not enough evidence to reliably rule out ectopic pregnancy.',
+ 'We cannot rule out ectopic pregnancy.',
+ 'We are unable to rule out ectopic pregnancy.',
+ 'Has ectopic pregnancy been ruled out?',
+ 'Can ectopic pregnancy be safely ruled out?',
+ '## Remaining uncertainty\n\nHas ectopic pregnancy been ruled out?',
+ 'Ectopic pregnancy cannot be ruled out. Other explanations have not been excluded.'
+])('preserves cautious exclusion wording and attached uncertainty verbatim %#',text=>{expect(validateDiscussion(text)).toBe(text);});
+it.each([
+ 'Ectopic pregnancy has been ruled out.',
+ 'Ectopic pregnancy is fully ruled out.',
+ 'Ectopic pregnancy has been definitively excluded.',
+ 'We can rule out ectopic pregnancy.',
+ 'We rule out ectopic pregnancy.',
+ 'There is sufficient information to rule out ectopic pregnancy.',
+ 'There is not insufficient information to rule out ectopic pregnancy.',
+ 'We are not unable to rule out ectopic pregnancy.',
+ 'There is insufficient information. Ectopic pregnancy has been ruled out.',
+ 'Ectopic pregnancy cannot be ruled out. Endometriosis has been ruled out.',
+ 'Ectopic pregnancy cannot be ruled out, but other causes have been excluded.',
+ 'Ectopic pregnancy cannot be ruled out and endometriosis has been ruled out.',
+ 'Has ectopic pregnancy been ruled out? It has been ruled out.',
+ 'Has ectopic pregnancy been ruled out and endometriosis has been ruled out?',
+ 'This is not a diagnosis. Ectopic pregnancy has been ruled out.',
+ 'Ectopic pregnancy cannot be\n\nruled out.',
+ 'Ectopic pregnancy has not been ruled out; however, other causes have been excluded.'
+])('rejects definitive exclusions even beside unrelated uncertainty or a question %#',text=>{
+ let failure:unknown;try{validateDiscussion(text);}catch(error){failure=error;}expect(chatFailure(failure)).toMatchObject({code:'outputRejected',outputRejection:'diagnosticExclusion'});
+});
 it('accepts realistic fictional differential discussion without converting it into reviewed evidence',()=>{
  const text=`## Educational discussion, not a diagnosis
 

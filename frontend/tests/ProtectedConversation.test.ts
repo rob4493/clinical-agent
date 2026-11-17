@@ -64,6 +64,18 @@ it.each(['Your diagnosis is endometriosis.','You should take ibuprofen.','This c
  expect(response.status).toBe(503);const body=await response.text();expect(JSON.parse(body).code).toBe('outputRejected');expect(body).not.toContain(text);expect(body).not.toContain(String(session.receipt));
 });
 it.each([
+ ['Ectopic pregnancy cannot yet be fully ruled out. There is insufficient information to rule out other causes. No definitive diagnosis is possible.',true],
+ ['Ectopic pregnancy has not been excluded. Other causes cannot be\nreliably ruled out.',true],
+ ['There is insufficient information. Ectopic pregnancy has been ruled out.',false],
+ ['Ectopic pregnancy cannot be ruled out, but other causes have been excluded.',false]
+])('keeps exclusion uncertainty verbatim or rejects a definitive assertion through the protected route %#',async(text,allowed)=>{
+ const f=fixture(),original=f.transport.getMockImplementation()!;
+ f.transport.mockImplementation(async(address,init)=>{const response=await original(address,init);if(address.includes('/identity/token'))return response;const body=await response.json();body.choices[0].message.content=text;return json(body);});
+ const handler=createConverse(undefined,f.service),session=await f.start(),response=await handler(new Request(Origin+'/api/v1/conversation',{method:'POST',headers:{Origin,'Content-Type':'application/json'},body:JSON.stringify({version:'2',action:'turn',receipt:session.receipt,message:'general clinical education',history:[]})}),Context),body=await response.json();
+ if(allowed){expect(response.status).toBe(200);expect(body).toMatchObject({state:'replied',text});}else{expect(response.status).toBe(503);expect(body).toMatchObject({code:'outputRejected',outputRejection:'diagnosticExclusion'});expect(JSON.stringify(body)).not.toContain(text);}
+ expect(JSON.stringify([...f.records.values()])).not.toContain(text);
+});
+it.each([
  ['api_key=SyntheticCredentialValue123','secretExposure'],['<svg onload=alert(1)>','executableMarkup'],['[Source](javascript:alert(1))','unsafeReference'],
  ['Your diagnosis is endometriosis.','diagnosisAssertion'],['Start ibuprofen.','prescribingInstruction'],['Your probability is 90%.','patientSpecificRisk'],['A dose of 200 mg.','medicationDose'],['Your condition is stage II.','unsupportedStaging']
 ])('returns fixed rule and stage only, without retaining model content or operational identities %#',async(text,rejection)=>{

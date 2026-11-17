@@ -144,3 +144,7 @@ Failures expose only fixed outputStage/outputRejection or responseRejection code
 ## Conversation presentation
 
 Only IBM assistant discussion uses pinned react-markdown and remark-gfm. Headings, emphasis, lists, quotes and horizontally scrollable tables are React elements. All generated links are inactive, images never load, and raw HTML is escaped. Only attribute-free literal br nodes become visual breaks; code examples remain literal. Original assistant/user strings, receipts, history and structured clinical renderedText are unchanged. References remain unverified and formatting grants no clinical authority. No validation or activation rule changes.
+
+## Diagnostic exclusion qualification
+
+The fixed diagnosticExclusion category covers exclusion predicates (ruled out, rule out, excluded). Acceptance requires directly attached negation or insufficient-information wording, allowing bounded uncertainty modifiers and wrapped lines. Each predicate is checked independently; a disclaimer, earlier question or unrelated uncertainty cannot authorize a definitive exclusion. Original discussion text is returned unchanged. Direct questions require question punctuation and cannot waive an additional coordinated assertion. This remains a conservative grammatical screen, not semantic clinical verification; the fixed category does not identify the exact provider phrase and no provider text is retained.

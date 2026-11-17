@@ -16,6 +16,23 @@ export function chatAvailable(environment:OrchestrateEnvironment=process.env){
 }
 export function chatCapability(environment:OrchestrateEnvironment=process.env){return {version:'1',provider:'orchestrate',status:chatAvailable(environment)?'available':'blocked',mode:'controlledSynthetic',message:chatAvailable(environment)?'Configured for controlled fictional conversation; connectivity is not verified by this check.':'IBM conversation is disabled pending privacy and hosted abuse-control verification.',prompts:chatAvailable(environment)?Prompts.prompts:[]};}
 
+/** Local grammatical qualification, not evidence that a diagnosis is excluded.
+ * Only bounded modifiers may separate uncertainty from its exclusion predicate. */
+function uncertainExclusion(before:string,predicate:string,question:boolean){
+ const modifier='(?:(?:yet|currently|safely|fully|completely|reliably|confidently|definitively|conclusively|adequately)\\s+){0,2}';
+ const negative="(?:cannot|can\\s+not|can't|could\\s+not|couldn't|must\\s+not|mustn't)";
+ const attached=(pattern:string)=>{const match=new RegExp(pattern,'i').exec(before);return !!match&&!/\b(?:not|never)\s+$/i.test(before.slice(0,match.index));};
+ if(/^rule\s+out$/i.test(predicate))return attached('\\b'+negative+'\\s+'+modifier+'$')
+  ||attached('\\bunable\\s+to\\s+'+modifier+'$')
+  ||attached('\\b(?:insufficient|inadequate|not\\s+enough|no)\\s+(?:information|evidence)\\s+to\\s+'+modifier+'$');
+ if(attached('\\b'+negative+'\\s+'+modifier+'be\\s+'+modifier+'$')
+  ||attached("\\b(?:not|never|hasn't|haven't|hadn't|isn't|aren't|wasn't|weren't)\\s+"+modifier+'(?:been\\s+)?'+modifier+'$'))return true;
+ // Preserve direct questions, but an earlier predicate/conjunction cannot turn
+ // an additional affirmative exclusion into a question about the first finding.
+ return question&&!/\b(?:and|or|ruled|excluded|rule)\b/i.test(before)
+  &&new RegExp('^(?:[-*]\\s*|\\d+[.)]\\s*)?(?:has|have|can|could)\\b[^.!?;:]{0,100}\\b(?:be|been)\\s+'+modifier+'$','i').test(before.trimStart());
+}
+
 /** This is a rejection screen, not a semantic clinical-grounding validator. Natural
  * AI discussion is separately labelled and requires explicit expert/policy approval.
  * References and statistics are unverified text, never canonical citations. It
@@ -57,9 +74,6 @@ export function validateDiscussion(text:unknown,secrets:readonly string[]=[]):st
    /\b(?:if|whether)(?:\s+(?:the|this|a|your))?\s*$/i.test(before)
     ||/^(?:[-*]\s*|\d+[.)]\s*)?(?:do|did|can|could|would)\s+$/i.test(before)
     ||/^(?:not\s+(?:yet\s+)?)?(?:described|reported|mentioned|outlined|asked\s+about)\b/i.test(after)},
-  {rejection:'diagnosticExclusion',pattern:/\bruled\s+out\b/gi,allowed:(before:string)=>
-   /\b(?:cannot|can\s+not|can't|could\s+not|couldn't)\s+(?:safely\s+)?be\s*$|\bnot\s+(?:yet\s+)?(?:been\s+)?$/i.test(before)
-    ||/^(?:has|have|can|could)\b[^.!?;:]{0,100}\b(?:be|been)\s*$/i.test(before.trim())},
   {rejection:'prescribingInstruction',pattern:/\b(?:start|stop|increase|decrease|take|prescribe)\s+(?:\w+\s+){0,3}(?:medication|dose|ibuprofen|paracetamol|antibiotics?|hormones?)\b/gi,allowed:(before:string,_after:string,match:string)=>
    questionPrefix.test(before)||/^take\b/i.test(match)&&/\b(?:if|whether)\s+you\s+$/i.test(before)}
  ];
@@ -70,6 +84,14 @@ export function validateDiscussion(text:unknown,secrets:readonly string[]=[]):st
   const current=clause.trim();
   for(const rule of statements)for(const match of current.matchAll(rule.pattern)){
    if(!rule.allowed(current.slice(0,match.index),current.slice(match.index!+match[0].length).trimStart(),match[0]))reject(rule.rejection as DiscussionRejection);
+  }
+ }
+ // Exclusion predicates need their attached uncertainty even across a wrapped
+ // line. Preserve sentence/question boundaries; never apply a whole-answer waiver.
+ for(const paragraph of normalized.split(/\r?\n\s*\r?\n/))for(const segment of paragraph.matchAll(/[^.!?;:]+[.!?;:]?/g)){
+  const sentence=segment[0].trim(),question=sentence.endsWith('?');
+  for(const clause of sentence.split(/\b(?:but|however|nevertheless)\b/i))for(const match of clause.matchAll(/\b(?:ruled\s+out|rule\s+out|excluded)\b/gi)){
+   if(!uncertainExclusion(clause.slice(0,match.index).replace(/\s+/g,' '),match[0],question))reject('diagnosticExclusion');
   }
  }
  return text;
