@@ -1,0 +1,12 @@
+{
+  "provenance": "Offline synthetic reconstructions of the operator-reported visible title; not captured IBM responses. The visible title alone does not determine the original Markdown syntax.",
+  "table": "| Consideration | Uncertainty |\n| --- | --- |\n| Fictional possibility | Not established |",
+  "variants": [
+    {"id":"markdownHeading","title":"## 1. Differential considerations","astType":"heading"},
+    {"id":"boldParagraph","title":"**1. Differential considerations**","astType":"paragraph"},
+    {"id":"numberedText","title":"1. Differential considerations","astType":"list"},
+    {"id":"numberedBold","title":"1. **Differential considerations**","astType":"list"},
+    {"id":"numberedParenthesis","title":"1) Differential considerations","astType":"list"},
+    {"id":"escapedNumberedParagraph","title":"1\\. Differential considerations","astType":"paragraph"}
+  ]
+}

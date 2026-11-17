@@ -49,7 +49,7 @@
     "frontend/src/DemoCases.ts": "6f1f6b121a4b3ce2c39a4e44903577d2465dddc5d658d3202a4cb4cbbae16584",
     "frontend/src/Disclosure.tsx": "0421accf4bcf7129293e97e4585be1d67f4e6587f75ae0a529b6a5cc33307fc7",
     "frontend/src/DiscussionMarkdown.tsx": "6026e57c356f459ff527583b57bb61350703075d9c78fcaac9d8fe7c57d17ca7",
-    "frontend/src/DiscussionSections.tsx": "a0b21cc779e5fc8adc64103378057e28c3210f3c4a1c1f9920d753420a6def8c",
+    "frontend/src/DiscussionSections.tsx": "eb4be436b5097de36a7be019be3b0ff93cbf93b452a0a892b8b98411165382e3",
     "frontend/src/EditableConversation.tsx": "437e40ae71ddd976d8566bb52771db669cfddfec4fbf9339f6cf4f4bc4dc2a10",
     "frontend/src/FindingIcon.tsx": "799bd9048b5676a3323417dea4eae9d9bfb7f57a9750207430657d2f08463fba",
     "frontend/src/GuidedFollowup.tsx": "1e078e26da86f6fdd9ea576ac937b1de3786d03d8a2d9a2ef4bed34785cedb6c",

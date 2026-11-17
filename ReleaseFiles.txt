@@ -233,6 +233,7 @@ frontend/tests/documentFixtures.ts
 frontend/tests/endoBrowser.cjs
 frontend/tests/evaluationBrowser.cjs
 frontend/tests/fixtures.ts
+frontend/tests/ibmHeadingFixtures.json
 frontend/tests/localGuard.cjs
 frontend/tests/openPending.ts
 frontend/tests/presentationBrowser.cjs

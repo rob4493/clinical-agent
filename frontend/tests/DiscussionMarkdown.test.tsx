@@ -4,6 +4,9 @@ import DiscussionMarkdown from '../src/DiscussionMarkdown';
 import {readFileSync} from 'node:fs';
 import userEvent from '@testing-library/user-event';
 import {discussionSectionCategory} from '../src/DiscussionSections';
+import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import IBMHeadingFixtures from './ibmHeadingFixtures.json';
 
 it('renders educational headings, emphasis, lists, quotations and existing follow-up questions',()=>{
  const text='# Educational possibilities\n\n**Discussion**, not a *diagnosis*.\n\n1. Reported symptoms\n2. Remaining uncertainty\n\n- Timing\n- Context\n\n> Fictional history only\n\n### Follow-up questions\n\nWhat has already been clarified?';
@@ -51,4 +54,33 @@ it('does not interpret headings inside quotations, code or provider HTML as cont
 });
 it('keeps subtle icon geometry and wrapped headings aligned at mobile widths',()=>{
  const css=readFileSync('src/styles.css','utf8');expect(css).toMatch(/grid-template-columns:1rem minmax\(0,1fr\) 1rem/);expect(css).toMatch(/\.discussionSectionHeading\s*\{[^}]*min-width:0;[^}]*overflow-wrap:anywhere/s);expect(css).toMatch(/\.discussionSectionIcon[^}]*width:1rem; height:1rem/s);expect(css).toMatch(/\.discussionSummary[^}]*min-height:44px/s);
+});
+it.each(IBMHeadingFixtures.variants)('records the parser interpretation of the synthetic IBM-style $id fixture before section grouping',({title,astType})=>{
+ let firstType:string|undefined;function observe(){return(tree:unknown)=>{firstType=(tree as {children:{type:string}[]}).children[0]?.type;};}
+ render(<Markdown remarkPlugins={[remarkGfm,observe]}>{title+'\n\n'+IBMHeadingFixtures.table}</Markdown>);expect(firstType).toBe(astType);expect(screen.getByRole('table')).toBeVisible();
+});
+it.each(IBMHeadingFixtures.variants)('groups the synthetic $id title, differential table, icon and chevron together',async({title})=>{
+ const text=title+'\n\n'+IBMHeadingFixtures.table+'\n\n## Follow-up questions\n\nWhat remains unknown?',original=text;render(<DiscussionMarkdown text={text}/>);
+ const summary=screen.getByRole('heading',{name:/^1[.)] Differential considerations$/}).closest('summary')!;expect(summary).not.toBeNull();expect(summary).toHaveAttribute('data-section-category','differential');expect(summary.querySelector('.lucide-list-tree')).not.toBeNull();expect(summary.querySelector('.discussionSectionChevron')).not.toBeNull();expect(screen.getByRole('table').closest('details')).toBe(summary.parentElement);
+ await userEvent.click(summary);expect(screen.getByRole('table',{hidden:true})).not.toBeVisible();expect(screen.getByText('What remains unknown?')).toBeVisible();summary.focus();await userEvent.keyboard('{Enter}');expect(screen.getByRole('table')).toBeVisible();expect(text).toBe(original);
+});
+it.each([
+ '1. Differential considerations\n2. Review the table below.\n\n'+IBMHeadingFixtures.table,
+ '- Differential considerations\n\n'+IBMHeadingFixtures.table,
+ '1. Differential considerations\n\n   '+IBMHeadingFixtures.table.replace(/\n/g,'\n   '),
+ '1. `Differential considerations`\n\n'+IBMHeadingFixtures.table,
+ '1. Differential considerations include several possibilities.\n\n'+IBMHeadingFixtures.table,
+ '1. Differential considerations\n\nOrdinary explanatory paragraph, not an explicit section/table boundary.',
+ '**Differential considerations** are not established here.\n\n'+IBMHeadingFixtures.table,
+ '| Label | Context |\n| --- | --- |\n| **1. Differential considerations** | Ordinary table cell |',
+ '> **1. Differential considerations**\n> Quoted text.',
+ '```markdown\n**1. Differential considerations**\n```',
+ '**An unfamiliar standalone title**\n\n'+IBMHeadingFixtures.table,
+ '**Differential considerations**'
+])('does not promote ordinary or ambiguous list, paragraph, table, quoted or code content %#',text=>{const {container}=render(<DiscussionMarkdown text={text}/>);expect(container.querySelector('details,summary')).toBeNull();});
+it('retains lists and Markdown numbering instead of swallowing them into an inferred section',()=>{
+ const text='1. Differential considerations\n2. Follow-up questions\n\n'+IBMHeadingFixtures.table;render(<DiscussionMarkdown text={text}/>);expect(screen.getAllByRole('listitem')).toHaveLength(2);expect(screen.getByRole('list').tagName).toBe('OL');expect(screen.getByRole('table').closest('details')).toBeNull();
+});
+it('keeps recognized bold safety sections visible outside collapsible ancestors',()=>{
+ render(<DiscussionMarkdown text={'# Review\n\n**1. Emergency warning**\n\nWarning remains visible.\n\n**2. Follow-up questions**\n\nWhat remains unknown?'}/>);expect(screen.getByText('Warning remains visible.').closest('details')).toBeNull();expect(screen.getByRole('heading',{name:'1. Emergency warning'})).toBeVisible();
 });

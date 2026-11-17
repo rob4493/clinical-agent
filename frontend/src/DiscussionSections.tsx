@@ -35,11 +35,33 @@ export function DiscussionSummary({children,node,...props}:ComponentPropsWithout
 export function DiscussionStaticTitle({children,className,node,...props}:ComponentPropsWithoutRef<'div'>&{node?:unknown;'data-section-category'?:string}){
  return <div className={className} {...props}>{className==='discussionStaticTitle'?<Title category={props['data-section-category']??'neutral'} expandable={false}>{children}</Title>:children}</div>;
 }
-type Node={type:string;depth?:number;value?:string;children?:Node[];data?:{hName:string;hProperties?:Record<string,string|boolean>}};
+type Node={type:string;depth?:number;value?:string;ordered?:boolean;position?:{start:{offset?:number};end:{offset?:number}};children?:Node[];data?:{hName:string;hProperties?:Record<string,string|boolean>}};
 function headingText(node:Node):string{return node.type==='text'||node.type==='inlineCode'?node.value??'':node.children?.map(headingText).join('')??'';}
-/** Group only root-level Markdown headings. Never wrap quotes, lists or tables,
+function titleInline(node:Node):boolean{return node.type==='text'||node.type==='strong'&&!!node.children?.every(titleInline);}
+/** Promote only exact registered labels at root-level section boundaries.
+ * A singleton numbered title additionally needs an immediately following root
+ * table; ordinary multi-item, nested or content-bearing lists stay lists. */
+function sectionHeadings(nodes:Node[],source:string){
+ return nodes.map((node,index)=>{
+  if(node.type==='paragraph'&&node.children?.length&&node.children.every(titleInline)){
+   const label=headingText(node),bold=node.children.every(child=>child.type==='strong'||child.type==='text'&&!child.value?.trim());
+   if(discussionSectionCategory(label)!=='neutral'&&nodes[index+1]&&nodes[index+1].type!=='heading'
+    &&(bold||/^\s*\d+[.)]\s+/.test(label)&&nodes[index+1].type==='table'))return {...node,type:'heading',depth:2};
+  }
+  if(node.type==='list'&&node.ordered&&node.children?.length===1&&nodes[index+1]?.type==='table'){
+   const item=node.children[0],paragraph=item.children?.[0];
+   if(item.type!=='listItem'||item.children?.length!==1||paragraph?.type!=='paragraph'||!paragraph.children?.every(titleInline))return node;
+   const start=node.position?.start.offset,end=paragraph.position?.start.offset;
+   const marker=typeof start==='number'&&typeof end==='number'?source.slice(start,end):'';
+   if(!/^\s*\d+[.)][ \t]+$/.test(marker)||discussionSectionCategory(headingText(paragraph))==='neutral')return node;
+   return {...paragraph,type:'heading',depth:2,children:[{type:'text',value:marker},...(paragraph.children??[])]};
+  }
+  return node;
+ });
+}
+/** Group root-level Markdown headings and unambiguous presentation titles. Never wrap quotes, lists or tables,
  * and never alter source strings or collapse a recognized safety section. */
-export function discussionSections(){return (tree:unknown)=>{
+export function discussionSections(){return (tree:unknown,file:{value?:unknown})=>{
  const root=tree as Node;if(root.type!=='root'||!Array.isArray(root.children))return;
  function group(nodes:Node[]):Node[]{
   const result:Node[]=[];
@@ -52,5 +74,5 @@ export function discussionSections(){return (tree:unknown)=>{
   }
   return result;
  }
- root.children=group(root.children);
+ root.children=group(sectionHeadings(root.children,typeof file.value==='string'?file.value:''));
 };}
