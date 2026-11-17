@@ -47,6 +47,21 @@ it('sends edited first/follow-up text using server-owned thread, without replayi
  expect(new Headers(calls[0][1].headers).has('X-IBM-THREAD-ID')).toBe(false);expect(new Headers(calls[1][1].headers).get('X-IBM-THREAD-ID')).toMatch(/^[a-f0-9-]{36}$/);
  expect(JSON.stringify(second)).not.toContain('thread_id');expect(JSON.stringify([...f.records.values()])).not.toContain('what is endometriosis');
 });
+it('accepts a mocked educational clinical response and follow-up without storing the discussion',async()=>{
+ const question='What possible explanations might account for recurring pelvic pain, painful menstruation and discomfort during intercourse? What follow-up questions would help, without a definitive diagnosis?';
+ const discussion='Several explanations could be considered for this reported symptom pattern. No definitive diagnosis is possible from this discussion. You have described recurring pelvic pain, painful menstruation and discomfort during intercourse. Follow-up questions: Do you have a record of when symptoms occur? Do you take any medication? Other conditions cannot be ruled out.';
+ const f=fixture(),original=f.transport.getMockImplementation()!,logs=[vi.spyOn(console,'log'),vi.spyOn(console,'warn'),vi.spyOn(console,'error')];
+ f.transport.mockImplementation(async(address,init)=>{const response=await original(address,init);if(address.includes('/identity/token'))return response;const body=await response.json();body.choices[0].message.content=discussion;return json(body);});
+ const session=await f.start(),first=await f.turn(session.receipt,question);expect(first).toMatchObject({state:'replied',text:discussion});expect(String(first.label)).toContain('not independently verified clinical evidence');
+ expect(await f.turn(first.receipt,'What else remains uncertain?',[question])).toMatchObject({state:'replied',text:discussion});
+ expect(JSON.stringify([...f.records.values()])).not.toContain(question);expect(JSON.stringify([...f.records.values()])).not.toContain(discussion);for(const log of logs)expect(log).not.toHaveBeenCalled();vi.restoreAllMocks();
+});
+it.each(['Your diagnosis is endometriosis.','You should take ibuprofen.','This confirms ectopic pregnancy.'])('returns only fixed outputRejected for mocked unsafe responses %#',async text=>{
+ const f=fixture(),original=f.transport.getMockImplementation()!;
+ f.transport.mockImplementation(async(address,init)=>{const response=await original(address,init);if(address.includes('/identity/token'))return response;const body=await response.json();body.choices[0].message.content=text;return json(body);});
+ const handler=createConverse(undefined,f.service),session=await f.start(),response=await handler(new Request(Origin+'/api/v1/conversation',{method:'POST',headers:{Origin,'Content-Type':'application/json'},body:JSON.stringify({version:'2',action:'turn',receipt:session.receipt,message:'general clinical education',history:[]})}),Context);
+ expect(response.status).toBe(503);const body=await response.text();expect(JSON.parse(body).code).toBe('outputRejected');expect(body).not.toContain(text);expect(body).not.toContain(String(session.receipt));
+});
 it('starts an isolated conversation and rejects receipt tampering, cross-operator use and history edits',async()=>{
  const f=fixture(),one=await f.start(),two=await f.start();expect(one.receipt).not.toBe(two.receipt);
  await expect(f.turn(String(one.receipt)+'A')).rejects.toThrow();

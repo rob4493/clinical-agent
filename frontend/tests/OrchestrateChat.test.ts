@@ -54,3 +54,38 @@ it('keeps supported clarification questions separately labelled and never copies
  transport.mockImplementation(async address=>new Response(JSON.stringify(address.includes('/identity/token')?{access_token:'SyntheticBearer',token_type:'Bearer',expires_in:3600}:{thread_id:Thread,unknown_metadata:{text:'SyntheticPrivateMetadata'},choices:[{index:0,finish_reason:'stop',message:{role:'assistant',content:[{type:'text',text:'Which earlier finding remains uncertain?'}]}}]}),{headers:{'content-type':'application/json'}}));
  const {receipt}=await start(service),reply=await service.handle({version:'1',action:'turn',receipt,promptId:'pain'},signal());expect(reply).toMatchObject({text:'Which earlier finding remains uncertain?',label:'AI-generated discussion — not Endo-verified evidence'});expect(JSON.stringify(reply)).not.toContain('SyntheticPrivateMetadata');
 });
+
+it.each([
+ 'Possible explanations include several conditions; no definitive diagnosis is possible from this discussion.',
+ 'A differential diagnosis is a list of possibilities, not a diagnosis for this patient.',
+ 'The differential diagnosis is broad; it cannot establish a diagnosis for this person.',
+ 'One possible diagnosis is endometriosis; this remains an educational possibility.',
+ 'You have described recurring pelvic pain and painful periods. What is the timing?',
+ 'The patient has reported discomfort during intercourse. What remains unknown?',
+ 'Do you have a record of when symptoms occur?',
+ 'If you have these symptoms, discussion alone does not establish their cause.',
+ 'Other conditions cannot be ruled out from the information provided.',
+ 'Pregnancy has not been ruled out.',
+ 'Nothing in this description confirms endometriosis.',
+ 'Do you take any medication?',
+ 'A definitive diagnosis is not established here.',
+ 'The diagnosis is uncertain; assessment would be needed.',
+ 'This discussion does not confirm ectopic pregnancy.',
+ 'Could this be endometriosis?',
+ 'Follow-up questions: 1) Do you have a symptom diary? 2) Do you take any medication?'
+])('accepts educational differential and clarification language without rewriting it %#',text=>{expect(validateDiscussion(text)).toBe(text);});
+it.each([
+ 'This confirms endometriosis.', 'You have endometriosis.', 'You definitely have endometriosis.',
+ 'The patient has endometriosis.', 'Your diagnosis is endometriosis.',
+ 'One possible diagnosis is confirmed endometriosis.', 'The diagnosis is not uncertain: it is endometriosis.',
+ 'Endometriosis has been ruled out.', 'You do not have endometriosis.',
+ 'Other conditions cannot be ruled out. You have endometriosis.',
+ 'Do you have any questions? The patient has an ectopic pregnancy.',
+ 'Nothing here confirms endometriosis; this confirms ectopic pregnancy.',
+ 'If you have symptoms, you have endometriosis.',
+ 'A differential diagnosis is a list; the diagnosis is endometriosis.',
+ 'Do you take medication? Start ibuprofen.', 'Do you take medication? You should take 200 mg.',
+ 'Do you take medication? You should take medication.', 'Start patient medication.', 'Prescribe antibiotics.',
+ 'You **have** endometriosis.', 'Nothing contradicts that this confirms endometriosis.',
+ 'If you have these symptoms, this is your definitive diagnosis.', 'Take 200 **mg** medication.'
+])('rejects definitive claims and prescribing even beside safe educational language %#',text=>{expect(()=>validateDiscussion(text)).toThrow();});

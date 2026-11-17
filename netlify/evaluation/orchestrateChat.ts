@@ -19,7 +19,45 @@ export function chatCapability(environment:OrchestrateEnvironment=process.env){r
  * It cannot add citations or replace Endo-verified clinical analysis.
  */
 export function validateDiscussion(text:unknown):string{
- if(typeof text!=='string'||!text.trim()||text.length>4000||/[<>\u0000-\u0008\u000b\u000c\u000e-\u001f]|https?:|www\.|\[\d|```|\d+(?:\.\d+)?\s*%|&(?:#\d+|[a-z]+);/i.test(text)||/\b(?:system prompt|bearer|api.?key|tool_calls|function_call|diagnos(?:e|ed|is) (?:is|confirmed)|confirms? (?:endometriosis|ectopic)|you (?:have|do not have)|patient has|ruled out|stage [1-4iv]+|\d+(?:\.\d+)?\s*(?:mg|mcg|ml|tablets?)|(?:start|stop|increase|decrease|take|prescribe) (?:\w+\s+){0,3}(?:medication|dose|ibuprofen|paracetamol|antibiotics?|hormones?))\b/i.test(text))throw new ChatError('outputRejected');
+ // Protocol/action validation happens separately in the verified transport. These
+ // hard bounds, unsupported citations, secret markers and dose/staging restrictions
+ // remain unchanged; allowing qualified prose does not establish clinical truth.
+ const prohibited=/\b(?:system prompt|bearer|api.?key|tool_calls|function_call|stage [1-4iv]+|\d+(?:\.\d+)?\s*(?:mg|mcg|ml|tablets?))\b/i;
+ if(typeof text!=='string'||!text.trim()||text.length>4000||/[<>\u0000-\u0008\u000b\u000c\u000e-\u001f]|https?:|www\.|\[\d|```|\d+(?:\.\d+)?\s*%|&(?:#\d+|[a-z]+);/i.test(text)||prohibited.test(text))throw new ChatError('outputRejected');
+ const questionPrefix=/^(?:[-*]\s*|\d+[.)]\s*)?(?:do|did|does)\s+(?:you|(?:the|this)\s+patient)\s+(?:currently\s+)?$/i;
+ const statements=[
+  {pattern:/\bdiagnos(?:e|ed|is)\s+(?:is|confirmed)\b/gi,allowed:(before:string,after:string,match:string)=>{
+   if(!/^diagnosis\s+is$/i.test(match))return false;
+   if(/^(?:uncertain|unconfirmed)\b|^not\s+(?:yet\s+)?(?:confirmed|established|possible)\b/i.test(after))return true;
+   if(/\bno\s+(?:(?:definitive|confirmed|certain)\s+)?$/i.test(before)&&/^(?:possible|confirmed|established)\b/i.test(after))return true;
+   if(/^(?:confirmed|established|certain|definite)\b/i.test(after))return false;
+   return /\b(?:possible|potential|tentative|provisional)\s+$/i.test(before)
+    ||/\bdifferential\s+$/i.test(before)&&/^(?:(?:a|an)\s+(?:list|set|range|process)|broad|wide|uncertain)\b/i.test(after);
+  }},
+  {pattern:/\bconfirms?\s+(?:endometriosis|ectopic)\b/gi,allowed:(before:string)=>
+   /\b(?:(?:does|do|did|can|could|would)\s+not|doesn't|don't|didn't|cannot|can't|couldn't|wouldn't)\s*$/i.test(before)
+    ||/^(?:nothing|no\s+(?:information|finding|symptom|detail|evidence))(?:\s+(?:in|from|about|here|this|the|provided|reported|description|discussion|information|alone)){0,8}\s*$/i.test(before.trim())},
+  {pattern:/\b(?:you\s+(?:(?:definitely|certainly|clearly|absolutely)\s+)?(?:have|do\s+not\s+have|don't\s+have)|patient\s+(?:(?:definitely|certainly|clearly)\s+)?(?:has|does\s+not\s+have|doesn't\s+have))\b/gi,allowed:(before:string,after:string)=>
+   /\b(?:if|whether)(?:\s+(?:the|this|a|your))?\s*$/i.test(before)
+    ||/^(?:[-*]\s*|\d+[.)]\s*)?(?:do|did|can|could|would)\s+$/i.test(before)
+    ||/^(?:not\s+(?:yet\s+)?)?(?:described|reported|mentioned|outlined|asked\s+about)\b/i.test(after)},
+  {pattern:/\bruled\s+out\b/gi,allowed:(before:string)=>
+   /\b(?:cannot|can\s+not|can't|could\s+not|couldn't)\s+(?:safely\s+)?be\s*$|\bnot\s+(?:yet\s+)?(?:been\s+)?$/i.test(before)
+    ||/^(?:has|have|can|could)\b[^.!?;:]{0,100}\b(?:be|been)\s*$/i.test(before.trim())},
+  {pattern:/\b(?:start|stop|increase|decrease|take|prescribe)\s+(?:\w+\s+){0,3}(?:medication|dose|ibuprofen|paracetamol|antibiotics?|hormones?)\b/gi,allowed:(before:string,_after:string,match:string)=>
+   questionPrefix.test(before)||/^take\b/i.test(match)&&/\b(?:if|whether)\s+you\s+$/i.test(before)}
+ ];
+ // Normalize only for checking; return the exact original text. Each restricted
+ // span needs its own attached qualification. A disclaimer, question, or negation
+ // in another statement cannot authorize a subsequent unsafe assertion.
+ const normalized=text.replace(/[\u2018\u2019]/g,"'").replace(/\*\*|__/g,'').replace(/\s+/g,' ');
+ if(prohibited.test(normalized)||/\b(?:this|that|it)\s+is\s+(?:your|the\s+patient'?s)\s+(?:(?:definitive|confirmed)\s+)?diagnosis\b/i.test(normalized))throw new ChatError('outputRejected');
+ for(const clause of normalized.split(/[.!?;:]+|\b(?:but|however|nevertheless)\b/i)){
+  const current=clause.trim();
+  for(const rule of statements)for(const match of current.matchAll(rule.pattern)){
+   if(!rule.allowed(current.slice(0,match.index),current.slice(match.index!+match[0].length).trimStart(),match[0]))throw new ChatError('outputRejected');
+  }
+ }
  return text;
 }
 type Admission={run<T>(visitId:string,ordinal:number,signal:AbortSignal,infer:(signal:AbortSignal)=>Promise<T>):Promise<T>};
