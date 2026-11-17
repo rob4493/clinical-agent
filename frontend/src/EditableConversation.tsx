@@ -1,11 +1,11 @@
 import DiscussionMarkdown from './DiscussionMarkdown';
-import {DiscussionTextLimit,hasExecutableMarkup,isDiscussionRejection,isProviderRejection} from '../../shared/discussionContract';
+import {DiscussionTextLimit,hasExecutableMarkup,isDiscussionRejection,isProviderRejection,ClinicalLanguageWarnings,isClinicalLanguageWarning,type ClinicalLanguageWarning} from '../../shared/discussionContract';
 import {useEffect,useRef,useState} from 'react';
 
 /** Session-only UI. No case data, uploads, provider thread IDs or credentials. */
 export default function EditableConversation(){
  const [open,setOpen]=useState(false),[consent,setConsent]=useState(false),[receipt,setReceipt]=useState(''),[draft,setDraft]=useState(''),[pending,setPending]=useState(false);
- const [messages,setMessages]=useState<{role:'user'|'assistant';text:string}[]>([]),[history,setHistory]=useState<string[]>([]),[warnings,setWarnings]=useState<string[]>([]),[status,setStatus]=useState('');
+ const [messages,setMessages]=useState<{role:'user'|'assistant';text:string;clinicalWarnings?:ClinicalLanguageWarning[]}[]>([]),[history,setHistory]=useState<string[]>([]),[warnings,setWarnings]=useState<string[]>([]),[status,setStatus]=useState('');
  const busy=useRef(false),controller=useRef<AbortController|null>(null),alive=useRef(true);
  useEffect(()=>{alive.current=true;return()=>{alive.current=false;controller.current?.abort();};},[]);
  async function request(payload:unknown){
@@ -19,6 +19,7 @@ export default function EditableConversation(){
    if(reply?.version!=='2'||!['started','replied','safetyHalt','structuredRequired','refused'].includes(reply.state))throw new Error();
    if(['started','replied'].includes(reply.state)&&(typeof reply.receipt!=='string'||!reply.receipt||reply.receipt.length>2048))throw new Error();
    if(reply.state==='replied'&&(typeof reply.text!=='string'||!reply.text.trim()||reply.text.length>DiscussionTextLimit||hasExecutableMarkup(reply.text)))throw new Error();
+   if(reply.clinicalWarnings!==undefined&&(!Array.isArray(reply.clinicalWarnings)||reply.clinicalWarnings.length>ClinicalLanguageWarnings.length||reply.clinicalWarnings.some((code:unknown)=>!isClinicalLanguageWarning(code))||new Set(reply.clinicalWarnings).size!==reply.clinicalWarnings.length))throw new Error();
    if(reply.state==='safetyHalt'&&(!Array.isArray(reply.warnings)||reply.warnings.some((text:unknown)=>typeof text!=='string'||text.length>2000)))throw new Error();
    return reply;
   }finally{clearTimeout(timeout);controller.current=null;}
@@ -31,7 +32,7 @@ export default function EditableConversation(){
    if(!current){const start=await request({version:'2',action:'start',syntheticOnly:true});if(start.state!=='started')throw new Error();current=start.receipt;}
    const reply=await request({version:'2',action:'turn',receipt:current,history,message});if(!alive.current)return;
    if(reply.state==='replied'){
-    setMessages(previous=>[...previous,{role:'user',text:message},{role:'assistant',text:reply.text}]);setHistory(previous=>[...previous,message]);setReceipt(reply.receipt);setDraft('');setStatus('AI-generated discussion. Not independently verified clinical evidence.');
+    setMessages(previous=>[...previous,{role:'user',text:message},{role:'assistant',text:reply.text,clinicalWarnings:reply.clinicalWarnings}]);setHistory(previous=>[...previous,message]);setReceipt(reply.receipt);setDraft('');setStatus('AI-generated discussion. Not independently verified clinical evidence.');
    }else{
     setReceipt('');setWarnings(reply.state==='safetyHalt'?reply.warnings:[]);
     setStatus(reply.state==='refused'?'The agent declined this request.':reply.state==='structuredRequired'?'Use Build the case for structured review. No case has been submitted or changed.':'Discussion is paused for safety clarification.');
@@ -49,7 +50,7 @@ export default function EditableConversation(){
   <div id="editableEndoConversation" hidden={!open}>
    <h3>Endo AI discussion</h3><p>Explore the findings, ask follow-up questions, or discuss general clinical education. Structured review remains separate.</p>
    <p role="note">AI-generated discussion, not independently verified clinical evidence. Synthetic/de-identified examples only. Not a diagnosis or prescription. Case details and documents are not automatically shared. AI references and statistics are unverified; reference links are inactive.</p>
-   <div className="conversationHistory" role="log" aria-label="IBM conversation" aria-busy={pending}>{messages.map((message,index)=><article key={index} className={'conversationMessage '+(message.role==='user'?'clinician':'endo')}><strong>{message.role==='user'?'Clinician':'Endo · AI-generated'}</strong>{message.role==='assistant'?<DiscussionMarkdown text={message.text}/>:<p style={{whiteSpace:'pre-wrap'}}>{message.text}</p>}</article>)}</div>
+   <div className="conversationHistory" role="log" aria-label="IBM conversation" aria-busy={pending}>{messages.map((message,index)=><article key={index} className={'conversationMessage '+(message.role==='user'?'clinician':'endo')}><strong>{message.role==='user'?'Clinician':'Endo · AI-generated'}</strong>{message.role==='assistant'?<DiscussionMarkdown text={message.text}/>:<p style={{whiteSpace:'pre-wrap'}}>{message.text}</p>}{!!message.clinicalWarnings?.length&&<p role="note" aria-label="Clinical-language cautions">Clinical-language cautions: {message.clinicalWarnings.join(', ')}. Review independently; synthetic preview only. These flags are not verified findings.</p>}</article>)}</div>
    <label><input type="checkbox" checked={consent} disabled={pending||stopped} onChange={event=>setConsent(event.target.checked)}/>This conversation contains fictional, de-identified information only.</label>
    <form className="conversationComposer" onSubmit={event=>{event.preventDefault();void send();}}><label htmlFor="editableEndoMessage">Ask Endo</label><textarea id="editableEndoMessage" rows={3} maxLength={1600} value={draft} disabled={pending||stopped} onChange={event=>setDraft(event.target.value)}/><button type="submit" disabled={pending||!consent||!draft.trim()||stopped}>{pending?'Waiting…':'Send to Endo'}</button></form>
    <p role="status">{status}</p><button type="button" disabled={pending} onClick={reset}>New conversation</button><button type="button" onClick={()=>document.getElementById('narrative')?.focus()}>Use structured case review</button>

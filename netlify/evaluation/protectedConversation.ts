@@ -2,7 +2,7 @@ import {createCipheriv,createDecipheriv,createHmac,randomBytes} from 'node:crypt
 import {competitionWindow,createCompetitionQuota,validateChatLock,type CompetitionTicket} from './orchestrateCompetition';
 import {QuotaError,waitQuota,type QuotaStore} from './demoQuota';
 import {createOrchestrateTransport,OrchestrateResponseError} from './orchestrateTransport';
-import {ChatError,validateDiscussion} from './orchestrateChat';
+import {ChatError,validateProtectedDiscussion} from './orchestrateChat';
 import {ownThread} from './threadOwner';
 import {validateCase} from './input';
 import {evaluateSafety} from './safety';
@@ -12,20 +12,12 @@ import {Module1,Module2} from './packages';
 import type {OrchestrateEnvironment} from './orchestrateTarget';
 import type {Transport} from './watsonShadow';
 
-export type OperatorContext={user?:{id:string;expiresAt:Date};deploy?:{id:string;context:string;published:boolean}};
-const Origin='https://deploy-preview-4--clinicalagent.netlify.app';
+import {protectedDiscussionAllowed,type OperatorContext} from './protectedDiscussionPolicy';
+export type {OperatorContext} from './protectedDiscussionPolicy';
 type Session={id:string;owner:string;ordinal:number;thread?:string;history:string;started:number;until:number};
 export function createProtectedConversation(options:{store:(signal:AbortSignal)=>Promise<QuotaStore>;environment?:OrchestrateEnvironment;clock?:()=>number;transport?:Transport}){
  const env=options.environment??process.env,clock=options.clock??Date.now;
- function allowed(context:OperatorContext){
-  const user=context.user;
-  return !!competitionWindow(env,clock())&&env.ORCHESTRATE_DISCUSSION_AUTHORIZED==='true'
-   &&env.ORCHESTRATE_EMBED_PREVIEW_ID==='4'&&env.ORCHESTRATE_EMBED_PREVIEW_ORIGIN===Origin
-   &&context.deploy?.context==='deploy-preview'&&context.deploy.published===false&&typeof context.deploy.id==='string'&&/^[A-Za-z0-9-]{1,128}$/.test(context.deploy.id)
-   &&!!user&&typeof user.id==='string'&&!!user.id&&!!env.ORCHESTRATE_EMBED_OPERATOR_IDS?.split(',').includes(user.id)
-   &&user.expiresAt instanceof Date&&Number.isFinite(user.expiresAt.getTime())&&user.expiresAt.getTime()>clock()
-   &&env.WATSONX_AI_AUTH_TYPE==='iam'&&typeof env.WATSONX_AI_APIKEY==='string'&&env.WATSONX_AI_APIKEY.length>0&&env.WATSONX_AI_APIKEY.length<=512&&!/\s/.test(env.WATSONX_AI_APIKEY);
- }
+ const allowed=(context:OperatorContext)=>protectedDiscussionAllowed(env,context,clock());
  function digest(value:string){return createHmac('sha256',env.WATSONX_AI_APIKEY!).update('Endo editable discussion v2\0'+value).digest('hex');}
  function seal(session:Session){const iv=randomBytes(12),cipher=createCipheriv('aes-256-gcm',Buffer.from(digest('receipt encryption'),'hex'),iv);const body=Buffer.concat([cipher.update(JSON.stringify(session),'utf8'),cipher.final()]);return Buffer.concat([iv,cipher.getAuthTag(),body]).toString('base64url');}
  function read(receipt:unknown,context:OperatorContext):Session{
@@ -80,8 +72,8 @@ export function createProtectedConversation(options:{store:(signal:AbortSignal)=
    let passed=false;
    try{
     const reply=await provider.complete(turn,signal);guard();await ownThread(options.store,session.id,reply.threadId,signal);
-    const text=validateDiscussion(reply.text,[env.WATSONX_AI_APIKEY!]);guard();passed=true;
-    return {version:'2',state:'replied',text,label:'AI-generated discussion — not independently verified clinical evidence',receipt:seal({...session,ordinal:session.ordinal+1,thread:reply.threadId,history:digest(JSON.stringify(messages))})};
+    const screened=validateProtectedDiscussion(reply.text,env,context,clock());guard();passed=true;
+    return {version:'2',state:'replied',text:screened.text,clinicalWarnings:screened.warnings,label:'AI-generated discussion — not independently verified clinical evidence',receipt:seal({...session,ordinal:session.ordinal+1,thread:reply.threadId,history:digest(JSON.stringify(messages))})};
    }catch(error){if(reservationFailure instanceof QuotaError)throw reservationFailure;if(error instanceof OrchestrateResponseError&&error.rejection==='providerRefusal')return {version:'2',state:'refused',detail:'The agent declined this request. No case changes were made.'};throw error;}
    finally{
     // Accounting must complete before a reply becomes visible. No retries/refunds.

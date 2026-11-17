@@ -264,6 +264,7 @@ netlify/evaluation/packages.ts
 netlify/evaluation/policy.json
 netlify/evaluation/presentationProjector.ts
 netlify/evaluation/protectedConversation.ts
+netlify/evaluation/protectedDiscussionPolicy.ts
 netlify/evaluation/requestPolicy.ts
 netlify/evaluation/retrieval.ts
 netlify/evaluation/reviewSeal.ts

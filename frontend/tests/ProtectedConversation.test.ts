@@ -7,6 +7,7 @@ import {createConverse} from '../../netlify/functions/converse';
 import type {QuotaStore} from '../../netlify/evaluation/demoQuota';
 import type {Transport} from '../../netlify/evaluation/watsonShadow';
 import {DiscussionTextLimit} from '../../shared/discussionContract';
+import {validateProtectedDiscussion,validateDiscussion,chatFailure} from '../../netlify/evaluation/orchestrateChat';
 const Origin='https://deploy-preview-4--clinicalagent.netlify.app';
 const Now=Date.parse('2026-11-16T12:00:00Z');
 const Settings={ORCHESTRATE_DISCUSSION_AUTHORIZED:'true',ORCHESTRATE_COMPETITION_ENABLED:'true',ORCHESTRATE_COMPETITION_STARTED_AT:new Date(Now-1000).toISOString(),ORCHESTRATE_COMPETITION_UNTIL:new Date(Now+14400000-1000).toISOString(),ORCHESTRATE_COMPETITION_DAILY_CALL_LIMIT:'50',ORCHESTRATE_COMPETITION_DAILY_SESSION_LIMIT:'20',ORCHESTRATE_PROBE_ENABLED:'false',ORCHESTRATE_PROBE_EXCEPTION_ENABLED:'false',ORCHESTRATE_PROBE_KILL_SWITCH:'false',ORCHESTRATE_ENABLED:'false',ENDO_DEMO_INFERENCE_ENABLED:'false',ENDO_DEMO_KILL_SWITCH:'true',ORCHESTRATE_EMBED_PREVIEW_ENABLED:'false',ORCHESTRATE_EMBED_KILL_SWITCH:'true',OTEL_SDK_DISABLED:'true',ORCHESTRATE_EMBED_PREVIEW_ID:'4',ORCHESTRATE_EMBED_PREVIEW_ORIGIN:Origin,ORCHESTRATE_EMBED_OPERATOR_IDS:'operator',ORCHESTRATE_API_URL:'https://api.eu-de.watson-orchestrate.cloud.ibm.com/instances/SyntheticTenant',ORCHESTRATE_AGENT_ID:'c6698d4e-a08d-4b77-bf05-139ff3b4c695',ORCHESTRATE_ENVIRONMENT:'live',WATSONX_AI_AUTH_TYPE:'iam',WATSONX_AI_APIKEY:'SyntheticServerKey',WATSONX_AI_TIMEOUT_MS:'1000'};
@@ -27,6 +28,53 @@ function fixture(operatorContext=Context){
  const turn=(receipt:unknown,message='what is endometriosis?',history:string[]=[],context=operatorContext)=>service.handle({version:'2',action:'turn',receipt,message,history},context,signal());
  return {...storage,environment,transport,service,start,turn,setNow:(value:number)=>{now=value;}};
 }
+it.each([
+ ['The patient has pelvic pain.',['patientAssertion']],
+ ['The patient has a history of endometriosis.',['patientAssertion']],
+ ['The patient has reported worsening symptoms.',[]],
+ ['You have several differential considerations.',['patientAssertion']],
+ ['Endometriosis cannot be ruled out.',[]],
+ ['Additional investigation is needed to exclude other causes.',[]],
+ ['Your diagnosis is endometriosis.',['diagnosisAssertion']],
+ ['This confirms ectopic pregnancy.',['diagnosisConfirmation']],
+ ['The diagnosis is unconfirmed.',[]],
+ ['The diagnosis is not established.',[]],
+ ['Ectopic pregnancy has been ruled out.',['diagnosticExclusion']],
+ ['Other causes have been excluded.',['diagnosticExclusion']],
+ ['Your findings indicate stage IV disease.',['unsupportedStaging']],
+ ['Your probability is 90%.',['patientSpecificRisk']]
+])('classifies clinical language without rewriting or retaining authorized synthetic replies %#',async(text,categories)=>{
+ const f=fixture(),original=f.transport.getMockImplementation()!,logs=[vi.spyOn(console,'log'),vi.spyOn(console,'warn'),vi.spyOn(console,'error')];
+ f.transport.mockImplementation(async(address,init)=>{const response=await original(address,init);if(address.includes('/identity/token'))return response;const body=await response.json();body.choices[0].message.content=text;return json(body);});
+ try{const session=await f.start(),reply=await f.turn(session.receipt);expect(reply).toMatchObject({state:'replied',text,clinicalWarnings:categories});expect(reply.label).toContain('not independently verified clinical evidence');expect(JSON.stringify([...f.records.values()])).not.toContain(text);for(const log of logs)expect(log).not.toHaveBeenCalled();}finally{vi.restoreAllMocks();}
+});
+it('collects distinct clinical flags deterministically while retaining strict default policy',()=>{
+ const text='The patient has endometriosis. Ectopic pregnancy has been ruled out. Your diagnosis is endometriosis. This confirms endometriosis. Your condition is stage IV. Your probability is 90%. The patient has pelvic pain.';
+ expect(validateProtectedDiscussion(text,Settings,Context,Now)).toEqual({text,warnings:['patientAssertion','diagnosticExclusion','diagnosisAssertion','diagnosisConfirmation','unsupportedStaging','patientSpecificRisk']});
+ for(const strictText of ['The patient has pelvic pain.','Your diagnosis is endometriosis.','Ectopic pregnancy has been ruled out.','Your condition is stage IV.','Your probability is 90%.'])expect(()=>validateDiscussion(strictText)).toThrow();
+});
+it.each([
+ ['The patient has pelvic pain. Start ibuprofen.','prescribingInstruction'],
+ ['Ectopic pregnancy has been ruled out. A dose of 200 mg.','medicationDose'],
+ ['Your diagnosis is endometriosis. <script>alert(1)</script>','executableMarkup'],
+ ['The patient has pelvic pain. api_key=SyntheticExposedKey123','secretExposure'],
+ ['The patient has pelvic pain. [source](javascript:alert(1))','unsafeReference'],
+ ['The patient has pelvic pain. tool_calls','actionDirective']
+])('clinical warnings never waive hard protection later in the same response %#',(text,code)=>{
+ let error:unknown;try{validateProtectedDiscussion(text,Settings,Context,Now);}catch(failure){error=failure;}expect(chatFailure(error)).toMatchObject({code:'outputRejected',outputRejection:code});
+});
+it.each([
+ {},{...Context,deploy:{...Context.deploy,context:'production'}},{...Context,deploy:{...Context.deploy,published:true}},
+ {...Context,user:{...Context.user,id:'unlisted'}},{...Context,user:{...Context.user,expiresAt:new Date(Now)}}
+])('does not expose warning-only screening to unauthorized or Production context %#',context=>{expect(()=>validateProtectedDiscussion('The patient has pelvic pain.',Settings,context,Now)).toThrow();});
+it.each([
+ {ORCHESTRATE_EMBED_PREVIEW_ID:'3'},{ORCHESTRATE_EMBED_PREVIEW_ORIGIN:'https://clinicalagent.netlify.app'},
+ {ORCHESTRATE_COMPETITION_ENABLED:'false'},{ORCHESTRATE_PROBE_KILL_SWITCH:'true'},{ORCHESTRATE_DISCUSSION_AUTHORIZED:'false'},
+ {ORCHESTRATE_COMPETITION_UNTIL:new Date(Now).toISOString()},{ORCHESTRATE_ENABLED:'true'}
+])('requires all existing preview authorization gates for warning-only screening %#',change=>{expect(()=>validateProtectedDiscussion('The patient has pelvic pain.',{...Settings,...change},Context,Now)).toThrow();});
+it('rejects request-supplied screening policy without calling IBM',async()=>{
+ const f=fixture(),session=await f.start();await expect(f.service.handle({version:'2',action:'turn',receipt:session.receipt,message:'general education',history:[],screeningPolicy:'warningOnly'},Context,signal())).rejects.toThrow();expect(f.transport).not.toHaveBeenCalled();
+});
 it.each([1,3,7])('maintains an operator-bound receipt/thread across a %s-day window and fails closed at expiry',async days=>{
  const until=Now+days*86400000,operator={...Context,user:{...Context.user,expiresAt:new Date(until+60000)}},f=fixture(operator);
  f.environment.ORCHESTRATE_COMPETITION_STARTED_AT=new Date(Now).toISOString();f.environment.ORCHESTRATE_COMPETITION_UNTIL=new Date(until).toISOString();
@@ -57,7 +105,7 @@ it('accepts a mocked educational clinical response and follow-up without storing
  expect(await f.turn(first.receipt,'What else remains uncertain?',[question])).toMatchObject({state:'replied',text:discussion});
  expect(JSON.stringify([...f.records.values()])).not.toContain(question);expect(JSON.stringify([...f.records.values()])).not.toContain(discussion);for(const log of logs)expect(log).not.toHaveBeenCalled();vi.restoreAllMocks();
 });
-it.each(['Your diagnosis is endometriosis.','You should take ibuprofen.','This confirms ectopic pregnancy.'])('returns only fixed outputRejected for mocked unsafe responses %#',async text=>{
+it.each(['You should take ibuprofen.','Take 200 mg medication.','api_key=SyntheticPrivateCredential123'])('returns only fixed outputRejected for mocked unsafe responses %#',async text=>{
  const f=fixture(),original=f.transport.getMockImplementation()!;
  f.transport.mockImplementation(async(address,init)=>{const response=await original(address,init);if(address.includes('/identity/token'))return response;const body=await response.json();body.choices[0].message.content=text;return json(body);});
  const handler=createConverse(undefined,f.service),session=await f.start(),response=await handler(new Request(Origin+'/api/v1/conversation',{method:'POST',headers:{Origin,'Content-Type':'application/json'},body:JSON.stringify({version:'2',action:'turn',receipt:session.receipt,message:'general clinical education',history:[]})}),Context);
@@ -68,16 +116,16 @@ it.each([
  ['Ectopic pregnancy has not been excluded. Other causes cannot be\nreliably ruled out.',true],
  ['There is insufficient information. Ectopic pregnancy has been ruled out.',false],
  ['Ectopic pregnancy cannot be ruled out, but other causes have been excluded.',false]
-])('keeps exclusion uncertainty verbatim or rejects a definitive assertion through the protected route %#',async(text,allowed)=>{
+])('preserves exclusion wording and classifies unsupported exclusions in authorized preview %#',async(text,allowed)=>{
  const f=fixture(),original=f.transport.getMockImplementation()!;
  f.transport.mockImplementation(async(address,init)=>{const response=await original(address,init);if(address.includes('/identity/token'))return response;const body=await response.json();body.choices[0].message.content=text;return json(body);});
  const handler=createConverse(undefined,f.service),session=await f.start(),response=await handler(new Request(Origin+'/api/v1/conversation',{method:'POST',headers:{Origin,'Content-Type':'application/json'},body:JSON.stringify({version:'2',action:'turn',receipt:session.receipt,message:'general clinical education',history:[]})}),Context),body=await response.json();
- if(allowed){expect(response.status).toBe(200);expect(body).toMatchObject({state:'replied',text});}else{expect(response.status).toBe(503);expect(body).toMatchObject({code:'outputRejected',outputRejection:'diagnosticExclusion'});expect(JSON.stringify(body)).not.toContain(text);}
+ expect(response.status).toBe(200);expect(body).toMatchObject({state:'replied',text,clinicalWarnings:allowed?[]:['diagnosticExclusion']});
  expect(JSON.stringify([...f.records.values()])).not.toContain(text);
 });
 it.each([
  ['api_key=SyntheticCredentialValue123','secretExposure'],['<svg onload=alert(1)>','executableMarkup'],['[Source](javascript:alert(1))','unsafeReference'],
- ['Your diagnosis is endometriosis.','diagnosisAssertion'],['Start ibuprofen.','prescribingInstruction'],['Your probability is 90%.','patientSpecificRisk'],['A dose of 200 mg.','medicationDose'],['Your condition is stage II.','unsupportedStaging']
+ ['system prompt','internalInstruction'],['Start ibuprofen.','prescribingInstruction'],['tool_calls','actionDirective'],['A dose of 200 mg.','medicationDose']
 ])('returns fixed rule and stage only, without retaining model content or operational identities %#',async(text,rejection)=>{
  const f=fixture(),original=f.transport.getMockImplementation()!,logs=[vi.spyOn(console,'log'),vi.spyOn(console,'warn'),vi.spyOn(console,'error')];
  f.transport.mockImplementation(async(address,init)=>{const response=await original(address,init);if(address.includes('/identity/token'))return response;const body=await response.json();body.choices[0].message.content=text;return json(body);});

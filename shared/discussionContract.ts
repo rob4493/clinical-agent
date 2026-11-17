@@ -2,6 +2,9 @@
 export const DiscussionTextLimit=16000;
 export const DiscussionRejections=['invalidText','emptyText','responseTooLong','invalidCharacters','executableMarkup','unsafeReference','secretExposure','internalInstruction','actionDirective','medicationDose','unsupportedStaging','patientSpecificRisk','diagnosisAssertion','diagnosisConfirmation','patientAssertion','diagnosticExclusion','prescribingInstruction','providerAction','unclassifiedOutput'] as const;
 export type DiscussionRejection=typeof DiscussionRejections[number];
+export const ClinicalLanguageWarnings=['patientAssertion','diagnosticExclusion','diagnosisAssertion','diagnosisConfirmation','unsupportedStaging','patientSpecificRisk'] as const;
+export type ClinicalLanguageWarning=typeof ClinicalLanguageWarnings[number];
+export function isClinicalLanguageWarning(value:unknown):value is ClinicalLanguageWarning{return typeof value==='string'&&(ClinicalLanguageWarnings as readonly string[]).includes(value);}
 export function isDiscussionRejection(value:unknown):value is DiscussionRejection{return typeof value==='string'&&(DiscussionRejections as readonly string[]).includes(value);}
 export const ProviderRejections=['httpNotSuccessful','contentType','bodyUnavailable','bodyReadFailed','bodyTooLarge','invalidUtf8','invalidJson','invalidShape','unexpectedFields','missingRequiredFields','invalidThreadId','invalidMetadata','invalidChoices','incompatibleMessageContent','finishReason','usageValidation','threadMismatch','actionResponse','providerRefusal','textTooLong','textInvalidCharacters','unclassifiedProtocol'] as const;
 export function isProviderRejection(value:unknown):value is typeof ProviderRejections[number]{return typeof value==='string'&&(ProviderRejections as readonly string[]).includes(value);}

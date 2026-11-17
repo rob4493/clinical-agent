@@ -7,7 +7,8 @@ import {createOrchestrateTransport,OrchestrateResponseError,type OrchestrateGate
 import {createReceipts,SessionError} from './visitReceipt';
 import {QuotaError} from './demoQuota';
 import {createWatsonRuntime,type Transport} from './watsonShadow';
-import {DiscussionTextLimit,hasExecutableMarkup,isDiscussionRejection,isProviderRejection,type DiscussionRejection} from '../../shared/discussionContract';
+import {DiscussionTextLimit,hasExecutableMarkup,isDiscussionRejection,isProviderRejection,ClinicalLanguageWarnings,isClinicalLanguageWarning,type ClinicalLanguageWarning,type DiscussionRejection} from '../../shared/discussionContract';
+import {protectedDiscussionAllowed,type OperatorContext} from './protectedDiscussionPolicy';
 
 export class ChatError extends Error {constructor(readonly code:'unavailable'|'inputRejected'|'outputRejected'){super('IBM conversation is unavailable. The case is unchanged.');}}
 export class DiscussionError extends ChatError {constructor(readonly rejection:DiscussionRejection){super('outputRejected');}}
@@ -38,8 +39,17 @@ function uncertainExclusion(before:string,predicate:string,question:boolean){
  * References and statistics are unverified text, never canonical citations. It
  * cannot replace Endo-verified clinical analysis or verify medical accuracy.
  */
-export function validateDiscussion(text:unknown,secrets:readonly string[]=[]):string{
+export function validateDiscussion(text:unknown,secrets:readonly string[]=[]):string{return screenDiscussion(text,secrets,false).text;}
+/** Warning-only policy is reachable only after independently checking the same
+ * trusted Preview #4 operator/window gate used by the conversation service. */
+export function validateProtectedDiscussion(text:unknown,env:OrchestrateEnvironment,context:OperatorContext,now:number){
+ if(!protectedDiscussionAllowed(env,context,now))throw new ChatError('unavailable');
+ return screenDiscussion(text,[env.WATSONX_AI_APIKEY!],true);
+}
+function screenDiscussion(text:unknown,secrets:readonly string[],warningOnly:boolean):{text:string;warnings:ClinicalLanguageWarning[]}{
  const reject=(code:DiscussionRejection):never=>{throw new DiscussionError(code);};
+ const warnings=new Set<ClinicalLanguageWarning>();
+ const concern=(code:ClinicalLanguageWarning)=>{if(!warningOnly)reject(code);warnings.add(code);};
  if(typeof text!=='string')return reject('invalidText');
  if(!text.trim())return reject('emptyText');
  if(text.length>DiscussionTextLimit)return reject('responseTooLong');
@@ -54,8 +64,8 @@ export function validateDiscussion(text:unknown,secrets:readonly string[]=[]):st
  if(/\bsystem prompt\b/i.test(normalized))return reject('internalInstruction');
  if(/\b(?:tool_calls|function_call)\b/i.test(normalized))return reject('actionDirective');
  if(/\b\d+(?:\.\d+)?\s*(?:mg|mcg|ml|tablets?)\b/i.test(normalized))return reject('medicationDose');
- if(/\b(?:your|(?:the|this) patient's)\s+(?:risk|probability|chance|likelihood)\s*(?:is|=|of)?\s*(?:(?:about|around|approximately)\s+)?\d+(?:\.\d+)?\s*%/i.test(normalized))return reject('patientSpecificRisk');
- if(/\b(?:this|that|it)\s+is\s+(?:your|the\s+patient'?s)\s+(?:(?:definitive|confirmed)\s+)?diagnosis\b/i.test(normalized))return reject('diagnosisAssertion');
+ if(/\b(?:your|(?:the|this) patient's)\s+(?:risk|probability|chance|likelihood)\s*(?:is|=|of)?\s*(?:(?:about|around|approximately)\s+)?\d+(?:\.\d+)?\s*%/i.test(normalized))concern('patientSpecificRisk');
+ if(/\b(?:this|that|it)\s+is\s+(?:your|the\s+patient'?s)\s+(?:(?:definitive|confirmed)\s+)?diagnosis\b/i.test(normalized))concern('diagnosisAssertion');
  const questionPrefix=/^(?:[-*]\s*|\d+[.)]\s*)?(?:do|did|does)\s+(?:you|(?:the|this)\s+patient)\s+(?:currently\s+)?$/i;
  const statements=[
   {rejection:'unsupportedStaging',pattern:/\bstage [1-4iv]+\b/gi,allowed:(before:string,after:string)=>! /\b(?:your|you|(?:this|the) patient|patient's)\b/i.test(before+' '+after)},
@@ -83,7 +93,9 @@ export function validateDiscussion(text:unknown,secrets:readonly string[]=[]):st
  for(const clause of normalized.split(/[\r\n.!?;:]+|\b(?:but|however|nevertheless)\b/i)){
   const current=clause.trim();
   for(const rule of statements)for(const match of current.matchAll(rule.pattern)){
-   if(!rule.allowed(current.slice(0,match.index),current.slice(match.index!+match[0].length).trimStart(),match[0]))reject(rule.rejection as DiscussionRejection);
+   if(!rule.allowed(current.slice(0,match.index),current.slice(match.index!+match[0].length).trimStart(),match[0])){
+    if(isClinicalLanguageWarning(rule.rejection))concern(rule.rejection);else reject(rule.rejection as DiscussionRejection);
+   }
   }
  }
  // Exclusion predicates need their attached uncertainty even across a wrapped
@@ -91,10 +103,10 @@ export function validateDiscussion(text:unknown,secrets:readonly string[]=[]):st
  for(const paragraph of normalized.split(/\r?\n\s*\r?\n/))for(const segment of paragraph.matchAll(/[^.!?;:]+[.!?;:]?/g)){
   const sentence=segment[0].trim(),question=sentence.endsWith('?');
   for(const clause of sentence.split(/\b(?:but|however|nevertheless)\b/i))for(const match of clause.matchAll(/\b(?:ruled\s+out|rule\s+out|excluded)\b/gi)){
-   if(!uncertainExclusion(clause.slice(0,match.index).replace(/\s+/g,' '),match[0],question))reject('diagnosticExclusion');
+   if(!uncertainExclusion(clause.slice(0,match.index).replace(/\s+/g,' '),match[0],question))concern('diagnosticExclusion');
   }
  }
- return text;
+ return {text,warnings:ClinicalLanguageWarnings.filter(code=>warnings.has(code))};
 }
 type Admission={run<T>(visitId:string,ordinal:number,signal:AbortSignal,infer:(signal:AbortSignal)=>Promise<T>):Promise<T>};
 /** No case/upload fields or raw visitor messages enter this controller. The signed
