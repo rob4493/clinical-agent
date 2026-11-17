@@ -47,3 +47,7 @@ The optional in-browser upload workflow bundles PDF.js 6.4.299 (Apache-2.0), ffl
 ## Server-only quota dependency
 
 The prepared anonymous-demo quota adapter uses @netlify/blobs 11.1.7 (MIT), with its separately licensed dependencies. It is not imported into browser code. The 46 newly locked packages declare MIT, Apache-2.0, ISC, 0BSD or MIT/CC0 terms; callsite 1.0.0 omits the manifest licence field but identifies MIT in its distributed Readme. Package licences and notices remain applicable independently of this project licence. OpenTelemetry tracing bootstrap is not imported and content tracing remains disabled. No Netlify dependency licence covers clinical source publications.
+
+## Conversation Markdown presentation
+
+The browser discussion renderer adds react-markdown 10.1.0 and remark-gfm 4.0.1 with their locked transitive dependencies. Required installed package notices are preserved in frontend/public/THIRD_PARTY_NOTICES.txt and copied unchanged into the browser build. No dependency licence grants clinical authority or rights to medical publications.

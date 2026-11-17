@@ -28,7 +28,7 @@ export function validateDiscussion(text:unknown,secrets:readonly string[]=[]):st
  if(text.length>DiscussionTextLimit)return reject('responseTooLong');
  if(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(text))return reject('invalidCharacters');
  // Check the entire bounded response, never a truncated prefix. Rendering uses
- // text nodes only: references, %, fences and harmless markup stay inert and are
+ // safe React presentation: references, %, fences and harmless markup stay inert and are
  // neither followed nor promoted to reviewed evidence. No provider text is logged.
  const normalized=text.replace(/[\u2018\u2019]/g,"'").replace(/\*\*|__/g,'').replace(/[^\S\r\n]+/g,' ');
  if(secrets.some(secret=>secret.length>0&&text.includes(secret))||/-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----|\bBearer\s+[A-Za-z0-9._~-]{8,}|\b(?:api[_ -]?key|access[_ -]?token|refresh[_ -]?token|password|authorization|secret)\s*[:=]\s*["']?[A-Za-z0-9_./+%=-]{8,}|\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/i.test(normalized))return reject('secretExposure');

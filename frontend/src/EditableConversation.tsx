@@ -1,3 +1,4 @@
+import DiscussionMarkdown from './DiscussionMarkdown';
 import {DiscussionTextLimit,hasExecutableMarkup,isDiscussionRejection,isProviderRejection} from '../../shared/discussionContract';
 import {useEffect,useRef,useState} from 'react';
 
@@ -42,13 +43,13 @@ export default function EditableConversation(){
  }
  function reset(){if(busy.current)return;setReceipt('');setMessages([]);setHistory([]);setWarnings([]);setConsent(false);setStatus('New conversation. No previous context will be sent.');}
  const stopped=!receipt&&messages.length>0||warnings.length>0||!!status&&status!=='Waiting for IBM…'&&!consent&&!status.startsWith('New conversation');
- return <section className="guidedSuggestion unifiedAssistant" aria-label="IBM conversational discussion">
+ return <section className="guidedSuggestion unifiedAssistant ibmDiscussion" aria-label="IBM conversational discussion">
   <button type="button" aria-expanded={open} aria-controls="editableEndoConversation" onClick={()=>setOpen(value=>!value)}>{open?'Collapse Endo AI':'Continue with Endo AI'}</button>
   {warnings.length>0&&<div role="alert">{warnings.map(text=><p key={text}>{text}</p>)}</div>}
   <div id="editableEndoConversation" hidden={!open}>
    <h3>Endo AI discussion</h3><p>Explore the findings, ask follow-up questions, or discuss general clinical education. Structured review remains separate.</p>
-   <p role="note">AI-generated discussion, not independently verified clinical evidence. Synthetic/de-identified examples only. Not a diagnosis or prescription. Case details and documents are not automatically shared. AI references and statistics are unverified and shown as plain text.</p>
-   <div className="conversationHistory" role="log" aria-label="IBM conversation">{messages.map((message,index)=><article key={index} className={'conversationMessage '+(message.role==='user'?'clinician':'endo')}><strong>{message.role==='user'?'Clinician':'Endo · AI-generated'}</strong><p style={{whiteSpace:'pre-wrap'}}>{message.text}</p></article>)}</div>
+   <p role="note">AI-generated discussion, not independently verified clinical evidence. Synthetic/de-identified examples only. Not a diagnosis or prescription. Case details and documents are not automatically shared. AI references and statistics are unverified; reference links are inactive.</p>
+   <div className="conversationHistory" role="log" aria-label="IBM conversation" aria-busy={pending}>{messages.map((message,index)=><article key={index} className={'conversationMessage '+(message.role==='user'?'clinician':'endo')}><strong>{message.role==='user'?'Clinician':'Endo · AI-generated'}</strong>{message.role==='assistant'?<DiscussionMarkdown text={message.text}/>:<p style={{whiteSpace:'pre-wrap'}}>{message.text}</p>}</article>)}</div>
    <label><input type="checkbox" checked={consent} disabled={pending||stopped} onChange={event=>setConsent(event.target.checked)}/>This conversation contains fictional, de-identified information only.</label>
    <form className="conversationComposer" onSubmit={event=>{event.preventDefault();void send();}}><label htmlFor="editableEndoMessage">Ask Endo</label><textarea id="editableEndoMessage" rows={3} maxLength={1600} value={draft} disabled={pending||stopped} onChange={event=>setDraft(event.target.value)}/><button type="submit" disabled={pending||!consent||!draft.trim()||stopped}>{pending?'Waiting…':'Send to Endo'}</button></form>
    <p role="status">{status}</p><button type="button" disabled={pending} onClick={reset}>New conversation</button><button type="button" onClick={()=>document.getElementById('narrative')?.focus()}>Use structured case review</button>

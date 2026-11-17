@@ -137,6 +137,7 @@ frontend/src/App.tsx
 frontend/src/ConflictDialog.tsx
 frontend/src/DemoCases.ts
 frontend/src/Disclosure.tsx
+frontend/src/DiscussionMarkdown.tsx
 frontend/src/EditableConversation.tsx
 frontend/src/FindingIcon.tsx
 frontend/src/GuidedFollowup.tsx
@@ -183,6 +184,7 @@ frontend/tests/Conversation.test.tsx
 frontend/tests/DemoCases.test.tsx
 frontend/tests/DemoQuota.test.ts
 frontend/tests/Dialogue.test.tsx
+frontend/tests/DiscussionMarkdown.test.tsx
 frontend/tests/DocumentApi.test.ts
 frontend/tests/DocumentWorker.test.ts
 frontend/tests/Documents.test.ts
