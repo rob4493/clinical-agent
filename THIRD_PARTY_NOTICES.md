@@ -51,3 +51,5 @@ The prepared anonymous-demo quota adapter uses @netlify/blobs 11.1.7 (MIT), with
 ## Conversation Markdown presentation
 
 The browser discussion renderer adds react-markdown 10.1.0 and remark-gfm 4.0.1 with their locked transitive dependencies. Required installed package notices are preserved in frontend/public/THIRD_PARTY_NOTICES.txt and copied unchanged into the browser build. No dependency licence grants clinical authority or rights to medical publications.
+
+The presentation-only section icons use lucide-react 1.73.0. Its installed licence/copyright notices are preserved in frontend/public/THIRD_PARTY_NOTICES.txt. Icons are bundled inline and require no remote assets.

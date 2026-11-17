@@ -1,5 +1,6 @@
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import {discussionSections,DiscussionSummary,DiscussionStaticTitle} from './DiscussionSections';
 
 // Convert only a standalone, attribute-free literal <br> AST node. Never parse
 // raw HTML, rewrite clinical text, or change code spans/blocks or stored history.
@@ -14,10 +15,11 @@ function literalBreaks(){
   visit(tree);
  };
 }
-const elements=['p','br','h1','h2','h3','h4','h5','h6','strong','em','del','ul','ol','li','blockquote','hr','pre','code','table','thead','tbody','tr','th','td','a','img'];
+const elements=['p','br','h1','h2','h3','h4','h5','h6','strong','em','del','ul','ol','li','blockquote','hr','pre','code','table','thead','tbody','tr','th','td','a','img','details','summary','section','div'];
 /** Presentation only. No HTML parser, URL navigation, media fetch or clinical authority. */
 export default function DiscussionMarkdown({text}:{text:string}){
- return <div className="discussionMarkdown"><Markdown remarkPlugins={[remarkGfm,literalBreaks]} allowedElements={elements} urlTransform={()=>''} components={{
+ return <div className="discussionMarkdown"><Markdown remarkPlugins={[remarkGfm,literalBreaks,discussionSections]} allowedElements={elements} urlTransform={()=>''} components={{
+  summary:DiscussionSummary,div:DiscussionStaticTitle,
   a:({children})=><span className="discussionReference" title="Unverified AI reference; navigation disabled">{children}</span>,
   img:({alt})=><span className="discussionReference">{alt?`[Image omitted: ${alt}]`:'[Image omitted]'}</span>,
   table:({children})=><div className="discussionTable" role="region" aria-label="AI discussion table" tabIndex={0}><table>{children}</table></div>,

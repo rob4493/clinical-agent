@@ -138,6 +138,7 @@ frontend/src/ConflictDialog.tsx
 frontend/src/DemoCases.ts
 frontend/src/Disclosure.tsx
 frontend/src/DiscussionMarkdown.tsx
+frontend/src/DiscussionSections.tsx
 frontend/src/EditableConversation.tsx
 frontend/src/FindingIcon.tsx
 frontend/src/GuidedFollowup.tsx
