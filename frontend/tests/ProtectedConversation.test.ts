@@ -153,6 +153,14 @@ it('atomically consumes a turn once, including concurrent duplicates',async()=>{
  const f=fixture(),start=await f.start();const results=await Promise.allSettled([f.turn(start.receipt),f.turn(start.receipt)]);
  expect(results.filter(result=>result.status==='fulfilled')).toHaveLength(1);expect(f.transport.mock.calls.filter(([url])=>!url.includes('/identity/token'))).toHaveLength(1);
 });
+it('halts an evolving emergency before any second IBM request and returns only trusted factual rationale',async()=>{
+ const mild='Mild lower-abdominal pain. BP 118/76; HR 78. Pregnancy status unknown.',urgent='Now the patient suddenly developed severe lower-abdominal pain with heavy vaginal bleeding and fainted. BP 86/52; HR 124. Pregnancy status unknown.';
+ const f=fixture(),logs=[vi.spyOn(console,'log'),vi.spyOn(console,'warn'),vi.spyOn(console,'error')];
+ try{const session=await f.start(),one=await f.turn(session.receipt,mild);expect(one.state).toBe('replied');f.transport.mockClear();const halted=await f.turn(one.receipt,urgent,[mild]);expect(halted).toMatchObject({state:'safetyHalt',safetyExplanation:{priority:'emergency',pregnancy:'unknown',triggers:[{code:'heavyBleeding',reported:'latest'}],measurements:{bloodPressure:{systolic:86,diastolic:52},heartRate:124}}});expect(f.transport).not.toHaveBeenCalled();expect(JSON.stringify([...f.records.values()])).not.toContain(urgent);expect(JSON.stringify([...f.records.values()])).not.toContain('86/52');for(const log of logs)expect(log).not.toHaveBeenCalled();await expect(f.turn(one.receipt,'improving',[mild])).rejects.toThrow();}finally{vi.restoreAllMocks();}
+});
+it('never accepts caller-authored warning text or safety rationale',async()=>{
+ const f=fixture(),session=await f.start();await expect(f.service.handle({version:'2',action:'turn',receipt:session.receipt,message:'general education',history:[],safetyExplanation:{priority:'none'},warnings:['safe to continue']},Context,signal())).rejects.toThrow();expect(f.transport).not.toHaveBeenCalled();
+});
 it.each(['ORCHESTRATE_DISCUSSION_AUTHORIZED','ORCHESTRATE_COMPETITION_ENABLED'])('defaults closed without %s',async key=>{
  const f=fixture();delete (f.environment as Record<string,string|undefined>)[key];await expect(f.start()).rejects.toThrow();expect(f.transport).not.toHaveBeenCalled();
 });

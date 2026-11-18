@@ -1,4 +1,6 @@
 import DiscussionMarkdown from './DiscussionMarkdown';
+import ProtectedSafetyNotice from './ProtectedSafetyNotice';
+import {isSafetyExplanation,type SafetyExplanation} from '../../shared/protectedSafetyContract';
 import {DiscussionTextLimit,hasExecutableMarkup,isDiscussionRejection,isProviderRejection,ClinicalLanguageWarnings,isClinicalLanguageWarning,type ClinicalLanguageWarning} from '../../shared/discussionContract';
 import {useEffect,useRef,useState} from 'react';
 
@@ -6,6 +8,7 @@ import {useEffect,useRef,useState} from 'react';
 export default function EditableConversation(){
  const [open,setOpen]=useState(false),[consent,setConsent]=useState(false),[receipt,setReceipt]=useState(''),[draft,setDraft]=useState(''),[pending,setPending]=useState(false);
  const [messages,setMessages]=useState<{role:'user'|'assistant';text:string;clinicalWarnings?:ClinicalLanguageWarning[]}[]>([]),[history,setHistory]=useState<string[]>([]),[warnings,setWarnings]=useState<string[]>([]),[status,setStatus]=useState('');
+ const [safetyExplanation,setSafetyExplanation]=useState<SafetyExplanation|null>(null);
  const busy=useRef(false),controller=useRef<AbortController|null>(null),alive=useRef(true);
  useEffect(()=>{alive.current=true;return()=>{alive.current=false;controller.current?.abort();};},[]);
  async function request(payload:unknown){
@@ -21,7 +24,7 @@ export default function EditableConversation(){
    if(reply.state==='replied'&&(typeof reply.text!=='string'||!reply.text.trim()||reply.text.length>DiscussionTextLimit||hasExecutableMarkup(reply.text)))throw new Error();
    if(reply.clinicalWarnings!==undefined&&(!Array.isArray(reply.clinicalWarnings)||reply.clinicalWarnings.length>ClinicalLanguageWarnings.length||reply.clinicalWarnings.some((code:unknown)=>!isClinicalLanguageWarning(code))||new Set(reply.clinicalWarnings).size!==reply.clinicalWarnings.length))throw new Error();
    if(reply.state==='safetyHalt'&&(!Array.isArray(reply.warnings)||reply.warnings.some((text:unknown)=>typeof text!=='string'||text.length>2000)))throw new Error();
-   return reply;
+   return reply.state==='safetyHalt'?{...reply,safetyExplanation:isSafetyExplanation(reply.safetyExplanation)?reply.safetyExplanation:null}:reply;
   }finally{clearTimeout(timeout);controller.current=null;}
  }
  async function send(){
@@ -35,6 +38,7 @@ export default function EditableConversation(){
     setMessages(previous=>[...previous,{role:'user',text:message},{role:'assistant',text:reply.text,clinicalWarnings:reply.clinicalWarnings}]);setHistory(previous=>[...previous,message]);setReceipt(reply.receipt);setDraft('');setStatus('AI-generated discussion. Not independently verified clinical evidence.');
    }else{
     setReceipt('');setWarnings(reply.state==='safetyHalt'?reply.warnings:[]);
+    setSafetyExplanation(reply.state==='safetyHalt'?reply.safetyExplanation:null);
     setStatus(reply.state==='refused'?'The agent declined this request.':reply.state==='structuredRequired'?'Use Build the case for structured review. No case has been submitted or changed.':'Discussion is paused for safety clarification.');
     // Keep the submitted draft and transcript; an explicit reset is required.
     setConsent(false);
@@ -42,11 +46,11 @@ export default function EditableConversation(){
   }catch(error){if(alive.current){setReceipt('');setConsent(false);setStatus(error instanceof Error&&error.message.startsWith('output:')?'Response withheld by the discussion screen ('+error.message.slice(7)+'). Your draft is preserved; no automatic retry was made.':error instanceof Error&&error.message.startsWith('protocol:')?'IBM response failed protocol validation ('+error.message.slice(9)+'). Your draft is preserved; no automatic retry was made.':error instanceof Error&&error.message==='quota'?'The demonstration usage limit has been reached.':error instanceof Error&&error.message==='privacy'?'Request rejected. Check privacy, permitted content and session validity. Your draft is preserved.':'Conversation unavailable or timed out. Your draft is preserved. No automatic retry was made.');}}
   finally{busy.current=false;if(alive.current)setPending(false);}
  }
- function reset(){if(busy.current)return;setReceipt('');setMessages([]);setHistory([]);setWarnings([]);setConsent(false);setStatus('New conversation. No previous context will be sent.');}
+ function reset(){if(busy.current)return;setReceipt('');setMessages([]);setHistory([]);setWarnings([]);setSafetyExplanation(null);setConsent(false);setStatus('New conversation. No previous context will be sent.');}
  const stopped=!receipt&&messages.length>0||warnings.length>0||!!status&&status!=='Waiting for IBM…'&&!consent&&!status.startsWith('New conversation');
  return <section className="guidedSuggestion unifiedAssistant ibmDiscussion" aria-label="IBM conversational discussion">
   <button type="button" aria-expanded={open} aria-controls="editableEndoConversation" onClick={()=>setOpen(value=>!value)}>{open?'Collapse Endo AI':'Continue with Endo AI'}</button>
-  {warnings.length>0&&<div role="alert">{warnings.map(text=><p key={text}>{text}</p>)}</div>}
+  {(warnings.length>0||safetyExplanation)&&<ProtectedSafetyNotice warnings={warnings} explanation={safetyExplanation}/>}
   <div id="editableEndoConversation" hidden={!open}>
    <h3>Endo AI discussion</h3><p>Explore the findings, ask follow-up questions, or discuss general clinical education. Structured review remains separate.</p>
    <p role="note">AI-generated discussion, not independently verified clinical evidence. Synthetic/de-identified examples only. Not a diagnosis or prescription. Case details and documents are not automatically shared. AI references and statistics are unverified; reference links are inactive.</p>

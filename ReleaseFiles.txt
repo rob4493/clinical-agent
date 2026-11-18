@@ -145,6 +145,7 @@ frontend/src/GuidedFollowup.tsx
 frontend/src/OrchestrateChat.tsx
 frontend/src/PregnancyCases.json
 frontend/src/PregnancyFields.tsx
+frontend/src/ProtectedSafetyNotice.tsx
 frontend/src/ResponsePanel.tsx
 frontend/src/ReviewShell.tsx
 frontend/src/ScopePanel.tsx
@@ -211,6 +212,8 @@ frontend/tests/OrchestrateTarget.test.ts
 frontend/tests/OrchestrateTransport.test.ts
 frontend/tests/PreviewRelease.test.ts
 frontend/tests/ProtectedConversation.test.ts
+frontend/tests/ProtectedSafety.test.ts
+frontend/tests/ProtectedSafetyNotice.test.tsx
 frontend/tests/QuotaVerification.test.ts
 frontend/tests/RequestPolicy.test.ts
 frontend/tests/ResponsePresentation.test.tsx
@@ -266,6 +269,7 @@ netlify/evaluation/policy.json
 netlify/evaluation/presentationProjector.ts
 netlify/evaluation/protectedConversation.ts
 netlify/evaluation/protectedDiscussionPolicy.ts
+netlify/evaluation/protectedSafety.ts
 netlify/evaluation/requestPolicy.ts
 netlify/evaluation/retrieval.ts
 netlify/evaluation/reviewSeal.ts
@@ -325,6 +329,7 @@ shared/guidedFollowup.ts
 shared/observationContract.ts
 shared/observations.schema.json
 shared/orchestratePrompts.json
+shared/protectedSafetyContract.ts
 shared/requestIntent.json
 shared/requestIntent.ts
 shared/responsePresentation.json

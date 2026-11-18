@@ -4,11 +4,7 @@ import {QuotaError,waitQuota,type QuotaStore} from './demoQuota';
 import {createOrchestrateTransport,OrchestrateResponseError} from './orchestrateTransport';
 import {ChatError,validateProtectedDiscussion} from './orchestrateChat';
 import {ownThread} from './threadOwner';
-import {validateCase} from './input';
-import {evaluateSafety} from './safety';
-import {reportedStates} from './assertions';
-import Policy from './policy.json';
-import {Module1,Module2} from './packages';
+import {screenProtectedSafety} from './protectedSafety';
 import type {OrchestrateEnvironment} from './orchestrateTarget';
 import type {Transport} from './watsonShadow';
 
@@ -49,20 +45,13 @@ export function createProtectedConversation(options:{store:(signal:AbortSignal)=
    const messages=[...history,input.message];
    // Existing privacy validation and approved safety rules; no canonical case is
    // created or modified. Screen latest and cumulative text before provider access.
-   const warnings=new Map<string,string>();let conflict=false;
-   const checked=messages.map(additionalNotes=>validateCase({moduleHint:Module1,caseType:'detailed',pregnancyPossible:null,pidDiagnosedOrPresumed:null,additionalNotes}));
-   for(const narrative of [...messages,messages.join('\n')]){
-    const check={...checked[0],additionalNotes:narrative};
-    const positive=reportedStates(narrative,Policy.statusPatterns.pregnancyPossible[0]).has(true),negative=reportedStates(narrative,Policy.statusPatterns.pregnancyPossible[1]).has(true);
-    check.pregnancyPossible=positive&&!negative?true:negative&&!positive?false:null;
-    for(const moduleHint of [Module1,Module2]){const safety=evaluateSafety({...check,moduleHint});for(const warning of safety.warnings)warnings.set(warning.ruleId+'|'+warning.text,warning.text);if(safety.halt)conflict=true;}
-   }
+   const {warnings,conflict,explanation}=screenProtectedSafety(messages);
    // Consume the receipt once across workers, even on failure or cancellation.
    const operation=AbortSignal.any([signal,AbortSignal.timeout(2000)]),store=await waitQuota(options.store(operation),operation),key=`chat/lock/${session.id}/${session.ordinal}`,content='{"consumed":true}';
    validateChatLock(key,content);const written=await waitQuota(store.set(key,content,{onlyIfNew:true}),operation);if(!written.modified||!written.etag)throw new QuotaError('replayed');
    const observed=await waitQuota(store.getWithMetadata(key),operation);if(!observed||observed.etag!==written.etag||JSON.stringify(observed.data)!==content)throw new QuotaError('unavailable');
    guard();
-   if(warnings.size||conflict)return {version:'2',state:'safetyHalt',warnings:[...warnings.values()],detail:conflict?'Reported information requires clarification in the structured safety workflow. The case is unchanged.':'Routine AI discussion is paused. The case is unchanged.'};
+   if(warnings.length||conflict)return {version:'2',state:'safetyHalt',warnings,safetyExplanation:explanation,detail:conflict?'Reported information requires clarification in the structured safety workflow. The case is unchanged.':'Routine AI discussion is paused. The case is unchanged.'};
    if(/\b(?:structured (?:case |evidence )?(?:review|analysis)|analy[sz]e (?:this|the|my) case)\b/i.test(input.message))return {version:'2',state:'structuredRequired',detail:'Use the existing structured case form and explicitly review its fields. Chat has not submitted or changed a case.'};
    let ticket:CompetitionTicket|undefined,invoked=false,reservationFailure:unknown;
    const providerEnv={...env,ORCHESTRATE_ENABLED:'true'};

@@ -175,6 +175,10 @@ footer {display:flex;justify-content:space-between;gap:var(--space4);padding:var
 .unifiedAssistant button { min-height:44px; }
 .unifiedAssistant .conversationProvider { border-left:3px solid #71374f; padding-left:.75rem; }
 .unifiedAssistant [role=alert] { border-left:4px solid #a32923; padding:.75rem; }
+.protectedSafetyNotice h4 { margin:0 0 .6rem; font-size:1.1rem; }
+.protectedSafetyNotice h5 { margin:.8rem 0 .3rem; font-size:1rem; }
+.protectedSafetyNotice p,.protectedSafetyNotice ul { margin:.4rem 0; }
+.protectedSafetyNotice summary { min-height:44px; cursor:pointer; align-content:center; }
 
 .embeddedChatMount:not(:empty) { height:min(70dvh, 42rem); min-height:22rem; width:100%; overflow:hidden; position:relative; }
 
