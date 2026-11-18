@@ -1,0 +1,24 @@
+import {render,screen,within,waitFor} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import {expect,it,vi} from 'vitest';
+import DiscussionSources from '../src/DiscussionSources';
+import EditableConversation from '../src/EditableConversation';
+it('renders only verified registry records with official URLs and safe external attributes',()=>{
+ render(<DiscussionSources ids={['WHO-2025','CDC-PID','NICE-NG126-2026','ACOG-CPP','https://evil.invalid','javascript:alert(1)']}/>);
+ const links=screen.getAllByRole('link');expect(links).toHaveLength(3);
+ expect(links.map(link=>link.getAttribute('href'))).toEqual(['https://www.who.int/news-room/fact-sheets/detail/endometriosis','https://www.cdc.gov/std/treatment-guidelines/pid.htm','https://www.nice.org.uk/guidance/ng126']);
+ for(const link of links){expect(link).toHaveAttribute('target','_blank');expect(link).toHaveAttribute('rel','noopener noreferrer');expect(link).toHaveAttribute('referrerpolicy','no-referrer');}
+ expect(screen.getByText(/World Health Organization/)).toHaveTextContent('15 October 2025');expect(screen.getByText(/not independent verification/)).toBeVisible();
+});
+it('has no fabricated links when relevant verified records are unavailable',()=>{render(<DiscussionSources ids={['ACOG-CPP','unknown']}/>);expect(screen.queryByRole('link')).toBeNull();expect(screen.getByText(/No sufficiently relevant registry-verified/)).toBeVisible();});
+it('keeps each response reading with its own answer and leaves model links inactive',async()=>{
+ let turns=0;const texts=['Endometriosis educational discussion. [Untrusted](https://evil.invalid)','Early pregnancy educational discussion.'];
+ const fetch=vi.fn(async(_url:string,init:RequestInit)=>{const body=JSON.parse(String(init.body));return new Response(JSON.stringify(body.action==='start'?{version:'2',state:'started',receipt:'opaque'}:{version:'2',state:'replied',receipt:'next',text:texts[turns],readingSourceIds:++turns===1?['WHO-2025']:['NICE-NG126-2026']}));});vi.stubGlobal('fetch',fetch);render(<EditableConversation primary/>);
+ const box=screen.getByRole('textbox',{name:'Ask Endo'});await userEvent.type(box,'fictional education question');await userEvent.click(screen.getByRole('button',{name:'Send to Endo'}));await screen.findByRole('link',{name:/Endometriosis/});await userEvent.type(box,'another fictional question');await userEvent.click(screen.getByRole('button',{name:'Send to Endo'}));await screen.findByRole('link',{name:/Ectopic pregnancy/});
+ const articles=document.querySelectorAll('article.endo');expect(articles).toHaveLength(2);expect(within(articles[0] as HTMLElement).getByRole('link')).toHaveAttribute('href','https://www.who.int/news-room/fact-sheets/detail/endometriosis');expect(within(articles[1] as HTMLElement).getByRole('link')).toHaveAttribute('href','https://www.nice.org.uk/guidance/ng126');expect(screen.queryByRole('link',{name:'Untrusted'})).toBeNull();
+ expect(JSON.parse(String(fetch.mock.calls[2][1].body))).toMatchObject({history:['fictional education question'],message:'another fictional question'});
+ await userEvent.click(screen.getByRole('button',{name:'New conversation'}));await waitFor(()=>expect(screen.queryByRole('link')).toBeNull());
+});
+it('does not attach reading to safety halts or generate an extra request',async()=>{const fetch=vi.fn(async(_url:string,init:RequestInit)=>new Response(JSON.stringify(JSON.parse(String(init.body)).action==='start'?{version:'2',state:'started',receipt:'opaque'}:{version:'2',state:'safetyHalt',warnings:['Approved warning fixture'],readingSourceIds:['WHO-2025']})));vi.stubGlobal('fetch',fetch);render(<EditableConversation primary/>);await userEvent.type(screen.getByRole('textbox',{name:'Ask Endo'}),'fictional urgent report');await userEvent.click(screen.getByRole('button',{name:'Send to Endo'}));await screen.findByRole('alert');expect(screen.queryByRole('link')).toBeNull();expect(screen.queryByRole('complementary',{name:'Sources & further reading'})).toBeNull();expect(fetch).toHaveBeenCalledTimes(2);});
+
+it('ignores fabricated response source IDs without hiding the safe answer',async()=>{vi.stubGlobal('fetch',vi.fn(async(_url:string,init:RequestInit)=>new Response(JSON.stringify(JSON.parse(String(init.body)).action==='start'?{version:'2',state:'started',receipt:'opaque'}:{version:'2',state:'replied',receipt:'next',text:'A bounded educational reply.',readingSourceIds:['https://evil.invalid']}))));render(<EditableConversation primary/>);await userEvent.type(screen.getByRole('textbox',{name:'Ask Endo'}),'fictional question');await userEvent.click(screen.getByRole('button',{name:'Send to Endo'}));await screen.findByText('A bounded educational reply.');expect(screen.queryByRole('link')).toBeNull();expect(screen.getByText(/No sufficiently relevant registry-verified/)).toBeVisible();});

@@ -139,6 +139,7 @@ frontend/src/DemoCases.ts
 frontend/src/Disclosure.tsx
 frontend/src/DiscussionMarkdown.tsx
 frontend/src/DiscussionSections.tsx
+frontend/src/DiscussionSources.tsx
 frontend/src/EditableConversation.tsx
 frontend/src/FindingIcon.tsx
 frontend/src/GuidedFollowup.tsx
@@ -187,6 +188,8 @@ frontend/tests/DemoCases.test.tsx
 frontend/tests/DemoQuota.test.ts
 frontend/tests/Dialogue.test.tsx
 frontend/tests/DiscussionMarkdown.test.tsx
+frontend/tests/DiscussionSourceSelection.test.ts
+frontend/tests/DiscussionSources.test.tsx
 frontend/tests/DocumentApi.test.ts
 frontend/tests/DocumentWorker.test.ts
 frontend/tests/Documents.test.ts
@@ -257,6 +260,7 @@ netlify/evaluation/conflictAssistance.ts
 netlify/evaluation/conversation.ts
 netlify/evaluation/demoAdmission.ts
 netlify/evaluation/demoQuota.ts
+netlify/evaluation/discussionSources.ts
 netlify/evaluation/guidedFollowup.ts
 netlify/evaluation/input.ts
 netlify/evaluation/orchestrateChat.ts
@@ -324,6 +328,7 @@ shared/conflictFixture.json
 shared/conflictReview.ts
 shared/conversation.ts
 shared/discussionContract.ts
+shared/discussionSources.ts
 shared/documentBridge.ts
 shared/followupModes.ts
 shared/guidedFollowup.ts

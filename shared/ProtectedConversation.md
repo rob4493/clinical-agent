@@ -179,3 +179,18 @@ authorization, protected-preview restrictions and server privacy/safety checks
 remain mandatory. Document-upload acknowledgments are separate and unchanged.
 Failures, refusals and safety halts set explicit in-memory halted state; only
 New conversation clears it. No automatic retry or resubmission occurs.
+
+## Response-specific related reading
+
+After successful discussion screening, the server selects at most four reading
+records by explicit topics in that answer alone, using the existing integrity-
+verified evidence registry. No prompt/history classification or model URL is used.
+Only verifiedOfficialRetrieval HTTPS URLs are eligible; unresolved ACOG and other
+records remain inactive. The browser receives source IDs and resolves them against
+the same bundled public registry metadata, never a provider-supplied URL. Missing
+or invalid reading metadata produces an availability notice without suppressing
+the answer. Selection performs no network request or source re-verification.
+All conversational reading is labelled related, not claim validation. Structured
+review keeps its existing claim-linked citations and verbatim renderedText.
+Safety halts/refusals do not select reading. Original reply text and continuation
+history remain unchanged. New tabs use noopener/noreferrer and no-referrer.
