@@ -168,3 +168,14 @@ Only the trusted Preview #4 editable route calls protectedSafety.ts. It reuses c
 The server returns fixed finding codes with latest/earlier report provenance, distinguishes actual rule triggers from additional reported findings, keeps pregnancy unknown when unconfirmed, and retains rule/source metadata and original warning wording. The UI renders this as a persistent alert independently of the collapsible chat and Markdown response. It uses fixed trusted vocabulary; malformed explanation metadata falls back to escaped original warnings. Clients cannot supply warning text or explanation fields in accepted requests. No AI-generated safety rationale is used.
 
 BP/HR parsing accepts only bounded integer formats and omits conflicting, uncertain or noncurrent measurements. Values remain unverified, unclassified supporting observations, never numeric triggers or evidence of resolution. No hypotension, tachycardia or shock threshold/classification is added. With unknown pregnancy in the reconstructed heavy-bleeding case, heavy bleeding is the existing trigger; sudden severe abdominal pain and fainting are additional positive reports rather than invented independent rule triggers. This bounded screen is not clinical validation or comprehensive natural-language triage. Rationale, narrative, measurements and transcripts are never logged or persisted; the existing immutable consumed-turn lock, quotas, operator gates and explicit reset behavior remain intact.
+
+## Protected discussion notice and initiation
+
+The editable UI keeps the persistent privacy notice and no longer requires a
+fictional-information checkbox. Explicit Send initiates a synthetic-only session
+with the unchanged syntheticOnly:true contract. This is not new processing consent
+or permission to submit identifiable information: separately approved operator
+authorization, protected-preview restrictions and server privacy/safety checks
+remain mandatory. Document-upload acknowledgments are separate and unchanged.
+Failures, refusals and safety halts set explicit in-memory halted state; only
+New conversation clears it. No automatic retry or resubmission occurs.

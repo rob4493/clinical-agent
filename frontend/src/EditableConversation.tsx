@@ -6,7 +6,7 @@ import {useEffect,useRef,useState} from 'react';
 
 /** Session-only UI. No case data, uploads, provider thread IDs or credentials. */
 export default function EditableConversation({primary=false}:{primary?:boolean}){
- const [open,setOpen]=useState(primary),[consent,setConsent]=useState(false),[receipt,setReceipt]=useState(''),[draft,setDraft]=useState(''),[pending,setPending]=useState(false);
+ const [open,setOpen]=useState(primary),[halted,setHalted]=useState(false),[receipt,setReceipt]=useState(''),[draft,setDraft]=useState(''),[pending,setPending]=useState(false);
  const [messages,setMessages]=useState<{role:'user'|'assistant';text:string;clinicalWarnings?:ClinicalLanguageWarning[];safety?:{warnings:string[];explanation:SafetyExplanation|null}}[]>([]),[history,setHistory]=useState<string[]>([]),[warnings,setWarnings]=useState<string[]>([]),[status,setStatus]=useState('');
  const [safetyExplanation,setSafetyExplanation]=useState<SafetyExplanation|null>(null);
  const busy=useRef(false),controller=useRef<AbortController|null>(null),alive=useRef(true);
@@ -28,7 +28,7 @@ export default function EditableConversation({primary=false}:{primary?:boolean})
   }finally{clearTimeout(timeout);controller.current=null;}
  }
  async function send(){
-  if(busy.current||!consent||!draft.trim())return;busy.current=true;setPending(true);setStatus('Waiting for IBM…');
+  if(busy.current||halted||!draft.trim())return;busy.current=true;setPending(true);setStatus('Waiting for IBM…');
   const message=draft;
   try{
    let current=receipt;
@@ -42,13 +42,13 @@ export default function EditableConversation({primary=false}:{primary?:boolean})
     if(reply.state==='safetyHalt')setMessages(previous=>[...previous,{role:'user',text:message,safety:{warnings:reply.warnings,explanation:reply.safetyExplanation}}]);
     setStatus(reply.state==='refused'?'The agent declined this request.':reply.state==='structuredRequired'?'Use Build the case for structured review. No case has been submitted or changed.':'Discussion is paused for safety clarification.');
     // Keep the submitted draft and transcript; an explicit reset is required.
-    setConsent(false);
+    setHalted(true);
    }
-  }catch(error){if(alive.current){setReceipt('');setConsent(false);setStatus(error instanceof Error&&error.message.startsWith('output:')?'Response withheld by the discussion screen ('+error.message.slice(7)+'). Your draft is preserved; no automatic retry was made.':error instanceof Error&&error.message.startsWith('protocol:')?'IBM response failed protocol validation ('+error.message.slice(9)+'). Your draft is preserved; no automatic retry was made.':error instanceof Error&&error.message==='quota'?'The demonstration usage limit has been reached.':error instanceof Error&&error.message==='privacy'?'Request rejected. Check privacy, permitted content and session validity. Your draft is preserved.':'Conversation unavailable or timed out. Your draft is preserved. No automatic retry was made.');}}
+  }catch(error){if(alive.current){setReceipt('');setHalted(true);setStatus(error instanceof Error&&error.message.startsWith('output:')?'Response withheld by the discussion screen ('+error.message.slice(7)+'). Your draft is preserved; no automatic retry was made.':error instanceof Error&&error.message.startsWith('protocol:')?'IBM response failed protocol validation ('+error.message.slice(9)+'). Your draft is preserved; no automatic retry was made.':error instanceof Error&&error.message==='quota'?'The demonstration usage limit has been reached.':error instanceof Error&&error.message==='privacy'?'Request rejected. Check privacy, permitted content and session validity. Your draft is preserved.':'Conversation unavailable or timed out. Your draft is preserved. No automatic retry was made.');}}
   finally{busy.current=false;if(alive.current)setPending(false);}
  }
- function reset(){if(busy.current)return;setReceipt('');setMessages([]);setHistory([]);setWarnings([]);setSafetyExplanation(null);setConsent(false);setStatus('New conversation. No previous context will be sent.');}
- const stopped=!receipt&&messages.length>0||warnings.length>0||!!status&&status!=='Waiting for IBM…'&&!consent&&!status.startsWith('New conversation');
+ function reset(){if(busy.current)return;setReceipt('');setMessages([]);setHistory([]);setWarnings([]);setSafetyExplanation(null);setHalted(false);setStatus('New conversation. No previous context will be sent.');}
+ const stopped=halted;
  return <section className="guidedSuggestion unifiedAssistant ibmDiscussion" aria-label="IBM conversational discussion">
   <button type="button" aria-expanded={open} aria-controls="editableEndoConversation" onClick={()=>setOpen(value=>!value)}>{open?'Collapse Endo Agent':'Open Endo Agent'}</button>
   {!open&&(warnings.length>0||safetyExplanation)&&<ProtectedSafetyNotice warnings={warnings} explanation={safetyExplanation}/>}
@@ -58,8 +58,7 @@ export default function EditableConversation({primary=false}:{primary?:boolean})
    <p role="note">AI-generated discussion, not independently verified clinical evidence. Synthetic/de-identified examples only. Not a diagnosis or prescription. Case details and documents are not automatically shared. AI references and statistics are unverified; reference links are inactive.</p>
    <div className="conversationHistory" role="log" aria-label="IBM conversation" aria-busy={pending}>{messages.map((message,index)=><div key={index}><article className={'conversationMessage '+(message.role==='user'?'clinician':'endo')}><strong>{message.role==='user'?'Clinician':'Endo Agent · AI-generated'}</strong>{message.role==='assistant'?<DiscussionMarkdown text={message.text}/>:<p style={{whiteSpace:'pre-wrap'}}>{message.text}</p>}{!!message.clinicalWarnings?.length&&<p role="note" aria-label="Clinical-language cautions">Clinical-language cautions: {message.clinicalWarnings.join(', ')}. Review independently; synthetic preview only. These flags are not verified findings.</p>}</article>{message.safety&&<ProtectedSafetyNotice warnings={message.safety.warnings} explanation={message.safety.explanation}/>}</div>)}{pending&&<article className="conversationMessage clinician"><strong>Clinician</strong><p style={{whiteSpace:'pre-wrap'}}>{draft}</p></article>}</div>
    <p className="agentPrivacy">Use authorized, de-identified information only. Messages are screened for privacy and safety.</p>
-   <label><input type="checkbox" checked={consent} disabled={pending||stopped} onChange={event=>setConsent(event.target.checked)}/>This conversation contains fictional, de-identified information only.</label>
-   <form className="conversationComposer" onSubmit={event=>{event.preventDefault();void send();}}><label htmlFor="editableEndoMessage">Ask Endo</label><textarea id="editableEndoMessage" placeholder="Type your clinical question or describe a patient presentation…" rows={3} maxLength={1600} value={draft} disabled={pending||stopped} onChange={event=>setDraft(event.target.value)}/><button type="submit" disabled={pending||!consent||!draft.trim()||stopped}>{pending?'Waiting…':'Send to Endo'}</button></form>
+   <form className="conversationComposer" onSubmit={event=>{event.preventDefault();void send();}}><label htmlFor="editableEndoMessage">Ask Endo</label><textarea id="editableEndoMessage" placeholder="Type your clinical question or describe a patient presentation…" rows={3} maxLength={1600} value={draft} disabled={pending||stopped} onChange={event=>setDraft(event.target.value)}/><button type="submit" disabled={pending||!draft.trim()||stopped}>{pending?'Waiting…':'Send to Endo'}</button></form>
    <p role="status">{status}</p>{warnings.length>0&&<p>Starting a new conversation does not resolve the reported emergency.</p>}<button type="button" disabled={pending} onClick={reset}>New conversation</button><button type="button" onClick={()=>document.getElementById('narrative')?.focus()}>Use structured case review</button>
   </div>
  </section>;

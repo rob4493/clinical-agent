@@ -50,7 +50,7 @@
     "frontend/src/Disclosure.tsx": "0421accf4bcf7129293e97e4585be1d67f4e6587f75ae0a529b6a5cc33307fc7",
     "frontend/src/DiscussionMarkdown.tsx": "d3f84551f5d04dd517f60db0ad8b045d32ddc9e4eef85833ac7e39d7cfc372a3",
     "frontend/src/DiscussionSections.tsx": "5e5e4b61fef2bdc14ba4d13e9cf06111776a357035b849b0a7c6e9899fcf8aba",
-    "frontend/src/EditableConversation.tsx": "d5d29eea38d225776a39450bcd477dd878bc716c119828a74601d1ae8d00ff87",
+    "frontend/src/EditableConversation.tsx": "86037865a0ae8d913475e6eea203cdf21b20b60a09ac2971aa9d34a52472d71c",
     "frontend/src/FindingIcon.tsx": "799bd9048b5676a3323417dea4eae9d9bfb7f57a9750207430657d2f08463fba",
     "frontend/src/GuidedFollowup.tsx": "1e078e26da86f6fdd9ea576ac937b1de3786d03d8a2d9a2ef4bed34785cedb6c",
     "frontend/src/OrchestrateChat.tsx": "4733b069897a6bed1dab366f596d73c0a67d445845c003ddaa30004f4ed2a789",
