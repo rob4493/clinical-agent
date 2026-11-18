@@ -228,3 +228,19 @@ footer {display:flex;justify-content:space-between;gap:var(--space4);padding:var
  .discussionMarkdown { font-size:.95rem; }
  .discussionTable th,.discussionTable td { padding:.6rem; }
 }
+/* AI-first workspace: clinical review remains a separate explicit submission. */
+.agentFirstWorkspace{grid-template-columns:minmax(0,2fr) minmax(320px,1fr)}
+.agentFirstWorkspace>.agentWorkspace{grid-column:1;grid-row:1 / span 2;min-width:0;scroll-margin-top:1rem}
+.agentFirstWorkspace>.caseCard{grid-column:2;grid-row:1}
+.agentFirstWorkspace>.conflictWorkspace{grid-column:2;grid-row:2;min-width:0}
+.agentWorkspace .ibmDiscussion{margin:0;padding:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.agentWorkspace h2{font-family:var(--serif);font-size:2rem;margin:.75rem 0 .25rem;color:var(--plumDeep)}
+.agentSubtitle,.agentPrivacy{color:var(--muted);font-size:.85rem}
+.agentWelcome{text-align:center;padding:2.5rem .5rem}.agentWelcome h3{font:2rem/1.2 var(--serif);color:var(--plumDeep)}.agentWelcome>p{max-width:52ch;margin:1rem auto;color:var(--muted)}
+.agentSuggestions{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:1.5rem}.agentSuggestions button{text-align:left;padding:1rem;border:1px solid var(--border);border-radius:.75rem;background:var(--cream);color:var(--plumDeep)}.agentSuggestions span{display:block;margin-top:.4rem;font-size:.85rem;font-weight:400}
+.agentWorkspace .conversationMessage{max-width:100%;margin:1.25rem 0;padding:1rem;border-radius:.75rem;overflow-wrap:anywhere}.agentWorkspace .conversationMessage.clinician{background:#f5e9ed;margin-left:1.5rem}.agentWorkspace .conversationMessage.endo{background:#fffdf9;border:1px solid var(--border)}
+.agentWorkspace .conversationComposer{position:sticky;bottom:0;background:var(--surface);padding:.75rem 0;z-index:1}.agentWorkspace textarea{width:100%;min-width:0}.agentWorkspace .conversationHistory{overflow:visible;max-height:none}
+.agentFirstWorkspace .moduleCards,.agentFirstWorkspace .fieldGrid,.agentFirstWorkspace .statusFields{grid-template-columns:minmax(0,1fr)}
+@media(min-width:1400px){main:has(.agentFirstWorkspace){max-width:1600px}}
+@media(max-width:1050px){.agentFirstWorkspace{grid-template-columns:minmax(0,1fr)}.agentFirstWorkspace>.agentWorkspace{grid-column:1;grid-row:1}.agentFirstWorkspace>.caseCard{grid-column:1;grid-row:2}.agentFirstWorkspace>.conflictWorkspace{grid-column:1;grid-row:3}}
+@media(max-width:600px){.agentWorkspace .ibmDiscussion{padding:1rem}.agentSuggestions{grid-template-columns:1fr}.agentWelcome{padding:1.5rem 0}.agentWorkspace .conversationMessage.clinician{margin-left:0}.agentWorkspace .conversationComposer button{width:100%}}

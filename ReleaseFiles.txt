@@ -240,6 +240,7 @@ frontend/tests/ibmHeadingFixtures.json
 frontend/tests/localGuard.cjs
 frontend/tests/openPending.ts
 frontend/tests/presentationBrowser.cjs
+frontend/tests/retainedExamples.ts
 frontend/tests/setup.ts
 frontend/tests/uploadBrowser.cjs
 frontend/tests/uploadBuild.mjs
