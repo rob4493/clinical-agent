@@ -22,6 +22,20 @@ export function discussionSectionCategory(heading:string){
  const label=heading.toLowerCase().normalize('NFKC').replace(/^\s*\d+[.)]\s*/,'').replace(/[\s:]+$/,'').replace(/\s+/g,' ').trim();
  return Object.entries(categories).find(([,entry])=>entry.labels.includes(label))?.[0]??'neutral';
 }
+/** Decorative topic cue only, scoped to the clinician turn paired with this answer.
+ * Abstain on questions, uncertainty, historical reports or conflicting mentions.
+ * Never read AI text, infer a diagnosis, or update clinical/safety state. */
+export function reportedPelvicDiscussionTopic(message=''):boolean{
+ const text=message.replace(/’/g,"'").replace(/\b(is|was)n't\b/gi,'$1 not').replace(/"[^"]*"|“[^”]*”/g,' ');
+ const term=/\b(?:pelvic (?:pain|discomfort)|(?:pain|discomfort) in (?:the )?(?:pelvis|pelvic (?:area|region)))\b/i;
+ const clauses=text.split(/[.!;\n]|\bbut\b|\bhowever\b/i).filter(clause=>term.test(clause));
+ return clauses.length>0&&clauses.every(clause=>{
+  const match=term.exec(clause)!,prefix=clause.slice(0,match.index),suffix=clause.slice(match.index+match[0].length);
+  if(clause.includes('?')||/\b(?:uncertain|unsure|unclear|unknown|possible|possibly|suspected|might|may|could|whether|if|hypothetical|previously|resolved|history of|used to|denies|denied|unconfirmed)\b|\blast (?:year|month|week)\b|\b\d+ (?:years?|months?|days?) ago\b/i.test(clause))return false;
+  if(/\b(?:no|not|denies|denied|without|absent|unconfirmed|cannot|can't|rule out)\b|\b\w+n't\b/i.test(prefix)||/^\s*(?:(?:is|was|has been)\s+)?(?:absent|denied|excluded|ruled out|not (?:present|reported|confirmed|excluded|ruled out)|unconfirmed|unknown|resolved)\b/i.test(suffix))return false;
+  return /\b(?:patient|she|he|they|i)\b[\s\S]*\b(?:reports?|experienc(?:es|ing)|has|have|describes?|presents?|complains?)\b/i.test(prefix)||/^\s*(?:(?:is|was)\s+)?reported\b/i.test(suffix);
+ });
+}
 function Title({category,children,expandable}:{category:string;children:ReactNode;expandable:boolean}){
  const Icon=Object.hasOwn(categories,category)?categories[category].icon:FileText;
  return <>{category==='considerations'?<span className="discussionSectionIcon discussionAnatomyIcon" aria-hidden="true"><FindingIcon finding="pelvicPain" title="" decorative/></span>:<Icon className="discussionSectionIcon" size={16} strokeWidth={1.75} aria-hidden="true" focusable="false"/>}<span className="discussionSectionHeading">{children}</span>{expandable&&<ChevronDown className="discussionSectionChevron" size={16} strokeWidth={1.75} aria-hidden="true" focusable="false"/>}</>;
@@ -90,7 +104,7 @@ function sectionHeadings(nodes:Node[],source:string){
 }
 /** Group root-level Markdown headings and unambiguous presentation titles. Never wrap quotes, lists or tables,
  * and never alter source strings or collapse a recognized safety section. */
-export function discussionSections(){return (tree:unknown,file:{value?:unknown})=>{
+export function discussionSections(options:{fallbackTopic?:'pelvicPain'}={}){return (tree:unknown,file:{value?:unknown})=>{
  const root=tree as Node;if(root.type!=='root'||!Array.isArray(root.children))return;
  function group(nodes:Node[]):Node[]{
   const result:Node[]=[];
@@ -109,6 +123,6 @@ export function discussionSections(){return (tree:unknown,file:{value?:unknown})
  const list=blocks.find(node=>node.type==='list');
  const substantive=list&&!list.ordered&&(list.children?.length??0)>=2&&list.children!.every(item=>item.children?.every(child=>child.type==='paragraph'))&&headingText(list).length>=120;
  if(blocks[0]?.type==='paragraph'&&list&&blocks.indexOf(list)>0&&substantive&&blocks.every(node=>node.type==='paragraph'||node.type==='list'&&!node.ordered)){
-  root.children=[blocks[0],{type:'discussionSection',data:{hName:'section',hProperties:{className:'discussionSection discussionFallbackSection'}},children:[{type:'discussionTitle',data:{hName:'div',hProperties:{className:'discussionStaticTitle','data-section-category':'discussion'}},children:[{type:'heading',depth:2,children:[{type:'text',value:'Discussion points'}]}]},...blocks.slice(1)]}];
+  root.children=[blocks[0],{type:'discussionSection',data:{hName:'section',hProperties:{className:'discussionSection discussionFallbackSection'}},children:[{type:'discussionTitle',data:{hName:'div',hProperties:{className:'discussionStaticTitle','data-section-category':options.fallbackTopic==='pelvicPain'?'considerations':'discussion'}},children:[{type:'heading',depth:2,children:[{type:'text',value:'Discussion points'}]}]},...blocks.slice(1)]}];
  }else root.children=group(blocks);
 };}
