@@ -5,6 +5,7 @@ import type {ComponentPropsWithoutRef,KeyboardEvent,ReactNode} from 'react';
 // Exact presentation labels only: never use diagnoses, symptoms or risk words in
 // body text to classify a patient or designate an emergency.
 const categories:Record<string,{icon:LucideIcon;labels:readonly string[]}>= {
+ discussion:{icon:MessagesSquare,labels:['discussion points']},
  considerations:{icon:Activity,labels:['key considerations','pelvic pain / key considerations','pelvic pain','pelvic pain considerations']},
  history:{icon:ClipboardList,labels:['helpful history','symptom pattern','patient history','patient history (as reported)','clinical history','history','history of presenting complaint']},
  symptoms:{icon:Activity,labels:['symptoms','symptoms and clinical features','reported symptoms','presenting symptoms','symptom history']},
@@ -102,5 +103,12 @@ export function discussionSections(){return (tree:unknown,file:{value?:unknown})
   }
   return result;
  }
- root.children=group(sectionHeadings(root.children,typeof file.value==='string'?file.value:''));
+ const blocks=sectionHeadings(root.children,typeof file.value==='string'?file.value:'');
+ // Structural fallback only: never infer a condition, symptom or urgency from
+ // prose. Preserve the original nodes and ordering, including list semantics.
+ const list=blocks.find(node=>node.type==='list');
+ const substantive=list&&!list.ordered&&(list.children?.length??0)>=2&&list.children!.every(item=>item.children?.every(child=>child.type==='paragraph'))&&headingText(list).length>=120;
+ if(blocks[0]?.type==='paragraph'&&list&&blocks.indexOf(list)>0&&substantive&&blocks.every(node=>node.type==='paragraph'||node.type==='list'&&!node.ordered)){
+  root.children=[blocks[0],{type:'discussionSection',data:{hName:'section',hProperties:{className:'discussionSection discussionFallbackSection'}},children:[{type:'discussionTitle',data:{hName:'div',hProperties:{className:'discussionStaticTitle','data-section-category':'discussion'}},children:[{type:'heading',depth:2,children:[{type:'text',value:'Discussion points'}]}]},...blocks.slice(1)]}];
+ }else root.children=group(blocks);
 };}

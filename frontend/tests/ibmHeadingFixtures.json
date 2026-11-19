@@ -15,5 +15,10 @@
     {"id":"numberedBold","title":"1. **Differential considerations**","astType":"list"},
     {"id":"numberedParenthesis","title":"1) Differential considerations","astType":"list"},
     {"id":"escapedNumberedParagraph","title":"1\\. Differential considerations","astType":"paragraph"}
-  ]
+  ],
+  "headingless": {
+  "provenance": "Synthetic offline reconstruction of the reported paragraph/list/conclusion structure; not an IBM transcript or clinically validated content.",
+  "input": "I'm reviewing a patient in their early 30s who has been experiencing mild pelvic discomfort for the past few weeks. The discomfort occasionally worsens around menstruation.\n\nThe patient is currently comfortable, with a blood pressure of 118/76 and heart rate of 78.\n\nWhat are the main clinical possibilities you would consider?",
+  "response": "Several possibilities could be discussed, but this description alone does not establish a diagnosis.\n\n- Endometriosis: an educational consideration, not confirmed by the reported pattern.\n- Primary dysmenorrhea: a possible discussion topic, not a determination for this patient.\n- Ovarian cyst: not established by the information supplied.\n- Pelvic floor or musculoskeletal pain: a possible consideration requiring independent assessment.\n- Irritable bowel syndrome: bowel history has not been supplied and this is not confirmed.\n- Pelvic inflammatory disease: no diagnosis is established by this fictional scenario.\n\nThe reported observations remain unverified. Further history and independent assessment would be needed to clarify these possibilities."
+}
 }
