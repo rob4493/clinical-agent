@@ -1,15 +1,18 @@
+import FindingIcon from './FindingIcon';
 import {Activity,BookOpen,CalendarDays,ChevronDown,ClipboardList,FileText,ListTree,MessagesSquare,NotebookPen,Search,Shield,type LucideIcon} from 'lucide-react';
 import type {ComponentPropsWithoutRef,KeyboardEvent,ReactNode} from 'react';
 
 // Exact presentation labels only: never use diagnoses, symptoms or risk words in
 // body text to classify a patient or designate an emergency.
 const categories:Record<string,{icon:LucideIcon;labels:readonly string[]}>= {
- history:{icon:ClipboardList,labels:['patient history','patient history (as reported)','clinical history','history','history of presenting complaint']},
+ considerations:{icon:Activity,labels:['key considerations','pelvic pain / key considerations','pelvic pain','pelvic pain considerations']},
+ history:{icon:ClipboardList,labels:['helpful history','symptom pattern','patient history','patient history (as reported)','clinical history','history','history of presenting complaint']},
  symptoms:{icon:Activity,labels:['symptoms','symptoms and clinical features','reported symptoms','presenting symptoms','symptom history']},
  gynecologic:{icon:CalendarDays,labels:['gynecologic history','gynecological history','gynaecologic history','gynaecological history','menstrual history','reproductive history']},
  differential:{icon:ListTree,labels:['differential considerations','differential diagnosis','differential diagnoses','educational differential discussion','possible explanations']},
- investigations:{icon:Search,labels:['investigations','relevant investigations','investigation considerations','tests and investigations']},
+ investigations:{icon:Search,labels:['next steps','further evaluation','assessment considerations','evaluation considerations','investigations','relevant investigations','investigation considerations','tests and investigations']},
  treatment:{icon:BookOpen,labels:['treatment considerations','management considerations','treatment options']},
+ references:{icon:BookOpen,labels:['sources & further reading','sources and further reading','sources','references','further reading']},
  documentation:{icon:NotebookPen,labels:['documentation','documentation considerations','record keeping']},
  followup:{icon:MessagesSquare,labels:['follow-up questions','follow-up questions and uncertainties','follow up questions','follow-up','follow up','clarifying questions','questions to clarify']},
  safety:{icon:Shield,labels:['safety','safety information','safety warnings','emergency warning','emergency warnings','urgent assessment']}
@@ -20,7 +23,7 @@ export function discussionSectionCategory(heading:string){
 }
 function Title({category,children,expandable}:{category:string;children:ReactNode;expandable:boolean}){
  const Icon=Object.hasOwn(categories,category)?categories[category].icon:FileText;
- return <><Icon className="discussionSectionIcon" size={16} strokeWidth={1.75} aria-hidden="true" focusable="false"/><span className="discussionSectionHeading">{children}</span>{expandable&&<ChevronDown className="discussionSectionChevron" size={16} strokeWidth={1.75} aria-hidden="true" focusable="false"/>}</>;
+ return <>{category==='considerations'?<span className="discussionSectionIcon discussionAnatomyIcon" aria-hidden="true"><FindingIcon finding="pelvicPain" title="" decorative/></span>:<Icon className="discussionSectionIcon" size={16} strokeWidth={1.75} aria-hidden="true" focusable="false"/>}<span className="discussionSectionHeading">{children}</span>{expandable&&<ChevronDown className="discussionSectionChevron" size={16} strokeWidth={1.75} aria-hidden="true" focusable="false"/>}</>;
 }
 export function DiscussionSummary({children,node,...props}:ComponentPropsWithoutRef<'summary'>&{node?:unknown;'data-section-category'?:string}){
  function keyboard(event:KeyboardEvent<HTMLElement>){
