@@ -264,3 +264,9 @@ footer {display:flex;justify-content:space-between;gap:var(--space4);padding:var
 .discussionExternalIcon{display:inline-block;vertical-align:middle;margin-left:.35rem;flex-shrink:0}
 .ibmDiscussion .conversationMessage .discussionCaution{display:block;padding:.75rem;margin-top:1rem;background:#f8eef0;border-radius:.5rem;font-size:.8rem;color:#71374f}
 @media(max-width:640px){.ibmDiscussion .discussionSummary,.ibmDiscussion .discussionStaticTitle{grid-template-columns:40px minmax(0,1fr) 16px;gap:.65rem}.ibmDiscussion .discussionSectionIcon,.discussionReadingIcon{width:40px;height:40px}.discussionReadingHeading{grid-template-columns:40px minmax(0,1fr);gap:.65rem}.ibmDiscussion .discussionSection>:not(summary):not(.discussionStaticTitle),.discussionReading>p,.discussionReading>ul{margin-left:0}.ibmDiscussion .discussionSafetySection>.discussionStaticTitle{grid-template-columns:16px minmax(0,1fr) 16px}}
+
+/* Routine evaluation disclosure, separate from persistent emergency alerts. */
+.ibmDiscussion .discussionDisclosure{display:flex;align-items:flex-start;gap:.5rem;margin:.5rem 0;padding:.35rem 0;color:var(--muted);background:transparent;border:0}
+.ibmDiscussion .discussionDisclosure>svg{width:16px;height:16px;flex-shrink:0;margin-top:.12rem}
+.ibmDiscussion .discussionDisclosure>p{margin:0;font-size:.8rem;line-height:1.45}
+.ibmDiscussion .agentPrivacy{margin:.5rem 0 .15rem}.ibmDiscussion .agentDataBoundary{margin:0 0 .4rem;color:var(--muted);font-size:.75rem;line-height:1.4}
