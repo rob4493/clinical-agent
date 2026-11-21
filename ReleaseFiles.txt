@@ -187,6 +187,7 @@ frontend/tests/OrchestrateTarget.test.ts
 frontend/tests/OrchestrateTransport.test.ts
 frontend/tests/ProductionAccess.test.ts
 frontend/tests/ProductionConversation.test.ts
+frontend/tests/ProductionIamOnce.test.ts
 frontend/tests/RequestPolicy.test.ts
 frontend/tests/ResponsePresentation.test.tsx
 frontend/tests/ReviewedSummary.test.tsx
@@ -248,6 +249,7 @@ netlify/evaluation/threadOwner.ts
 netlify/evaluation/watsonShadow.ts
 netlify/functions/converse.ts
 netlify/functions/evaluate.ts
+netlify/functions/productionIamOnce.ts
 package-lock.json
 package.json
 pytest.ini
@@ -258,6 +260,7 @@ shared/DocumentReview.md
 shared/EndoDesign.md
 shared/GuidedFollowup.md
 shared/ProductionChat.md
+shared/ProductionIamOnce.md
 shared/README.md
 shared/ResponsePresentation.md
 shared/VisualFindings.md
