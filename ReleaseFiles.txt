@@ -214,6 +214,8 @@ frontend/tests/OrchestrateProbe.test.ts
 frontend/tests/OrchestrateTarget.test.ts
 frontend/tests/OrchestrateTransport.test.ts
 frontend/tests/PreviewRelease.test.ts
+frontend/tests/ProductionAccess.test.ts
+frontend/tests/ProductionConversation.test.ts
 frontend/tests/ProtectedConversation.test.ts
 frontend/tests/ProtectedSafety.test.ts
 frontend/tests/ProtectedSafetyNotice.test.tsx
@@ -258,8 +260,10 @@ netlify/evaluation/analysis.ts
 netlify/evaluation/assertions.ts
 netlify/evaluation/conflictAssistance.ts
 netlify/evaluation/conversation.ts
+netlify/evaluation/conversationQuota.ts
 netlify/evaluation/demoAdmission.ts
 netlify/evaluation/demoQuota.ts
+netlify/evaluation/discussionSafety.ts
 netlify/evaluation/discussionSources.ts
 netlify/evaluation/guidedFollowup.ts
 netlify/evaluation/input.ts
@@ -272,9 +276,12 @@ netlify/evaluation/orchestrateTransport.ts
 netlify/evaluation/packages.ts
 netlify/evaluation/policy.json
 netlify/evaluation/presentationProjector.ts
+netlify/evaluation/productionAccess.ts
+netlify/evaluation/productionConversation.ts
 netlify/evaluation/protectedConversation.ts
 netlify/evaluation/protectedDiscussionPolicy.ts
 netlify/evaluation/protectedSafety.ts
+netlify/evaluation/publicConverse.ts
 netlify/evaluation/requestPolicy.ts
 netlify/evaluation/retrieval.ts
 netlify/evaluation/reviewSeal.ts
@@ -311,6 +318,7 @@ shared/OperatorContextVerification.md
 shared/OrchestrateProbe.md
 shared/Preview4Update.md
 shared/PreviewVerification.md
+shared/ProductionChat.md
 shared/ProtectedConversation.md
 shared/README.md
 shared/ResponsePresentation.md

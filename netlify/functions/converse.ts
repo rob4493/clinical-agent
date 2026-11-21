@@ -1,3 +1,5 @@
+import {createPublicConverse} from '../evaluation/publicConverse';
+import type {DeployContext} from '../evaluation/productionAccess';
 import {createAdmission} from '../evaluation/demoAdmission';
 import {netlifyQuota} from '../../frontend/src/server/netlifyQuota';
 import {createChat,chatFailure,ChatError} from '../evaluation/orchestrateChat';
@@ -8,7 +10,7 @@ import {CompetitionStore} from '../evaluation/orchestrateCompetition';
 
 // Platform IP controls complement immutable site-wide reservations. This rule must
 // be confirmed in deployed processing logs; local mocks do not prove enforcement.
-export const config={rateLimit:{windowLimit:12,windowSize:60,aggregateBy:['ip','domain'],action:'rate_limit'}};
+export const config={path:'/api/v1/conversation',rateLimit:{windowLimit:12,windowSize:60,aggregateBy:['ip','domain'],action:'rate_limit'}};
 const Headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'};
 const store=(signal:AbortSignal)=>netlifyQuota('EndoConversationQuota',signal);
 const admission=createAdmission(store);
@@ -37,4 +39,5 @@ export function createConverse(service:Pick<ReturnType<typeof createChat>,'capab
   const result=version==='2'?await protectedService.handle(payload,context,signal):await service.handle(payload,signal);signal.throwIfAborted();return json(result);
  }catch(failure){if(request.signal.aborted)return new Response(null,{status:499,headers:Headers});const safe=chatFailure(failure instanceof InputError?new ChatError('inputRejected'):failure);return json({version:'1',code:safe.code,...(safe.outputStage?{outputStage:safe.outputStage}:{}),...(safe.outputRejection?{outputRejection:safe.outputRejection}:{}),...(safe.responseRejection?{responseRejection:safe.responseRejection}:{}),detail:'Conversation is unavailable or the request was not permitted. The case is unchanged.'},safe.status);}
 };}
-export default createConverse();
+const protectedHandler=createConverse(),publicHandler=createPublicConverse();
+export default (request:Request,context:OperatorContext&DeployContext={})=>new URL(request.url).origin==='https://clinicalagent.netlify.app'?publicHandler(request,context):protectedHandler(request,context);

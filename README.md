@@ -18,7 +18,7 @@ Developers and future integrations share a [versioned clinical-data contract](sh
 - Concise clinician-oriented responses, relevant source links, reviewed visuals and safe evidence-insufficient outcomes.
 - Browser-memory PDF, DOCX and TXT review with clinician confirmation before analysis.
 - Optional server-side watsonx.ai presentation support that cannot replace the deterministic clinical analysis.
-- Optional local follow-up collection with one final approval for case changes; live IBM conversation remains disabled.
+- Optional local follow-up collection with one final approval for case changes. Protected Preview #4 has separately authorized IBM discussion; the anonymous Production migration remains default-disabled pending release verification.
 - IBM watsonx Orchestrate integration assets for a separate conversational evaluation agent.
 - Two competition topics: **Endometriosis and Chronic Pelvic Pain** and **Early Pregnancy Pain and Bleeding**.
 
@@ -235,3 +235,5 @@ To use the available local follow-up workflow:
 **Check IBM connection** checks Endo's availability status only. It does not contact IBM or send your case. Existing conflicts still require their separate review, and urgent warnings take priority over follow-up.
 
 See [connection status and approval requirements](shared/AgentConnection.md).
+
+Production visitor controls, usage bounds, release prerequisites and the public user workflow are documented in [Production chat](shared/ProductionChat.md). IBM Bob assists development; IBM watsonx Orchestrate is the runtime for the existing Agent Endo. A prepared route is not evidence of a completed public launch.

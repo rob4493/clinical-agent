@@ -105,3 +105,4 @@ GEMINI.md
 
 # Installed server-side Functions dependencies
 /node_modules/
+# Root Netlify Function runtime dependencies

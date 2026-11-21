@@ -1,3 +1,4 @@
+import {productionWindow,type Visitor} from './productionAccess';
 import Prompts from '../../shared/orchestratePrompts.json';
 import {analyze,CoverageMessage} from './analysis';
 import {validateCase} from './input';
@@ -44,6 +45,10 @@ export function validateDiscussion(text:unknown,secrets:readonly string[]=[]):st
  * trusted Preview #4 operator/window gate used by the conversation service. */
 export function validateProtectedDiscussion(text:unknown,env:OrchestrateEnvironment,context:OperatorContext,now:number){
  if(!protectedDiscussionAllowed(env,context,now))throw new ChatError('unavailable');
+ return screenDiscussion(text,[env.WATSONX_AI_APIKEY!],true);
+}
+export function validatePublicDiscussion(text:unknown,env:OrchestrateEnvironment,visitor:Visitor,now:number){
+ const window=productionWindow(env,now);if(!window||!visitor.network||visitor.started!==window.startedAt||visitor.until<=now||visitor.until>window.until)throw new ChatError('unavailable');
  return screenDiscussion(text,[env.WATSONX_AI_APIKEY!],true);
 }
 function screenDiscussion(text:unknown,secrets:readonly string[],warningOnly:boolean):{text:string;warnings:ClinicalLanguageWarning[]}{
