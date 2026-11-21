@@ -8,7 +8,7 @@ import type {OrchestrateEnvironment} from './orchestrateTarget';
 
 // Platform rule complements immutable site-wide daily and per-conversation limits.
 // Declarative configuration is not proof of observed hosted rate enforcement.
-export const config={path:'/api/v1/conversation',rateLimit:{windowLimit:12,windowSize:60,aggregateBy:['ip','domain'],action:'rate_limit'}};
+export const config={path:['/api/v1/conversation','/.netlify/functions/converse'],rateLimit:{windowLimit:12,windowSize:60,aggregateBy:['ip','domain'],action:'rate_limit'}};
 const Headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'};
 function json(value:unknown,status=200,cookie?:string){return new Response(JSON.stringify(value),{status,headers:{...Headers,...(cookie?{'Set-Cookie':cookie}:{})}});}
 async function body(request:Request,signal:AbortSignal){

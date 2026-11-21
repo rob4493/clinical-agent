@@ -10,7 +10,9 @@ import {CompetitionStore} from '../evaluation/orchestrateCompetition';
 
 // Platform IP controls complement immutable site-wide reservations. This rule must
 // be confirmed in deployed processing logs; local mocks do not prove enforcement.
-export const config={path:'/api/v1/conversation',rateLimit:{windowLimit:12,windowSize:60,aggregateBy:['ip','domain'],action:'rate_limit'}};
+// Keep the internal rewrite target routable. Netlify disables the default URL
+// with a custom path; the handler still rejects direct alternate-path requests.
+export const config={path:['/api/v1/conversation','/.netlify/functions/converse'],rateLimit:{windowLimit:12,windowSize:60,aggregateBy:['ip','domain'],action:'rate_limit'}};
 const Headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'};
 const store=(signal:AbortSignal)=>netlifyQuota('EndoConversationQuota',signal);
 const admission=createAdmission(store);

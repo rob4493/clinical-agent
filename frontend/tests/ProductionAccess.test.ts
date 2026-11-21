@@ -1,5 +1,7 @@
 // @vitest-environment node
 import {expect,it,vi} from 'vitest';
+import {readFileSync} from 'node:fs';
+import {config as deployedConfig} from '../../netlify/functions/converse';
 import {randomUUID} from 'node:crypto';
 import type {Transport} from '../../netlify/evaluation/watsonShadow';
 import {createPublicConverse as createConverse,config} from '../../netlify/evaluation/publicConverse';
@@ -21,7 +23,8 @@ it('defaults disabled, permits only an approved bounded window and never interpr
  expect(productionWindow({},Now)).toBeNull();expect(productionWindow(Settings,Now)).toMatchObject({dailyCalls:50,dailySessions:20} satisfies Partial<ConversationWindow>);
 });
 it('binds the rate rule to the exact application route and blocks alternate Function URLs',async()=>{
- expect(config.path).toBe('/api/v1/conversation');expect(config.rateLimit).toMatchObject({windowLimit:12,windowSize:60,aggregateBy:['ip','domain']});
+ expect(config.path).toEqual(['/api/v1/conversation','/.netlify/functions/converse']);expect(deployedConfig).toEqual(config);
+ const routing=readFileSync(new URL('../../netlify.toml',import.meta.url),'utf8');expect(routing).toContain('to = "/.netlify/functions/converse"');expect(config.rateLimit).toMatchObject({windowLimit:12,windowSize:60,aggregateBy:['ip','domain']});
  const f=fixture(),request=new Request(ProductionOrigin+'/.netlify/functions/converse',{method:'POST',headers:{Origin:ProductionOrigin,'Content-Type':'application/json'},body:JSON.stringify({version:'2',action:'start',syntheticOnly:true})});
  expect(isProductionRequest(request,Context)).toBe(false);expect((await f.handler(request,Context)).status).toBe(404);expect(f.records.size).toBe(0);expect(f.provider).not.toHaveBeenCalled();
 });
