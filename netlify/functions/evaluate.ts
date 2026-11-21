@@ -1,5 +1,6 @@
 import {runConversation} from '../evaluation/conversation';
 import {AgentStatus} from '../evaluation/agentService';
+import {chatAvailable} from '../evaluation/orchestrateChat';
 import { selectFollowup, runChoiceFollowup } from '../evaluation/structuredFollowup';
 import { conflictHeaders, type ConflictStatus } from '../evaluation/conflictAssistance';
 import { setImmediate } from 'node:timers/promises';
@@ -42,7 +43,7 @@ export default async function evaluate(request:Request):Promise<Response> {
   if(path==='/v1/conversation')return json(AgentStatus,request.method==='GET'?200:503);
   const packages=loadPackages();
   const initialPin=hashBytes(JSON.stringify(packages));
-  if(request.method==='GET'&&path==='/ready')return json({status:'ready',availableModuleCount:packages.length,reasonCode:'ready'});
+  if(request.method==='GET'&&path==='/ready')return json({status:'ready',availableModuleCount:packages.length,reasonCode:'ready',conversation:{available:chatAvailable()}});
   if(request.method==='GET'&&path==='/v1/runtime')return json({mode:'competition',synthetic:false,notice:EvaluationNotice,evaluation:{reviewStatus:'reviewedForEvaluation',competitionStatus:'competitionReady',notice:EvaluationNotice}});
   if(request.method==='GET'&&(path==='/v1/modules'||path.startsWith('/v1/modules/'))) {
    const modules=packages.map(entry=>({moduleId:entry.moduleId,displayName:entry.moduleId===Module1?'Endometriosis & Chronic Pelvic Pain':'Early Pregnancy Pain and Bleeding',version:entry.moduleId===Module1?'2.1':'1.0',description:'Project-authored summaries reviewedForEvaluation and competitionReady; not approved for patient care.',supportedCaseTypes:['brief','detailed']}));

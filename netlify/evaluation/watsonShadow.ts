@@ -14,6 +14,12 @@ export type ShadowStatus='skipped'|'shadow-success'|'shadow-fallback'|'reviewed-
 const ShadowReasons=['configuration','iam-timeout','iam-rejected','iam-response','model-timeout','model-rejected','model-response','presentation-validation','internal'] as const;
 export type ShadowReason=typeof ShadowReasons[number];
 class ShadowFault extends Error { constructor(readonly reason:ShadowReason){super('Shadow operation unavailable.');} }
+/** Fixed IAM-only classification for a protected diagnostic. Unknown errors never
+ * borrow provider text or a forged reason property. Existing broker behavior is unchanged. */
+export function classifyIamFailure(error:unknown):'configuration'|'iamTimeout'|'iamRejected'|'iamResponseInvalid'|'internal'{
+ if(!(error instanceof ShadowFault))return 'internal';
+ return error.reason==='configuration'?'configuration':error.reason==='iam-timeout'?'iamTimeout':error.reason==='iam-rejected'?'iamRejected':error.reason==='iam-response'?'iamResponseInvalid':'internal';
+}
 export function shadowHeaders(status:ShadowStatus,reason:ShadowReason='internal'):Record<string,string> {
  return {'X-Endo-Watson':status,...((status==='shadow-fallback'||status==='reviewed-fallback')?{'X-Endo-Watson-Reason':ShadowReasons.includes(reason)?reason:'internal'}:{})};
 }

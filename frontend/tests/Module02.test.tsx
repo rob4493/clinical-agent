@@ -1,3 +1,4 @@
+import {loadRetainedExample} from './retainedExamples';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -32,7 +33,7 @@ describe('Module 2 input-only competition presets', () => {
     const requests = mockApi();
     render(<App />);
     await screen.findByRole('radio', { name: 'Early Pregnancy Pain & Bleeding' });
-    await userEvent.selectOptions(screen.getByLabelText('Try a demonstration case'), preset.id);
+    loadRetainedExample(preset.id);
     expect(screen.getByDisplayValue('module_02_early_pregnancy')).toBeChecked();
     expect(document.querySelector('.additionalContext')).not.toHaveAttribute('open');
     expect(screen.getByLabelText('Case narrative')).toHaveValue(preset.narrative);
@@ -54,7 +55,7 @@ describe('Module 2 input-only competition presets', () => {
   it('does not carry early-pregnancy context into Module 1', async () => {
     const requests = mockApi(); render(<App />);
     await screen.findByRole('radio', { name: 'Early Pregnancy Pain & Bleeding' });
-    await userEvent.selectOptions(screen.getByLabelText('Try a demonstration case'), 'pregDetailed');
+    loadRetainedExample('pregDetailed');
     await userEvent.click(screen.getByDisplayValue('module_01_endo'));
     expect(screen.queryByLabelText('Pregnancy test result')).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Analyze case' }));

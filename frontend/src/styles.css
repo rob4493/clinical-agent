@@ -164,3 +164,109 @@ footer {display:flex;justify-content:space-between;gap:var(--space4);padding:var
 .conversationClarification p { margin:.25rem 0; }
 .conversationClarification summary { cursor:pointer; min-height:44px; align-content:center; }
 .conversationProvider button { min-height:36px; padding:.25rem .5rem; font-size:.85rem; }
+
+/* One inline assistant keeps the evidence visible and avoids mobile modal/nested scroll traps. */
+.unifiedAssistant header { display:flex; justify-content:space-between; align-items:start; gap:1rem; flex-wrap:wrap; }
+.unifiedAssistant header h3 { margin:0; }
+.unifiedAssistant header p { margin:.3rem 0 1rem; }
+.unifiedAssistant .conversationHistory { max-height:none; overflow:visible; }
+.unifiedAssistant .conversationComposer { position:static; background:transparent; }
+.unifiedAssistant textarea { width:100%; box-sizing:border-box; }
+.unifiedAssistant button { min-height:44px; }
+.unifiedAssistant .conversationProvider { border-left:3px solid #71374f; padding-left:.75rem; }
+.unifiedAssistant [role=alert] { border-left:4px solid #a32923; padding:.75rem; }
+.protectedSafetyNotice h4 { margin:0 0 .6rem; font-size:1.1rem; }
+.protectedSafetyNotice h5 { margin:.8rem 0 .3rem; font-size:1rem; }
+.protectedSafetyNotice p,.protectedSafetyNotice ul { margin:.4rem 0; }
+.protectedSafetyNotice summary { min-height:44px; cursor:pointer; align-content:center; }
+
+.embeddedChatMount:not(:empty) { height:min(70dvh, 42rem); min-height:22rem; width:100%; overflow:hidden; position:relative; }
+
+/* IBM discussion presentation only; structured evidence retains its verbatim renderer. */
+.ibmDiscussion .conversationMessage { min-width:0; box-sizing:border-box; padding:1rem 1.25rem; margin-block:1.25rem; }
+.ibmDiscussion .conversationMessage.endo { background:#fffaf7; border-left:3px solid #71374f; }
+.ibmDiscussion .conversationMessage.clinician { background:#f4edea; border-left:1px solid #d3c3c8; }
+.ibmDiscussion .conversationMessage > strong { display:block; font-size:.85rem; letter-spacing:.02em; color:#71374f; margin-bottom:.65rem; }
+.discussionMarkdown { min-width:0; line-height:1.7; overflow-wrap:anywhere; font-size:1rem; }
+.conversationMessage .discussionMarkdown p { white-space:normal; margin:.75rem 0; }
+.discussionMarkdown > :first-child { margin-top:0; }
+.discussionMarkdown > :last-child { margin-bottom:0; }
+.discussionMarkdown h4,.discussionMarkdown h5,.discussionMarkdown h6 { font-family:inherit; line-height:1.35; color:#402a35; margin:1.4rem 0 .6rem; }
+.discussionMarkdown h4 { font-size:1.2rem; }
+.discussionMarkdown h5 { font-size:1.1rem; }
+.discussionMarkdown h6 { font-size:1rem; }
+.discussionMarkdown ul,.discussionMarkdown ol { padding-left:1.6rem; margin:.75rem 0; }
+.discussionMarkdown li { margin:.4rem 0; padding-left:.15rem; }
+.discussionMarkdown li > p { margin:.35rem 0; }
+.discussionMarkdown blockquote { margin:1rem 0; padding:.25rem 1rem; border-left:3px solid #c5a8b5; color:#51464a; background:#f6eeea; }
+.discussionMarkdown pre { max-width:100%; overflow-x:auto; padding:.75rem; background:#f4edea; border-radius:.35rem; white-space:pre; }
+.discussionMarkdown code { font-size:.9em; white-space:pre-wrap; }
+.discussionMarkdown pre code { white-space:pre; }
+.discussionMarkdown hr { border:0; border-top:1px solid #d3c3c8; margin:1.25rem 0; }
+.discussionTable { max-width:100%; overflow-x:auto; overscroll-behavior-x:contain; margin:1rem 0; border:1px solid #d3c3c8; border-radius:.4rem; }
+.discussionTable:focus-visible { outline:2px solid #71374f; outline-offset:3px; }
+.discussionTable table { width:100%; min-width:32rem; border-collapse:collapse; font-size:.95rem; line-height:1.5; }
+.discussionTable th,.discussionTable td { padding:.7rem .85rem; border-bottom:1px solid #e4d7db; vertical-align:top; text-align:left; min-width:8rem; }
+.discussionTable th { background:#f1e4e8; font-weight:650; }
+.discussionTable tr:last-child td { border-bottom:0; }
+.discussionTable tbody tr:nth-child(even) { background:#faf3ef; }
+.discussionReference { overflow-wrap:anywhere; color:inherit; text-decoration:none; }
+.ibmDiscussion [aria-busy=true] { opacity:.85; }
+.discussionSection { margin:1rem 0; min-width:0; }
+.discussionSectionControls { display:flex; flex-wrap:wrap; gap:.5rem; margin:.5rem 0 1rem; }
+.discussionSectionControls button { min-height:44px; padding:.35rem .7rem; font-size:.85rem; }
+.discussionSummary,.discussionStaticTitle { display:grid; grid-template-columns:1rem minmax(0,1fr) 1rem; gap:.6rem; align-items:center; color:#71374f; }
+.discussionSummary { list-style:none; cursor:pointer; min-height:44px; border-radius:.3rem; }
+.discussionSummary::-webkit-details-marker { display:none; }
+.discussionSummary:focus-visible { outline:2px solid #71374f; outline-offset:3px; }
+.discussionSectionHeading { min-width:0; overflow-wrap:anywhere; }
+.discussionSectionHeading h4,.discussionSectionHeading h5,.discussionSectionHeading h6 { margin:.5rem 0; }
+.discussionSectionIcon,.discussionSectionChevron { width:1rem; height:1rem; flex-shrink:0; color:inherit; }
+.discussionSection[open] > .discussionSummary > .discussionSectionChevron { transform:rotate(180deg); }
+@media(max-width:640px) {
+ .ibmDiscussion .conversationMessage { padding:.85rem; width:100%; margin-inline:0; }
+ .discussionMarkdown { font-size:.95rem; }
+ .discussionTable th,.discussionTable td { padding:.6rem; }
+}
+/* AI-first workspace: clinical review remains a separate explicit submission. */
+.agentFirstWorkspace{grid-template-columns:minmax(0,2fr) minmax(320px,1fr)}
+.agentFirstWorkspace>.agentWorkspace{grid-column:1;grid-row:1 / span 2;min-width:0;scroll-margin-top:1rem}
+.agentFirstWorkspace>.caseCard{grid-column:2;grid-row:1}
+.agentFirstWorkspace>.conflictWorkspace{grid-column:2;grid-row:2;min-width:0}
+.agentWorkspace .ibmDiscussion{margin:0;padding:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.agentWorkspace h2{font-family:var(--serif);font-size:2rem;margin:.75rem 0 .25rem;color:var(--plumDeep)}
+.agentSubtitle,.agentPrivacy{color:var(--muted);font-size:.85rem}
+.agentWelcome{text-align:center;padding:2.5rem .5rem}.agentWelcome h3{font:2rem/1.2 var(--serif);color:var(--plumDeep)}.agentWelcome>p{max-width:52ch;margin:1rem auto;color:var(--muted)}
+.agentSuggestions{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:1.5rem}.agentSuggestions button{text-align:left;padding:1rem;border:1px solid var(--border);border-radius:.75rem;background:var(--cream);color:var(--plumDeep)}.agentSuggestions span{display:block;margin-top:.4rem;font-size:.85rem;font-weight:400}
+.agentWorkspace .conversationMessage{max-width:100%;margin:1.25rem 0;padding:1rem;border-radius:.75rem;overflow-wrap:anywhere}.agentWorkspace .conversationMessage.clinician{background:#f5e9ed;margin-left:1.5rem}.agentWorkspace .conversationMessage.endo{background:#fffdf9;border:1px solid var(--border)}
+.agentWorkspace .conversationComposer{position:sticky;bottom:0;background:var(--surface);padding:.75rem 0;z-index:1}.agentWorkspace textarea{width:100%;min-width:0}.agentWorkspace .conversationHistory{overflow:visible;max-height:none}
+.agentFirstWorkspace .moduleCards,.agentFirstWorkspace .fieldGrid,.agentFirstWorkspace .statusFields{grid-template-columns:minmax(0,1fr)}
+@media(min-width:1400px){main:has(.agentFirstWorkspace){max-width:1600px}}
+@media(max-width:1050px){.agentFirstWorkspace{grid-template-columns:minmax(0,1fr)}.agentFirstWorkspace>.agentWorkspace{grid-column:1;grid-row:1}.agentFirstWorkspace>.caseCard{grid-column:1;grid-row:2}.agentFirstWorkspace>.conflictWorkspace{grid-column:1;grid-row:3}}
+@media(max-width:600px){.agentWorkspace .ibmDiscussion{padding:1rem}.agentSuggestions{grid-template-columns:1fr}.agentWelcome{padding:1.5rem 0}.agentWorkspace .conversationMessage.clinician{margin-left:0}.agentWorkspace .conversationComposer button{width:100%}}
+/* Conversation presentation only: 44px topic art, separate from clinical findings. */
+.ibmDiscussion .discussionResponseHeader{display:flex;align-items:center;gap:.75rem;padding-bottom:.75rem;margin-bottom:1rem;border-bottom:1px solid var(--border);color:var(--plum);font-size:.85rem;letter-spacing:.02em}
+.ibmDiscussion .conversationMessage.endo{background:#fffaf6}
+.ibmDiscussion .discussionSection{padding:.8rem 0;border-top:1px solid #e8dadd}
+.ibmDiscussion .discussionSummary,.ibmDiscussion .discussionStaticTitle{grid-template-columns:44px minmax(0,1fr) 16px;gap:1rem;align-items:center}
+.ibmDiscussion .discussionSectionIcon{width:44px;height:44px;color:#87455d;stroke-width:1.5}
+.ibmDiscussion .discussionAnatomyIcon{display:block}.discussionAnatomyIcon>svg{width:100%;height:100%;stroke-width:2}
+.ibmDiscussion .discussionSection>:not(summary):not(.discussionStaticTitle){margin-left:60px}
+.ibmDiscussion .discussionSection .discussionSection .discussionSectionIcon{width:24px;height:24px}
+.ibmDiscussion .discussionSection .discussionSection .discussionSummary{grid-template-columns:24px minmax(0,1fr) 16px}
+.ibmDiscussion .discussionSafetySection>.discussionStaticTitle{grid-template-columns:16px minmax(0,1fr) 16px}
+.ibmDiscussion .discussionSafetySection>.discussionStaticTitle>.discussionSectionIcon{width:16px;height:16px;color:inherit}
+.discussionReading{border-top:1px solid var(--border);padding-top:1rem;margin-top:1.25rem;min-width:0}
+.discussionReadingHeading{display:grid;grid-template-columns:44px minmax(0,1fr);gap:1rem;align-items:center;color:#87455d}
+.discussionReadingHeading h4{margin:0;color:var(--plumDeep)}.discussionReadingIcon{width:44px;height:44px}
+.discussionReading>p,.discussionReading>ul{margin-left:60px}.discussionReading>p{font-size:.85rem;color:var(--muted)}
+.discussionReading li{padding:.4rem 0;overflow-wrap:anywhere}.discussionReading li p{font-size:.8rem;color:var(--muted)}
+.discussionExternalIcon{display:inline-block;vertical-align:middle;margin-left:.35rem;flex-shrink:0}
+.ibmDiscussion .conversationMessage .discussionCaution{display:block;padding:.75rem;margin-top:1rem;background:#f8eef0;border-radius:.5rem;font-size:.8rem;color:#71374f}
+@media(max-width:640px){.ibmDiscussion .discussionSummary,.ibmDiscussion .discussionStaticTitle{grid-template-columns:40px minmax(0,1fr) 16px;gap:.65rem}.ibmDiscussion .discussionSectionIcon,.discussionReadingIcon{width:40px;height:40px}.discussionReadingHeading{grid-template-columns:40px minmax(0,1fr);gap:.65rem}.ibmDiscussion .discussionSection>:not(summary):not(.discussionStaticTitle),.discussionReading>p,.discussionReading>ul{margin-left:0}.ibmDiscussion .discussionSafetySection>.discussionStaticTitle{grid-template-columns:16px minmax(0,1fr) 16px}}
+
+/* Routine evaluation disclosure, separate from persistent emergency alerts. */
+.ibmDiscussion .discussionDisclosure{display:flex;align-items:flex-start;gap:.5rem;margin:.5rem 0;padding:.35rem 0;color:var(--muted);background:transparent;border:0}
+.ibmDiscussion .discussionDisclosure>svg{width:16px;height:16px;flex-shrink:0;margin-top:.12rem}
+.ibmDiscussion .discussionDisclosure>p{margin:0;font-size:.8rem;line-height:1.45}
+.ibmDiscussion .agentPrivacy{margin:.5rem 0 .15rem}.ibmDiscussion .agentDataBoundary{margin:0 0 .4rem;color:var(--muted);font-size:.75rem;line-height:1.4}

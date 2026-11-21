@@ -16,7 +16,7 @@ function bounded(text:unknown,limit:number):text is string{return typeof text===
 function wait<T>(operation:Promise<T>,signal:AbortSignal):Promise<T>{
  return new Promise((resolve,reject)=>{const abort=()=>reject(new OrchestrateError());if(signal.aborted){void operation.catch(()=>{});abort();return;}signal.addEventListener('abort',abort,{once:true});operation.then(resolve,reject).finally(()=>signal.removeEventListener('abort',abort));});
 }
-export type ResponseRejection='httpNotSuccessful'|'contentType'|'bodyUnavailable'|'bodyReadFailed'|'bodyTooLarge'|'invalidUtf8'|'invalidJson'|'invalidShape'|'unexpectedFields'|'missingRequiredFields'|'invalidThreadId'|'invalidMetadata'|'invalidChoices'|'incompatibleMessageContent'|'finishReason'|'usageValidation'|'threadMismatch'|'actionResponse'|'providerRefusal';
+export type ResponseRejection='httpNotSuccessful'|'contentType'|'bodyUnavailable'|'bodyReadFailed'|'bodyTooLarge'|'invalidUtf8'|'invalidJson'|'invalidShape'|'unexpectedFields'|'missingRequiredFields'|'invalidThreadId'|'invalidMetadata'|'invalidChoices'|'incompatibleMessageContent'|'finishReason'|'usageValidation'|'threadMismatch'|'actionResponse'|'providerRefusal'|'textTooLong'|'textInvalidCharacters';
 /** Fixed codes only: never retain provider content, keys, headers or exception causes. */
 export class OrchestrateResponseError extends OrchestrateError {
  constructor(readonly rejection:ResponseRejection,readonly httpSuccess:boolean){super();}
@@ -27,6 +27,12 @@ export class OrchestrateResponseError extends OrchestrateError {
  */
 export function parseOrchestrateResponse(payload:unknown):{text:string;threadId:string}{
  const reject=(code:ResponseRejection):never=>{throw new OrchestrateResponseError(code,true);};
+ const assistantText=(value:unknown):string=>{
+  if(typeof value!=='string'||!value.length)return reject('incompatibleMessageContent');
+  if(value.length>16000)return reject('textTooLong');
+  if(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value))return reject('textInvalidCharacters');
+  return value;
+ };
  const record=(value:unknown,required:string[]):Record<string,unknown>=>{
   if(!value||typeof value!=='object'||Array.isArray(value))return reject('invalidShape');
   if(required.some(name=>!Object.hasOwn(value,name)))return reject('missingRequiredFields');
@@ -67,9 +73,9 @@ export function parseOrchestrateResponse(payload:unknown):{text:string;threadId:
   // Conservative text-only adapter; never stringify arbitrary objects or forms.
   // The cloud response schema does not enumerate content-part variants. These
   // explicit typed-text parts are locally supported, not tenant-verified.
-  text=message.content.map(part=>{const block=record(part,[]);if(block.type==='refusal')return reject('providerRefusal');if(block.type!=='text'||!Object.hasOwn(block,'text')||!bounded(block.text,16000))return reject('incompatibleMessageContent');return block.text;}).join('');
+  text=message.content.map(part=>{const block=record(part,[]);if(block.type==='refusal')return reject('providerRefusal');if(block.type!=='text'||!Object.hasOwn(block,'text'))return reject('incompatibleMessageContent');return assistantText(block.text);}).join('');
  }else return reject('incompatibleMessageContent');
- if(!bounded(text,16000))return reject('incompatibleMessageContent');
+ assistantText(text);
  if(reply.usage!==undefined){
   const value=reply.usage;
   if(!value||typeof value!=='object'||Array.isArray(value))return reject('usageValidation');

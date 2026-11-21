@@ -50,8 +50,8 @@ describe('Clinician conflict review', () => {
     const requests = vi.fn(async (url: string) => new Response(JSON.stringify(url.endsWith('/v1/modules') ? { modules: [{ ...Modules.modules[0], moduleId: 'module_01_endo' }] } : url.endsWith('/ready') ? Ready : conflict), { headers: { 'X-Clinical-Mode': 'competition' } }));
     // Match the actual public runtime header used by the client.
     vi.stubGlobal('fetch', requests);
-    render(<App />); await waitFor(() => expect(screen.getByLabelText('Try a demonstration case')).toBeEnabled());
-    fireEvent.change(screen.getByLabelText('Try a demonstration case'), { target: { value: 'conflict' } });
+    render(<App />); await waitFor(() => expect(screen.getByLabelText('Load example case')).toBeEnabled());
+    fireEvent.change(screen.getByLabelText('Load example case'), { target: { value: 'conflict' } });
     expect(screen.getByLabelText('Case narrative')).toHaveValue('pregnancy confirmed');
     expect(document.querySelector('input[name=clinicalModule]:checked')).toHaveAttribute('value', 'module_01_endo');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -77,8 +77,8 @@ it('keeps server urgent warnings first and requires acknowledgement before openi
   conflict.renderedText = 'Fictional urgent assessment warning. [1]\n\n' + CompetitionNotice;
   const requests = vi.fn(async (url: string) => new Response(JSON.stringify(url.endsWith('/v1/modules') ? { modules: [{ ...Modules.modules[0], moduleId: 'module_01_endo' }] } : url.endsWith('/ready') ? Ready : conflict), { headers: { 'X-Clinical-Mode': 'competition' } }));
   vi.stubGlobal('fetch', requests); render(<App />);
-  await waitFor(() => expect(screen.getByLabelText('Try a demonstration case')).toBeEnabled());
-  fireEvent.change(screen.getByLabelText('Try a demonstration case'), { target: { value: 'conflict' } });
+  await waitFor(() => expect(screen.getByLabelText('Load example case')).toBeEnabled());
+  fireEvent.change(screen.getByLabelText('Load example case'), { target: { value: 'conflict' } });
   await userEvent.click(screen.getByRole('button', { name: 'Analyze case' }));
   const urgent = await screen.findByRole('heading', { name: 'Urgent assessment' });
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

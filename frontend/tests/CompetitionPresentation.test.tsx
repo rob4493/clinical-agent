@@ -62,7 +62,7 @@ describe('competition presentation with mocked HTTP only', () => {
     await screen.findByText(EvaluationBanner);
     await screen.findByRole('radio', { name: 'Endometriosis & Chronic Pelvic Pain' });
     await userEvent.click(screen.getByDisplayValue('module_01_endo'));
-    await userEvent.selectOptions(screen.getByLabelText('Try a demonstration case'), 'brief');
+    await userEvent.selectOptions(screen.getByLabelText('Load example case'), 'mild');
     expect(screen.getByDisplayValue('module_01_endo')).toBeChecked();
     expect(requests.mock.calls.some(([url]) => url.endsWith('/v1/analyze'))).toBe(false);
     await userEvent.click(screen.getByRole('button', { name: 'Analyze case' }));
