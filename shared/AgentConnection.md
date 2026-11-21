@@ -1,4 +1,19 @@
-# Endo conversational connection — prepared, not live
+# Historical design note — Endo conversational connection (November 5, 2026)
+
+> **Historical/superseded status:** This file documents an earlier proposed
+> direct watsonx.ai conversation design and its then-unresolved safeguards.
+> **It does not describe the currently active public Agent Endo.**
+> The actual public Endo website now runs the existing **IBM watsonx Orchestrate
+> Agent Endo**, with one verified completed Production first turn as of
+> November 21, 2026. The first-turn live evaluation did not test continuity.
+> **[Open the live Endo website](https://clinicalagent.netlify.app/)**.
+> See [current production chat and safeguards](ProductionChat.md) and
+> [IBM Orchestrate integration](../orchestrate/README.md).
+>
+> The historical content below is retained for provenance; statements that
+> model-backed conversation was unavailable apply only to November 5, 2026.
+
+## Original November 5 design notes
 
 Reviewed 5 November 2026. **The application cannot currently conduct model-backed conversations.** External clinical-text transmission remains unauthorized. No IBM request, credential entry, live setting change or agent registration occurred in this work. Local follow-up is explicitly labeled as a bounded fallback, not IBM inference.
 
