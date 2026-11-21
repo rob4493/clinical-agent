@@ -1,12 +1,45 @@
 # Production migration and anonymous evaluation admission
 
-Status: implemented offline, default-disabled. No public activation is established
-by successful mocks, a review flag or a deployment. Preview #4 remains independent.
+**CURRENT PUBLIC STATUS — ACTIVE (verified November 21, 2026).**
+
+**[🌐 Open the live Endo website and Agent Endo](https://clinicalagent.netlify.app/)** — https://clinicalagent.netlify.app/
+
+Agent Endo's IBM watsonx Orchestrate conversation is available to anonymous visitors
+for synthetic-only evaluation, without a judge login. Production verification
+confirmed a new anonymous session, secure HttpOnly cookie, and **one completed
+real IBM response** (`completed / invoked: true`). Public follow-up continuity
+was **not** exercised in that activation; earlier protected Preview #4 testing
+demonstrated multi-turn behavior.
+
+**Launch checkpoint:** published Netlify deployment
+`6b01aa92d599c4c7de59f902`, source commit
+`0e906aa30b81234d41803619cb6f0af7eada9fa5`.
+**UTC window:** activated `2026-11-21T14:31:00Z`;
+configured expiration `2027-01-21T14:31:00Z`.
+At the launch checkpoint, Production chat was enabled, the kill switch
+disengaged and the capability endpoint reported `available`.
+This is a historical verified checkpoint, not continuous uptime monitoring.
+The first-turn test used exactly two outbound IBM HTTP requests (IAM + agent).
+Remaining daily application capacity then was 49 call slots / 18 session slots;
+these counts are **not current live balances**.
+
+**Safety scope:** only fictional/de-identified educational prompts; not a
+clinical production service or approved for patient care. Quotas, cookie
+ownership, privacy and emergency screening, immutable historical quota/stop
+records, and a fail-closed operational kill switch remain in place.
+IBM Trial service availability, account-level capacity and downstream
+permissions have not been independently established beyond the observed live
+first-turn behavior. Preserve the user-approved limited evaluation policy;
+do not claim unrestricted IBM capacity.
+
+**Historical note:** the rollout, blocker investigation and planned activation
+sections below document earlier stages. The current launch status and
+timestamps above supersede their prelaunch statements. Preview #4 remains
+a separate protected evaluation environment.
 
 ## Visitor workflow
 
-When a separately verified production release is enabled, open
-https://clinicalagent.netlify.app, type a fictional/de-identified educational
+Open **[live Endo](https://clinicalagent.netlify.app/)**, type a fictional/de-identified educational
 question, and select Send to Endo. No account, access code or operator allowlist is
 required. Continue with follow-up questions; New conversation explicitly clears
 browser-memory history. Structured Evidence Review remains a separate form and
@@ -52,7 +85,9 @@ and https://docs.netlify.com/build/functions/api/ .
 
 ## Activation prerequisites and configuration
 
-Default-disabled flags: ENDO_CHAT_ENABLED=false, ENDO_CHAT_KILL_SWITCH=true.
+The current verified activation checkpoint used ENDO_CHAT_ENABLED=true and
+ENDO_CHAT_KILL_SWITCH=false. The safe default and rollback values are
+ENDO_CHAT_ENABLED=false and ENDO_CHAT_KILL_SWITCH=true.
 The operator explicitly approved a narrowly scoped public synthetic judging policy
 on 2026-11-21, accepting unresolved effective Live connections/indirect actions and
 provider capacity/overage ceilings. For that approved existing-agent evaluation,
@@ -93,6 +128,10 @@ Use Production-scoped overrides only; do not overwrite global/preview credential
 
 ## Rollout and rollback
 
+**Historical release checklist (completed through first public IBM turn on
+November 21, 2026).** Do not reinterpret it as a current activation blocker.
+Keep it for subsequent rebuilds and emergency rollback.
+
 1. Resolve main/PR conflicts and verify clinical/evidence bindings and full tests.
 2. Deploy reviewed code with public inference disabled; retain the last published
    Production deploy ID/commit and the protected Preview for comparison.
@@ -112,13 +151,17 @@ operator-supplied hosted productionIamOnce log: status PASS, iamHttp 200,
 errorCode null, runtimeConfigurationAccessed true. The one-shot diagnostic was
 subsequently disabled and removed; no token or secret was retained.
 Effective immutable Live bindings and full-period provider allowance remain
-unverified. Public activation/merge is not reported complete.
+unverified. **Historical correction:** PR #4 was merged and the public
+Agent Endo first response was completed on November 21, 2026 as recorded above.
+Those unresolved account details remain limitations, not a statement that
+public chat is currently disabled.
 
 ## Two-calendar-month public evaluation commitment
 
-Actual public activation date: **NOT ACTIVATED**.
-Actual configured public expiration date: **NOT SET**.
-Verified anonymous availability / live conversations: **NOT ESTABLISHED**.
+Actual public activation date: **2026-11-21T14:31:00Z**.
+Actual configured public expiration date: **2027-01-21T14:31:00Z**.
+Verified anonymous availability / live conversations: **ONE COMPLETED REAL IBM FIRST TURN**, at deployment `6b01aa92d599c4c7de59f902`.
+Production multi-turn / memory behavior: **NOT YET VERIFIED in this live activation**.
 
 Do not populate these records with build, preparation or diagnostic deployment
 dates. At the actual public activation checkpoint, record the UTC ISO timestamp
@@ -141,11 +184,12 @@ availability-window changes do not reset immutable site/network daily tickets.
 UTC daily rollover renews only that day's fixed allowance, never unused tickets
 or provider permissions. No automatic availability renewal follows expiration.
 
-Before activation, verify the IBM service entitlement lasts THROUGH the configured
-expiration and covers existing agent/tools, connections and downstream processing.
-Choose sustainable site/network/visitor daily limits from that allowance and
-record the evidence/reference; the proposed 50 calls/20 sessions are not yet an
-approved two-month budget. Count every UTC date intersected by [start, until):
+The operator approved the limited synthetic judging evaluation with a
+conservative IBM Trial cutoff and site-level quotas. The reported Trial expiration
+was January 30, 2027, after this configured two-month window. These application
+limits do **not** establish remaining IBM provider capacity, cost ceilings, or
+uninterrupted service. Preserve the original verification requirements for
+any broader clinical or commercial use. Count every UTC date intersected by [start, until):
 ceil(until/86400000)-floor(start/86400000). Two calendar months touch at most 63
 UTC dates; at proposed defaults that is at most 3,150 application call reservations
 and 1,260 sessions. This does not cap internal IBM/tool execution or downstream
