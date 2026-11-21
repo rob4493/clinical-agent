@@ -1,5 +1,30 @@
 # Endo Clinical Evidence — watsonx Orchestrate Integration
 
+## [🌐 LAUNCH THE LIVE ENDO AGENT WEBSITE](https://clinicalagent.netlify.app/)
+
+**Live public website: https://clinicalagent.netlify.app/**
+
+**Status: LIVE for anonymous synthetic evaluation.** The existing **Agent Endo**
+is deployed as **Live v2.0.0** in **IBM watsonx Orchestrate**, retaining both original
+clinical API tools. The public Netlify website confirmed a real IBM-backed first
+conversation response on **November 21, 2026** (deployment
+`6b01aa92d599c4c7de59f902`). The earlier protected Preview #4 demonstrated
+multi-turn discussion, and a working website demonstration was **recorded and
+submitted for judging**. Public Production multi-turn continuity was **not tested**
+in the first verified launch session.
+
+**Two-month judging window:** November 21, 2026, 14:31 UTC – January 21, 2027,
+14:31 UTC, subject to IBM service availability, application usage caps and the
+operational kill switch. No account or login is required for judges.
+Use **only fictional/de-identified educational information**; this is not a
+clinical production service. [Detailed public controls and release evidence](../shared/ProductionChat.md).
+
+**IBM stack:** **IBM Bob** assisted development of tools, agent instructions
+and fixtures; **IBM watsonx Orchestrate** operates Agent Endo; **IBM Cloud IAM**
+authenticates server-to-server requests; **IBM watsonx.ai** is a distinct
+optional bounded presentation adapter, not a claimed part of the recorded
+Orchestrate demonstration.
+
 ## SYNTHETIC DEMONSTRATION ONLY
 
 This integration calls the **publicly accessible** Endo Clinical Evidence API
@@ -295,6 +320,14 @@ The agent is a relay. All clinical content flows from the API unchanged.
 ---
 
 ## Known limitations and remaining gates
+
+**Interpretation (updated November 21, 2026):** These limitations describe
+what is needed for clinical/patient-adjacent or wider operational use, **not**
+a claim that public synthetic Endo Agent chat is offline. The public IBM
+first turn is verified; a new public multi-turn continuity check and
+independent provider allowance/downstream-permission review are still open.
+The conversation route enforces bounded anonymous quotas and rate controls,
+separately from the public deterministic analysis endpoint below.
 
 | Gap | Detail |
 |---|---|
