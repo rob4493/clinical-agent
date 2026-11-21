@@ -53,13 +53,28 @@ and https://docs.netlify.com/build/functions/api/ .
 ## Activation prerequisites and configuration
 
 Default-disabled flags: ENDO_CHAT_ENABLED=false, ENDO_CHAT_KILL_SWITCH=true.
-An administrator must independently verify effective operations, connections,
-destinations, indirect actions and IBM service allowance for the EXISTING two-tool
-Live agent before setting ENDO_CHAT_TOOL_POLICY=approved-operations-enforced,
-ENDO_CHAT_PROVIDER_ALLOWANCE=reviewed and ENDO_CHAT_REVIEW_REFERENCE to the reviewed
-release reference. These server settings record a review, not technical evidence
-of IBM-side enforcement. Local parser rejection cannot prevent remote actions.
-No flag or browser input grants approval of unknown operations.
+The operator explicitly approved a narrowly scoped public synthetic judging policy
+on 2026-11-21, accepting unresolved effective Live connections/indirect actions and
+provider capacity/overage ceilings. For that approved existing-agent evaluation,
+use ENDO_CHAT_TOOL_POLICY=existing-live-synthetic-evaluation together with
+ENDO_CHAT_PROVIDER_ALLOWANCE=trial-synthetic-evaluation and a recorded
+ENDO_CHAT_REVIEW_REFERENCE. These values record authorization and risk acceptance,
+NOT verified provider permissions, remaining quota or an enforceable spending cap.
+ENDO_CHAT_TRIAL_UNTIL must be no later than 2027-01-30T00:00:00.000Z, and the public
+expiration must not exceed that conservative Trial cutoff.
+
+This path enforces at most 50 site calls/20 sessions daily, 12 calls/3 sessions per
+visitor cookie and 20 calls/8 sessions per network. All other safeguards are
+unchanged. No additional IBM administrator approval was established as mandatory
+for the stated functionality-evaluation purpose. General Trial terms still apply:
+no commercial/operational use, no personal/regulated data, and no use past expiry.
+Unknown Live actions/cost ceilings remain disclosed; known unapproved actions or
+destinations are not authorized. Local output validation cannot undo remote work.
+
+The original independently verified path remains available only with genuine
+review evidence: approved-operations-enforced / reviewed. Do not set those values
+for this synthetic-demo exception. Historical sign-off requirements below are
+superseded for this specifically authorized evaluation, not asserted as IBM rules.
 
 Production needs the existing EU-DE ORCHESTRATE_API_URL, unchanged agent UUID
 c6698d4e-a08d-4b77-bf05-139ff3b4c695, ORCHESTRATE_ENVIRONMENT=live,
@@ -69,7 +84,7 @@ ENDO_CHAT_STARTED_AT / ENDO_CHAT_UNTIL support two UTC calendar months from actu
 public activation, with no automatic renewal. ENDO_CHAT_DAILY_CALL_LIMIT / DAILY_SESSION_LIMIT,
 ENDO_CHAT_VISITOR_CALL_LIMIT / VISITOR_SESSION_LIMIT and
 ENDO_CHAT_NETWORK_CALL_LIMIT / NETWORK_SESSION_LIMIT set limits (all prefixed
-ENDO_CHAT_). Actual final limits require provider allowance evidence first.
+ENDO_CHAT_). Evaluation limits follow the explicitly approved caps above; they are not IBM-side spending ceilings.
 
 Keep ORCHESTRATE_ENABLED=false, ENDO_DEMO_INFERENCE_ENABLED=false,
 ENDO_DEMO_KILL_SWITCH=true and OTEL_SDK_DISABLED=true. Embedded chat and unrelated
@@ -81,7 +96,7 @@ Use Production-scoped overrides only; do not overwrite global/preview credential
 1. Resolve main/PR conflicts and verify clinical/evidence bindings and full tests.
 2. Deploy reviewed code with public inference disabled; retain the last published
    Production deploy ID/commit and the protected Preview for comparison.
-3. Complete IBM action-boundary/allowance review and valid credential verification.
+3. Record either genuine independent verification or the explicitly approved synthetic judging authorization; runtime IAM is already verified.
 4. Configure a bounded Production window/limits/secret using secure management;
    rebuild and confirm anonymous capability without consuming a reservation.
 5. Bounded authorized live tests must demonstrate real responses, continuity,
@@ -272,3 +287,80 @@ and the permitted public synthetic evaluation use is the smallest missing
 provider evidence. Conservative application limits cannot be represented as
 fitting an unknown provider limit or as capping internal/downstream processing.
 Do not set ENDO_CHAT_PROVIDER_ALLOWANCE=reviewed until that comparison is possible.
+
+## Reassessment: public judging evaluation versus operational production
+
+Review date: 2026-11-21. A Netlify deployment context named production is a hosting
+classification, not proof of real-patient, commercial or operational use. The
+operator describes this release as a time-limited synthetic-only judging prototype.
+This purpose must be assessed against the applicable evaluation terms, rather than
+assuming that the site's public URL is prohibited.
+
+### Explicit IBM requirements found in the reviewed general Trial documentation
+
+IBM describes functionality/technology evaluation, a time-limited entitlement,
+no commercial/production operational use and no personal/regulated data. The
+observed instance-specific extended Trial ends 2027-01-30. The Trial has no SLA;
+there is no verified continuous-availability guarantee. Applicable program-specific
+rules were not independently supplied or established by generic hackathon pages.
+No reviewed source establishes a separate IBM-administrator sign-off requirement
+for every synthetic judging demonstration. No account-specific numerical capacity
+or overage ceiling was established by these general sources.
+
+Source: https://www.ibm.com/docs/en/watsonx/watson-orchestrate/base?topic=entitlements-licenses-cloud
+
+### Necessary technical controls retained
+
+Server-only credentials; strict origin/deployment checks; IP-bound signed visitor
+cookies and encrypted conversation receipts; one-hour sessions and replay locks;
+privacy/input screening; synthetic-only request contract; emergency interception;
+output/action/secret/prescribing defenses; bounded requests/timeouts; no automatic
+retries; immutable visitor/network/site budgets; UTC daily limits; operational stop
+marker and kill switches; expiration before the existing Trial ends. Known
+unapproved actions/destinations must not be authorized by a policy exception.
+
+### Additional project-process requirements
+
+The literal gates ENDO_CHAT_TOOL_POLICY=approved-operations-enforced and
+ENDO_CHAT_PROVIDER_ALLOWANCE=reviewed, and the requirement for independent exhaustive
+Live-action/allowance sign-off before any public evaluation, were introduced in
+this project's development process. They are not shown to be an IBM requirement
+merely by existing in TypeScript or this document. They remain ACTIVE in code until
+an explicitly approved amendment is implemented and validated. Do not falsify the
+values to get past those existing gates.
+
+### Approved synthetic judging amendment -- implementation record
+
+For this existing synthetic judging prototype only, add a separate authorization
+path recording the operator's actual authorization, without claiming verification:
+- ENDO_CHAT_TOOL_POLICY=existing-live-synthetic-evaluation
+- ENDO_CHAT_PROVIDER_ALLOWANCE=trial-synthetic-evaluation
+- ENDO_CHAT_REVIEW_REFERENCE=a recorded operator-approved evaluation reference
+- ENDO_CHAT_TRIAL_UNTIL=2027-01-30T00:00:00.000Z (conservative date cutoff)
+
+Both authorization values must match together; mixing them with verified-policy
+values must fail closed. Require the explicit enable flag/kill switch and all
+existing safeguards. Limit this mode to at most 50 site calls/20 sessions per UTC
+day, 12 calls/3 sessions per visitor cookie and 20 calls/8 sessions per network;
+retain immutable records across renewed sessions, days and deployments. The public
+window must start at actual activation, last two calendar months and end no later
+than the Trial cutoff; no automatic renewal. Preserve the old independently
+verified path for separately evidenced configurations. No agent/tool/permission
+change or new framework is proposed.
+
+Explicit operator decision APPROVED for this PROJECT policy amendment: authorize
+the existing-agent public synthetic evaluation despite unresolved effective Live
+connection/indirect-action details and provider capacity/overage ceilings. Application
+budgets do not cap internal IBM model/tool executions or all downstream costs;
+provider limits/outages may deny service. Output validation cannot undo remote
+actions already taken. This is risk acceptance, not evidence of enforced provider
+permissions, remaining allowance, contractual permission or a hard spending cap.
+
+The first attempt to implement this amendment was rejected by automatic approval
+review: it would persistently relax Production admission under unverified Live
+permissions/allowance, with possible cost and downstream-action exposure, and the
+current authorization was not judged sufficiently specific. No code/settings were
+changed by that rejected operation. The operator subsequently explicitly approved this exact amendment. Admission
+code and regression tests now implement it; deployment and bounded live checks
+remain subject to validation. Public inference remains disabled until activation. No further IBM administrator approval is asserted as
+a generic prerequisite by this reassessment.

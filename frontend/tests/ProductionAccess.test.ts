@@ -105,3 +105,33 @@ it('keeps visitor cookies short-lived late in a two-month public window without 
  const renewed=access.issue()!;expect(renewed.visitor.id).not.toBe(issued.visitor.id);
  now=Date.parse(env.ENDO_CHAT_UNTIL);expect(access.issue()).toBeNull();
 });
+
+
+it('admits explicitly authorized synthetic judging without asserting provider verification',()=>{
+ const env={...Settings,ENDO_CHAT_TOOL_POLICY:'existing-live-synthetic-evaluation',ENDO_CHAT_PROVIDER_ALLOWANCE:'trial-synthetic-evaluation',ENDO_CHAT_TRIAL_UNTIL:'2027-01-30T00:00:00.000Z',ENDO_CHAT_STARTED_AT:new Date(Now).toISOString(),ENDO_CHAT_UNTIL:new Date(maximumPublicEvaluationEnd(Now)).toISOString()};
+ expect(productionWindow(env,Now)).toMatchObject({dailyCalls:50,dailySessions:20,visitorCalls:12,networkCalls:20});
+ expect(productionWindow({...env,ENDO_CHAT_TRIAL_UNTIL:''},Now)).toBeNull();
+ expect(productionWindow({...env,ENDO_CHAT_TRIAL_UNTIL:'2027-01-31T00:00:00Z'},Now)).toBeNull();
+ expect(productionWindow({...env,ENDO_CHAT_TRIAL_UNTIL:new Date(Now+86400000).toISOString()},Now)).toBeNull();
+ expect(productionWindow({...env,ENDO_CHAT_PROVIDER_ALLOWANCE:'reviewed'},Now)).toBeNull();
+ expect(productionWindow({...env,ENDO_CHAT_TOOL_POLICY:'unverified'},Now)).toBeNull();
+ expect(productionWindow({...env,ENDO_CHAT_KILL_SWITCH:'true'},Now)).toBeNull();
+ expect(productionWindow({...env,ENDO_CHAT_STARTED_AT:new Date(Now+1).toISOString()},Now)).toBeNull();
+ for(const [key,value] of Object.entries({ENDO_CHAT_DAILY_CALL_LIMIT:'51',ENDO_CHAT_DAILY_SESSION_LIMIT:'21',ENDO_CHAT_VISITOR_CALL_LIMIT:'13',ENDO_CHAT_VISITOR_SESSION_LIMIT:'4',ENDO_CHAT_NETWORK_CALL_LIMIT:'21',ENDO_CHAT_NETWORK_SESSION_LIMIT:'9'}))expect(productionWindow({...env,[key]:value},Now)).toBeNull();
+ expect(productionWindow(env,Date.parse(env.ENDO_CHAT_UNTIL))).toBeNull();
+});
+
+it('supports anonymous first/follow-up discussion under the approved Trial evaluation path',async()=>{
+ const f=fixture(),thread=randomUUID();
+ Object.assign(f.environment,{ENDO_CHAT_TOOL_POLICY:'existing-live-synthetic-evaluation',ENDO_CHAT_PROVIDER_ALLOWANCE:'trial-synthetic-evaluation',ENDO_CHAT_TRIAL_UNTIL:'2027-01-30T00:00:00.000Z'});
+ f.provider.mockImplementation(async address=>new Response(JSON.stringify(address.includes('/identity/token')?{access_token:'SyntheticBearer',token_type:'Bearer',expires_in:3600}:{thread_id:thread,choices:[{index:0,finish_reason:'stop',message:{role:'assistant',content:'General educational discussion only.'}}]}),{headers:{'Content-Type':'application/json'}}));
+ const start=await f.handler(f.request({version:'2',action:'start',syntheticOnly:true}),Context);
+ expect(start.status).toBe(200);const session=await start.json(),cookie=start.headers.get('Set-Cookie')!.split(';')[0];
+ const first=await f.handler(f.request({version:'2',action:'turn',receipt:session.receipt,message:'Explain general clinical education.',history:[]},{Cookie:cookie}),Context);
+ expect(first.status).toBe(200);const reply=await first.json();expect(reply.state).toBe('replied');
+ const second=await f.handler(f.request({version:'2',action:'turn',receipt:reply.receipt,message:'Can you explain that more simply?',history:['Explain general clinical education.']},{Cookie:cookie}),Context);
+ expect(second.status).toBe(200);expect(await second.json()).toMatchObject({state:'replied'});
+ const calls=f.provider.mock.calls.filter(([address])=>!address.includes('/identity/token'));expect(calls).toHaveLength(2);
+ expect(new Headers(calls[1][1].headers).get('X-IBM-THREAD-ID')).toBe(thread);
+ expect(JSON.parse(String(calls[1][1].body)).messages).toEqual([{role:'user',content:'Can you explain that more simply?'}]);
+});

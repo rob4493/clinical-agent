@@ -6,15 +6,21 @@ export const ProductionOrigin='https://clinicalagent.netlify.app';
 export const VisitorCookie='__Host-endo-demo';
 export type DeployContext={ip?:string;deploy?:{id:string;context:string;published:boolean}};
 export type Visitor={id:string;started:number;until:number;network?:string};
-/** An administrator opt-in is not evidence of IBM-side enforcement. Activation
- * requires independently reviewed effective restrictions, outside this process. */
+/** Evaluation authorization records purpose and accepted existing configuration,
+ * never proof of IBM-side restrictions, remaining quota or spending ceilings. */
 export function productionWindow(env:OrchestrateEnvironment,now:number):ConversationWindow|null{
  const startedAt=Date.parse(env.ENDO_CHAT_STARTED_AT||''),until=Date.parse(env.ENDO_CHAT_UNTIL||'');
  const integer=(value:string|undefined,fallback:number,max:number)=>value===undefined?fallback:/^[1-9]\d{0,2}$/.test(value)&&Number(value)<=max?Number(value):NaN;
  const dailyCalls=integer(env.ENDO_CHAT_DAILY_CALL_LIMIT,50,999),dailySessions=integer(env.ENDO_CHAT_DAILY_SESSION_LIMIT,20,200);
  const visitorCalls=integer(env.ENDO_CHAT_VISITOR_CALL_LIMIT,12,50),visitorSessions=integer(env.ENDO_CHAT_VISITOR_SESSION_LIMIT,3,10),networkCalls=integer(env.ENDO_CHAT_NETWORK_CALL_LIMIT,20,200),networkSessions=integer(env.ENDO_CHAT_NETWORK_SESSION_LIMIT,8,50);
- if(env.ENDO_CHAT_ENABLED!=='true'||env.ENDO_CHAT_KILL_SWITCH!=='false'||env.ENDO_CHAT_TOOL_POLICY!=='approved-operations-enforced'
-  ||env.ENDO_CHAT_PROVIDER_ALLOWANCE!=='reviewed'||!/^[-A-Za-z0-9_]{8,128}$/.test(env.ENDO_CHAT_REVIEW_REFERENCE||'')
+ const verified=env.ENDO_CHAT_TOOL_POLICY==='approved-operations-enforced'&&env.ENDO_CHAT_PROVIDER_ALLOWANCE==='reviewed';
+ const evaluation=env.ENDO_CHAT_TOOL_POLICY==='existing-live-synthetic-evaluation'&&env.ENDO_CHAT_PROVIDER_ALLOWANCE==='trial-synthetic-evaluation';
+ const trialEnd=Date.parse(env.ENDO_CHAT_TRIAL_UNTIL||'');
+ // Conservative midnight cutoff for the independently observed Trial end date.
+ const trialCeiling=Date.parse('2027-01-30T00:00:00.000Z');
+ const evaluationBounds=!evaluation||Number.isFinite(trialEnd)&&trialEnd<=trialCeiling&&until<=trialEnd&&dailyCalls<=50&&dailySessions<=20&&visitorCalls<=12&&visitorSessions<=3&&networkCalls<=20&&networkSessions<=8;
+ if(env.ENDO_CHAT_ENABLED!=='true'||env.ENDO_CHAT_KILL_SWITCH!=='false'||!(verified||evaluation)||!evaluationBounds
+  ||!/^[-A-Za-z0-9_]{8,128}$/.test(env.ENDO_CHAT_REVIEW_REFERENCE||'')
   ||env.OTEL_SDK_DISABLED!=='true'||env.ORCHESTRATE_ENABLED!=='false'||env.ENDO_DEMO_INFERENCE_ENABLED!=='false'||env.ENDO_DEMO_KILL_SWITCH!=='true'
   ||env.ORCHESTRATE_AGENT_ID!=='c6698d4e-a08d-4b77-bf05-139ff3b4c695'||env.ORCHESTRATE_ENVIRONMENT!=='live'||env.WATSONX_AI_AUTH_TYPE!=='iam'
   ||!isOrchestrateApiUrl(env.ORCHESTRATE_API_URL)||new URL(env.ORCHESTRATE_API_URL!).hostname!=='api.eu-de.watson-orchestrate.cloud.ibm.com'
