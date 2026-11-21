@@ -237,3 +237,12 @@ To use the available local follow-up workflow:
 See [connection status and approval requirements](shared/AgentConnection.md).
 
 Production visitor controls, usage bounds, release prerequisites and the public user workflow are documented in [Production chat](shared/ProductionChat.md). IBM Bob assists development; IBM watsonx Orchestrate is the runtime for the existing Agent Endo. A prepared route is not evidence of a completed public launch.
+
+Public evaluation requirement: two UTC calendar months from actual public
+activation, preserving daily quotas, one-hour visitor sessions and kill switches.
+**Actual activation: NOT ACTIVATED. Actual expiration: NOT SET.** Preparation and
+diagnostic deployments do not start the period. Record both actual dates here
+and in shared/ProductionChat.md at the verified activation checkpoint. Full-period
+IBM allowance and sustainable daily limits must be verified before activation;
+continuous public availability has not been established. The separate temporary
+Production IAM diagnostic retains its maximum ten-minute window.

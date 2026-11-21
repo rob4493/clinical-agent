@@ -5,7 +5,7 @@ import type {Transport} from '../../netlify/evaluation/watsonShadow';
 import {createPublicConverse as createConverse,config} from '../../netlify/evaluation/publicConverse';
 import {createVisitorAccess,isProductionRequest,productionWindow,ProductionOrigin,VisitorCookie} from '../../netlify/evaluation/productionAccess';
 import {createProductionConversation} from '../../netlify/evaluation/productionConversation';
-import {validateConversationTicket,type ConversationWindow} from '../../netlify/evaluation/conversationQuota';
+import {maximumPublicEvaluationEnd,validateConversationTicket,type ConversationWindow} from '../../netlify/evaluation/conversationQuota';
 import type {QuotaStore} from '../../netlify/evaluation/demoQuota';
 const Now=Date.parse('2026-11-16T18:00:00Z');
 const Settings={ENDO_CHAT_ENABLED:'true',ENDO_CHAT_KILL_SWITCH:'false',ENDO_CHAT_TOOL_POLICY:'approved-operations-enforced',ENDO_CHAT_PROVIDER_ALLOWANCE:'reviewed',ENDO_CHAT_REVIEW_REFERENCE:'SyntheticReviewedFixture',ENDO_CHAT_STARTED_AT:new Date(Now-1000).toISOString(),ENDO_CHAT_UNTIL:new Date(Now+3600000).toISOString(),ENDO_CHAT_DAILY_CALL_LIMIT:'50',ENDO_CHAT_DAILY_SESSION_LIMIT:'20',ENDO_CHAT_VISITOR_CALL_LIMIT:'12',ENDO_CHAT_VISITOR_SESSION_LIMIT:'3',ENDO_CHAT_NETWORK_CALL_LIMIT:'20',ENDO_CHAT_NETWORK_SESSION_LIMIT:'8',ENDO_CHAT_ACCESS_CODE:'SyntheticDemoAccessCode123',ENDO_CHAT_SESSION_SECRET:'SyntheticSessionSecretNeverUseInProduction123',ORCHESTRATE_ENABLED:'false',ENDO_DEMO_INFERENCE_ENABLED:'false',ENDO_DEMO_KILL_SWITCH:'true',OTEL_SDK_DISABLED:'true',ORCHESTRATE_API_URL:'https://api.eu-de.watson-orchestrate.cloud.ibm.com/instances/SyntheticTenant',ORCHESTRATE_AGENT_ID:'c6698d4e-a08d-4b77-bf05-139ff3b4c695',ORCHESTRATE_ENVIRONMENT:'live',WATSONX_AI_AUTH_TYPE:'iam',WATSONX_AI_APIKEY:'SyntheticServerKey',WATSONX_AI_TIMEOUT_MS:'1000'};
@@ -27,7 +27,7 @@ it('binds the rate rule to the exact application route and blocks alternate Func
 });
 it.each([
  {ENDO_CHAT_ENABLED:'false'},{ENDO_CHAT_KILL_SWITCH:'true'},{ENDO_CHAT_TOOL_POLICY:'unverified'},{ENDO_CHAT_SESSION_SECRET:''},{ENDO_CHAT_PROVIDER_ALLOWANCE:'unverified'},{ENDO_CHAT_REVIEW_REFERENCE:''},{WATSONX_AI_APIKEY:''},
- {ENDO_CHAT_DAILY_CALL_LIMIT:'1000'},{ENDO_CHAT_DAILY_SESSION_LIMIT:'201'},{ENDO_CHAT_UNTIL:new Date(Now).toISOString()},{ENDO_CHAT_STARTED_AT:new Date(Now+1).toISOString()},{ENDO_CHAT_UNTIL:new Date(Now+604800000).toISOString()},
+ {ENDO_CHAT_DAILY_CALL_LIMIT:'1000'},{ENDO_CHAT_DAILY_SESSION_LIMIT:'201'},{ENDO_CHAT_UNTIL:new Date(Now).toISOString()},{ENDO_CHAT_STARTED_AT:new Date(Now+1).toISOString()},{ENDO_CHAT_UNTIL:'2027-02-16T18:00:00Z'},
  {ORCHESTRATE_ENABLED:'true'},{ENDO_DEMO_INFERENCE_ENABLED:'true'},{ENDO_DEMO_KILL_SWITCH:'false'},{OTEL_SDK_DISABLED:'false'},{ORCHESTRATE_ENVIRONMENT:'draft'},{ORCHESTRATE_AGENT_ID:'11111111-1111-4111-8111-111111111111'},
  {ORCHESTRATE_API_URL:'https://api.us-south.watson-orchestrate.cloud.ibm.com/instances/SyntheticTenant'}
 ])('fails closed for unsafe or incomplete production settings %j',async changes=>{
@@ -76,3 +76,32 @@ it('binds visitor cookies to trusted runtime IP, never spoofable request headers
 it('fails closed without trusted runtime IP and never uses caller visitor identities',async()=>{const f=fixture(),{ip,...withoutIp}=Context;void ip;const response=await f.handler(f.request({version:'2',action:'start',syntheticOnly:true},{'X-Forwarded-For':Context.ip}),withoutIp);expect(response.status).toBe(404);expect(f.records.size).toBe(0);});
 it('caps session creation across fresh cookies on the same network',async()=>{const f=fixture();f.environment.ENDO_CHAT_NETWORK_SESSION_LIMIT='2';for(let i=0;i<2;i++)expect((await f.handler(f.request({version:'2',action:'start',syntheticOnly:true}),Context)).status).toBe(200);const blocked=await f.handler(f.request({version:'2',action:'start',syntheticOnly:true}),Context);expect(blocked.status).toBe(429);expect(f.provider).not.toHaveBeenCalled();expect(JSON.stringify([...f.records])).not.toContain(Context.ip);});
 it('cannot activate from browser flags or approval fields',async()=>{const f=fixture();f.environment.ENDO_CHAT_TOOL_POLICY='unverified';const response=await f.handler(f.request({version:'2',action:'start',syntheticOnly:true,toolsVerified:true}),Context);expect(response.status).toBe(404);expect(f.records.size).toBe(0);});
+
+
+it.each([
+ ['2026-11-21T05:30:00Z','2027-01-21T05:30:00Z'],
+ ['2026-12-31T12:00:00Z','2027-02-28T12:00:00Z'],
+ ['2027-12-31T12:00:00Z','2028-02-29T12:00:00Z'],
+ ['2027-01-31T12:00:00Z','2027-03-31T12:00:00Z'],
+ ['2027-02-28T12:00:00Z','2027-04-28T12:00:00Z']
+])('bounds public availability by two UTC calendar months from %s', (start,end)=>{
+ const startedAt=Date.parse(start),until=Date.parse(end);
+ expect(maximumPublicEvaluationEnd(startedAt)).toBe(until);
+ const env={...Settings,ENDO_CHAT_STARTED_AT:start,ENDO_CHAT_UNTIL:end};
+ expect(productionWindow(env,startedAt)).not.toBeNull();
+ expect(productionWindow(env,startedAt+8*86400000)).not.toBeNull();
+ expect(productionWindow(env,until-1)).not.toBeNull();
+ expect(productionWindow(env,until)).toBeNull();
+ expect(productionWindow({...env,ENDO_CHAT_UNTIL:new Date(until+1).toISOString()},startedAt)).toBeNull();
+ expect(productionWindow({...env,ENDO_CHAT_KILL_SWITCH:'true'},startedAt)).toBeNull();
+});
+it('keeps visitor cookies short-lived late in a two-month public window without login',()=>{
+ const env={...Settings,ENDO_CHAT_STARTED_AT:new Date(Now).toISOString(),ENDO_CHAT_UNTIL:new Date(maximumPublicEvaluationEnd(Now)).toISOString()};
+ let now=Now+40*86400000;
+ const access=createVisitorAccess(env,()=>now,Context.ip),issued=access.issue()!;
+ expect(issued.visitor.until).toBe(now+3600000);
+ const cookie=issued.cookie.split(';')[0];expect(access.read(cookie)).not.toBeNull();
+ now+=3600000;expect(access.read(cookie)).toBeNull();
+ const renewed=access.issue()!;expect(renewed.visitor.id).not.toBe(issued.visitor.id);
+ now=Date.parse(env.ENDO_CHAT_UNTIL);expect(access.issue()).toBeNull();
+});

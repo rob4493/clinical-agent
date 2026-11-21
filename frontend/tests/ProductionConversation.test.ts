@@ -3,7 +3,7 @@ import {expect,it,vi} from 'vitest';
 import {randomUUID} from 'node:crypto';
 import {productionWindow} from '../../netlify/evaluation/productionAccess';
 import {createProductionConversation} from '../../netlify/evaluation/productionConversation';
-import {validateConversationTicket,productionStopKey} from '../../netlify/evaluation/conversationQuota';
+import {createConversationQuota,maximumPublicEvaluationEnd,validateConversationTicket,productionStopKey} from '../../netlify/evaluation/conversationQuota';
 import type {QuotaStore} from '../../netlify/evaluation/demoQuota';
 import type {Transport} from '../../netlify/evaluation/watsonShadow';
 const Now=Date.parse('2026-11-16T12:00:00Z');
@@ -103,3 +103,27 @@ it('enforces visitor call limits before IAM independently of site capacity',asyn
 it('enforces shared network limits across independent visitor cookies',async()=>{const f=fixture();f.environment.ENDO_CHAT_NETWORK_CALL_LIMIT='1';const start=await f.start();await f.turn(start.receipt);const other={...Context,id:randomUUID()},second=await f.service.handle({version:'2',action:'start',syntheticOnly:true},other,signal());await expect(f.service.handle({version:'2',action:'turn',receipt:second.receipt,message:'fictional education',history:[]},other,signal())).rejects.toThrow();expect(f.transport.mock.calls.filter(([url])=>!url.includes('/identity/token'))).toHaveLength(1);});
 
 it('honors an immutable operational stop before IAM without rebuilding or resetting tickets',async()=>{const f=fixture(),start=await f.start();const key=productionStopKey(productionWindow(f.environment,Now)!);await f.store.set(key,'{"stopped":true}',{onlyIfNew:true});const count=f.records.size;expect(await f.service.available(signal())).toBe(false);await expect(f.turn(start.receipt)).rejects.toThrow();expect(f.records.size).toBe(count);expect(f.transport).not.toHaveBeenCalled();});
+
+
+it('preserves frozen site quotas across renewed sessions and UTC days throughout two months',async()=>{
+ const storage=memory();let now=Now+40*86400000;
+ const window={startedAt:Now,until:maximumPublicEvaluationEnd(Now),dailyCalls:1,dailySessions:1};
+ const quota=()=>createConversationQuota(async()=>storage.store,window,()=>now,()=>0);
+ await quota().reserveCall(signal());await quota().reserveSession(signal());
+ await expect(quota().reserveCall(signal())).rejects.toThrow();
+ await expect(quota().reserveSession(signal())).rejects.toThrow();
+ // Another release window or visitor cannot reset the same UTC site's tickets.
+ const changed={...window,startedAt:Now+1};
+ await expect(createConversationQuota(async()=>storage.store,changed,()=>now,()=>0).reserveCall(signal())).rejects.toThrow();
+ now+=86400000;await quota().reserveCall(signal());await quota().reserveSession(signal());
+ expect([...storage.records.keys()].filter(key=>key.startsWith('policy/'))).toHaveLength(2);
+ now=window.until;await expect(quota().reserveCall(signal())).rejects.toThrow();
+});
+it('keeps the operational stop effective late in a public evaluation period',async()=>{
+ const f=fixture();f.environment.ENDO_CHAT_STARTED_AT=new Date(Now).toISOString();
+ f.environment.ENDO_CHAT_UNTIL=new Date(maximumPublicEvaluationEnd(Now)).toISOString();
+ f.setNow(Now+40*86400000);const window=productionWindow(f.environment,Now+40*86400000)!;
+ expect(await f.service.available(signal())).toBe(true);
+ await f.store.set(productionStopKey(window),'{"stopped":true}',{onlyIfNew:true});
+ expect(await f.service.available(signal())).toBe(false);expect(f.transport).not.toHaveBeenCalled();
+});

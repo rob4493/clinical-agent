@@ -65,8 +65,8 @@ Production needs the existing EU-DE ORCHESTRATE_API_URL, unchanged agent UUID
 c6698d4e-a08d-4b77-bf05-139ff3b4c695, ORCHESTRATE_ENVIRONMENT=live,
 WATSONX_AI_AUTH_TYPE=iam and securely stored WATSONX_AI_APIKEY. Generate a separate
 ENDO_CHAT_SESSION_SECRET through approved secret management; never commit it.
-ENDO_CHAT_STARTED_AT / ENDO_CHAT_UNTIL bound a window of at most seven days, with
-no automatic renewal. ENDO_CHAT_DAILY_CALL_LIMIT / DAILY_SESSION_LIMIT,
+ENDO_CHAT_STARTED_AT / ENDO_CHAT_UNTIL support two UTC calendar months from actual
+public activation, with no automatic renewal. ENDO_CHAT_DAILY_CALL_LIMIT / DAILY_SESSION_LIMIT,
 ENDO_CHAT_VISITOR_CALL_LIMIT / VISITOR_SESSION_LIMIT and
 ENDO_CHAT_NETWORK_CALL_LIMIT / NETWORK_SESSION_LIMIT set limits (all prefixed
 ENDO_CHAT_). Actual final limits require provider allowance evidence first.
@@ -91,10 +91,56 @@ Use Production-scoped overrides only; do not overwrite global/preview credential
    and rebuild. Verify GET is blocked; restore the recorded prior deploy if needed.
    Never delete/reset tickets. A rebuild checkpoint is required for runtime cleanup.
 
-Current external blockers: the authorized direct IAM exchange for read-only metadata
-inspection returned non-success on 2026-11-20. No metadata/agent/tool calls followed
-and no automatic retry occurred. Effective immutable Live bindings and provider
-allowance remain unverified. Production activation/merge is not reported complete.
+Current external blockers: earlier external IAM tests submitted Secrets Controller
+masked values and do not establish invalid runtime credentials. Production-runtime IAM passed on 2026-11-21 at 00:16:39 EST, according to the
+operator-supplied hosted productionIamOnce log: status PASS, iamHttp 200,
+errorCode null, runtimeConfigurationAccessed true. The one-shot diagnostic was
+subsequently disabled and removed; no token or secret was retained.
+Effective immutable Live bindings and full-period provider allowance remain
+unverified. Public activation/merge is not reported complete.
+
+## Two-calendar-month public evaluation commitment
+
+Actual public activation date: **NOT ACTIVATED**.
+Actual configured public expiration date: **NOT SET**.
+Verified anonymous availability / live conversations: **NOT ESTABLISHED**.
+
+Do not populate these records with build, preparation or diagnostic deployment
+dates. At the actual public activation checkpoint, record the UTC ISO timestamp
+in ENDO_CHAT_STARTED_AT and set ENDO_CHAT_UNTIL to exactly two UTC calendar months
+later. Preserve time of day and clamp an unavailable month-end date to that
+month's last day (December 31 -> February 28, or February 29 in a leap year).
+The admission and quota services enforce the same calendar bound. Shorter
+prelaunch verification windows remain possible but do not satisfy the public
+commitment. No judge login or periodic authorization renewal is required.
+
+Preparation/build time must not consume the promised period. If rebuilding delays
+runtime availability, reconcile the timestamps at activation and verify a full
+remaining two-month period before announcing launch. An interrupted or failed
+activation is not a verified launch. Record actual activation/expiration and
+hosting/provider dependencies here and in README when established.
+
+One-hour visitor-cookie/receipt expiry remains unchanged; a judge may start a new
+conversation without login. Session renewal, cookie clearing, deployment or
+availability-window changes do not reset immutable site/network daily tickets.
+UTC daily rollover renews only that day's fixed allowance, never unused tickets
+or provider permissions. No automatic availability renewal follows expiration.
+
+Before activation, verify the IBM service entitlement lasts THROUGH the configured
+expiration and covers existing agent/tools, connections and downstream processing.
+Choose sustainable site/network/visitor daily limits from that allowance and
+record the evidence/reference; the proposed 50 calls/20 sessions are not yet an
+approved two-month budget. Count every UTC date intersected by [start, until):
+ceil(until/86400000)-floor(start/86400000). Two calendar months touch at most 63
+UTC dates; at proposed defaults that is at most 3,150 application call reservations
+and 1,260 sessions. This does not cap internal IBM/tool execution or downstream
+charges, and does not establish entitlement or continuous availability.
+
+The operational stop marker and environment kill switches remain available during
+the full period. Provider outages, exhausted daily quotas and safety halts remain
+visible limitations. Never claim uninterrupted access from offline tests alone.
+The TEMPORARY Production IAM diagnostic is separate: its maximum authorization
+window stays TEN MINUTES and its single-use record is never reset.
 
 ## Immediate operational stop without a rebuild
 
@@ -124,3 +170,105 @@ Live bindings, connection credentials, permissions, delegated workflows or actua
 IBM service allowance. Both attached tools and the existing agent remain intact.
 An administrator's effective deployment/configuration evidence is still needed;
 no agent self-description or local output screen is substituted for that evidence.
+
+## Read-only administrator evidence checked 2026-11-21
+
+The authenticated EU-DE IBM agent page for the unchanged UUID showed Live
+Deployment Overview version 2.0.0, deployment 2026-11-14 13:41 EST, the two expected
+clinical tool display names, Knowledge (0) and Agents (0). This is direct IBM UI
+association evidence, not an agent self-description. It does not expose each
+attached tool's effective HTTP operation, credential/connection override or
+immutable deployed definition. Selecting a tool label exposed no binding detail.
+Do not promote generic/Draft tool metadata or Agents (0) into exhaustive proof of
+all indirect actions or permissions.
+
+The existing service instance was Active in Frankfurt, named watsonx-Hackathon
+Orchestrate, with Plan Trial. The Orchestrate trial popover showed 71 days left
+and an end date of 2027-01-30. Trial duration could cover a two-calendar-month
+activation now; actual activation must leave the full period within entitlement.
+The account service page also showed Legacy two-factor authentication /
+Authentication Failed and Internal Server Error. No authentication barrier was
+bypassed. Detailed usage/remaining capacity and account-specific public-evaluation
+terms could not be established through the available interface.
+
+Official reference: IBM's Trial entitlement is time-limited and non-production;
+this alone does not decide whether this synthetic public competition evaluation
+is permitted or establish a request/token/resource-unit allowance. Applicable
+account terms/IBM confirmation are required, rather than an automatic paid-plan
+change. See:
+https://www.ibm.com/docs/en/watsonx/watson-orchestrate/base?topic=entitlements-licenses-watsonx-orchestrate-cloud
+https://www.ibm.com/docs/en/watsonx/watson-orchestrate/base?topic=cloud-managing-service-usage
+
+Remaining administrator evidence, with secrets omitted:
+- A deployed Live v2.0.0 release/configuration reference tying this agent to BOTH
+  tool identifiers and their effective definitions/connections. Confirm only
+  GET https://clinicalagent.netlify.app/api/v1/modules and
+  POST https://clinicalagent.netlify.app/api/v1/analyze, their operation IDs,
+  effective authentication (repository declaration: none), connection principal
+  permissions, and any reachable workflows/callbacks/delegation/downstream model
+  use. IBM Support confirmation is acceptable if the UI cannot expose this.
+- This instance's current included/remaining request, token/resource-unit and
+  tool/model allowances, reset periods, enforced limits, overage terms, and end
+  timestamp. Confirm the account arrangement permits the two-month public
+  synthetic competition demonstration. Use that evidence to choose sustainable
+  daily limits before marking provider allowance reviewed.
+
+A Trial end date is NOT spending-limit proof. Existing protected one-test risk
+acceptance does not establish authorization or capacity for two months of public
+traffic. No production verification flag was set to substitute for missing evidence.
+
+Offline revalidation: 2,379 frontend/Function tests passed after the two-month
+change, covering anonymous sessions, thread ownership/continuity, privacy,
+emergency interruption, source handling and immutable quotas. Genuine public
+provider/tool tests remain NOT TESTED. Historical private-package backend tests
+require backend/competition/evidence/package.json and
+backend/competition/module02Evidence/package.json plus their pinned sources; both
+manifests are absent in the available checkouts. A representative emergency test
+fails with Competition evidence is unavailable on unchanged published-main source
+as well. No test or safety assertion was weakened and no private source invented.
+
+Final local validation for this milestone: 2,379 frontend/Function tests passed;
+314 documented source-only backend/security/release tests passed, 1 skipped;
+TypeScript and production build passed; all 144 canonical integrity bindings and
+442-file release inventory passed. The broader legacy/private-package run had
+440 passed, 78 failed, 1 skipped; the representative missing-package failure was
+reproduced against unchanged main. This is not an all-backend-tests-pass claim.
+No clinical claims, warning policy, source bindings, UI or canonical schema were
+changed. No IAM/agent/tool requests, quota writes, merges, deployments or hosted
+activation occurred during this readiness review. Actual public dates remain unset.
+
+## Existing Preview configuration carried forward
+
+The operator confirms the successful protected Preview #4 Live agent and both
+original tools are the intended unchanged Production baseline. No alternate
+agent, tool removal, extra permission grant or replacement architecture is required.
+A Live export is not the exclusive acceptable evidence: current IBM administrator
+configuration plus trustworthy authenticated release metadata and bounded observed
+operation traces may establish equivalent binding evidence. Generic/Draft catalog
+records alone remain insufficient, and unknown connection permissions are not
+relabeled verified by this baseline decision.
+
+On 2026-11-21, direct checks of the existing public backend operations passed:
+GET /api/v1/modules returned both modules; a fictional POST /api/v1/analyze returned
+HTTP 200 / AgentResponse, no warnings and three source records; a fictional Module
+2 emergency returned U1. Both POSTs returned X-Endo-Watson: skipped. Actual newline
+separators were present in renderedText. These were backend checks, not IBM agent
+or tool-invocation tests, and consumed no Orchestrate conversation reservations.
+
+Repository review confirms module listing is read-only, while analyze validates
+bounded clinical fields, privacy, reviewed evidence and emergency handling. It has
+no EHR/patient-record writes or persistent case/transcript storage in this path.
+POST means analysis processing here, not proof of an external write. Optional
+presentation can contact IBM only under its independent WATSONX_ENABLED gate;
+current Production management metadata reports false. Other optional follow-up
+features also require this master gate. Preserve all existing tools and gates.
+
+The remaining account-capacity decision must use this instance's existing Trial
+entitlement, without an assumed subscription change. Public pricing and Trial
+feature descriptions do not independently establish its remaining MAU/message,
+model/tool usage allowances, enforced ceilings or overage rules. A read-only
+account Plan/Usage statement or IBM account-support confirmation of those values
+and the permitted public synthetic evaluation use is the smallest missing
+provider evidence. Conservative application limits cannot be represented as
+fitting an unknown provider limit or as capping internal/downstream processing.
+Do not set ENDO_CHAT_PROVIDER_ALLOWANCE=reviewed until that comparison is possible.

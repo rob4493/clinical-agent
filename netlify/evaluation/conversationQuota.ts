@@ -1,6 +1,15 @@
 import {createHash,randomInt,randomUUID} from 'node:crypto';
 import {QuotaError,waitQuota,validateTicket,type QuotaStore} from './demoQuota';
 export const ConversationStore='EndoPublicConversationV2';
+/** UTC calendar months, clamping month-end dates; never a fixed 60-day approximation.
+ * This public availability bound does not extend visitor sessions or diagnostics. */
+export function maximumPublicEvaluationEnd(startedAt:number):number{
+ if(!Number.isSafeInteger(startedAt)||startedAt<0)return NaN;
+ const date=new Date(startedAt);if(!Number.isFinite(date.getTime()))return NaN;
+ const day=date.getUTCDate();date.setUTCDate(1);date.setUTCMonth(date.getUTCMonth()+2);
+ const last=new Date(date.getTime());last.setUTCMonth(last.getUTCMonth()+1);last.setUTCDate(0);
+ date.setUTCDate(Math.min(day,last.getUTCDate()));return date.getTime();
+}
 export interface ConversationWindow {startedAt:number;until:number;dailyCalls:number;dailySessions:number;visitorCalls?:number;visitorSessions?:number;networkCalls?:number;networkSessions?:number}
 const Uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const Reasons=new Set(['completed','disabled','configuration','authenticationFailure','authorizationFailure','endpointOrAgentUnavailable','quotaRejected','quotaUnavailable','networkFailure','timeout','providerUnavailable','providerResponse','continuityFailure','internal']);
@@ -48,7 +57,7 @@ export function createConversationQuota(factory:(signal:AbortSignal)=>Promise<Qu
   if(!observed||observed.etag!==written.etag||JSON.stringify(observed.data)!==content)throw new QuotaError('unavailable');return true;
  }
  async function reserve(kind:Ticket['kind'],signal:AbortSignal):Promise<Ticket>{
-  if(clock()<window.startedAt||clock()>=window.until||window.until-window.startedAt>604800000)throw new QuotaError('unavailable');
+  if(!Number.isSafeInteger(window.startedAt)||!Number.isSafeInteger(window.until)||window.until<=window.startedAt||clock()<window.startedAt||clock()>=window.until||window.until>maximumPublicEvaluationEnd(window.startedAt))throw new QuotaError('unavailable');
   let exhausted=false;
   try{return await use(signal,async(store,operation)=>{
    const day=new Date(clock()).toISOString().slice(0,10),key='policy/'+day,content=JSON.stringify({version:'1',dailyCalls:window.dailyCalls,dailySessions:window.dailySessions});

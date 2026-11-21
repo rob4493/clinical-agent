@@ -1,7 +1,7 @@
 import {isIP} from 'node:net';
 import {createHmac,randomUUID,timingSafeEqual} from 'node:crypto';
 import {isOrchestrateApiUrl,type OrchestrateEnvironment} from './orchestrateTarget';
-import type {ConversationWindow} from './conversationQuota';
+import {maximumPublicEvaluationEnd,type ConversationWindow} from './conversationQuota';
 export const ProductionOrigin='https://clinicalagent.netlify.app';
 export const VisitorCookie='__Host-endo-demo';
 export type DeployContext={ip?:string;deploy?:{id:string;context:string;published:boolean}};
@@ -20,7 +20,7 @@ export function productionWindow(env:OrchestrateEnvironment,now:number):Conversa
   ||!isOrchestrateApiUrl(env.ORCHESTRATE_API_URL)||new URL(env.ORCHESTRATE_API_URL!).hostname!=='api.eu-de.watson-orchestrate.cloud.ibm.com'
   ||!env.WATSONX_AI_APIKEY||env.WATSONX_AI_APIKEY.length>512||/\s|[\u0000-\u001f]/.test(env.WATSONX_AI_APIKEY)
   ||!env.ENDO_CHAT_SESSION_SECRET||env.ENDO_CHAT_SESSION_SECRET.length<32||env.ENDO_CHAT_SESSION_SECRET.length>256||/\s/.test(env.ENDO_CHAT_SESSION_SECRET)
-  ||![now,startedAt,until,dailyCalls,dailySessions,visitorCalls,visitorSessions,networkCalls,networkSessions].every(Number.isFinite)||startedAt>now||until<=now||until<=startedAt||until-startedAt>604800000)return null;
+  ||![now,startedAt,until,dailyCalls,dailySessions,visitorCalls,visitorSessions,networkCalls,networkSessions].every(Number.isFinite)||startedAt>now||until<=now||until<=startedAt||until>maximumPublicEvaluationEnd(startedAt))return null;
  return {startedAt,until,dailyCalls,dailySessions,visitorCalls,visitorSessions,networkCalls,networkSessions};
 }
 export function isProductionRequest(request:Request,context:DeployContext){
