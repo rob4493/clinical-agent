@@ -1,0 +1,12 @@
+{
+  "version": "1",
+  "prompts": [
+    {"id":"pain","text":"Fictional demonstration case: pelvic pain occurs during menstruation and intercourse. What information would help clarify the pattern?"},
+    {"id":"bowel","text":"In this fictional case, occasional bowel symptoms are also reported. Their timing is uncertain. What should be clarified?"},
+    {"id":"summary","text":"Summarize this fictional conversation and suggest the three most useful patient-history questions. Preserve uncertainty and do not diagnose or select treatment."}
+  ],
+  "connectionProbe": [
+    {"id":"probeFirst","text":"Nonclinical connectivity test. Remember the fictional object name Blue Lantern for this conversation. Reply only: Blue Lantern acknowledged."},
+    {"id":"probeSecond","text":"Nonclinical connectivity test. What fictional object name did I give you previously? Reply only with that name."}
+  ]
+}

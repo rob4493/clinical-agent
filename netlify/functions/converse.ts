@@ -1,44 +1,43 @@
+import {createPublicConverse} from '../evaluation/publicConverse';
+import type {DeployContext} from '../evaluation/productionAccess';
+import {createAdmission} from '../evaluation/demoAdmission';
 import {netlifyQuota} from '../../frontend/src/server/netlifyQuota';
-import {ConversationStore} from '../evaluation/conversationQuota';
-import {createProductionConversation} from '../evaluation/productionConversation';
-import {createVisitorAccess,isProductionRequest,productionWindow,ProductionOrigin,type DeployContext} from '../evaluation/productionAccess';
-import {chatFailure,ChatError} from '../evaluation/discussionSafety';
+import {createChat,chatFailure,ChatError} from '../evaluation/orchestrateChat';
 import {InputError,parseJson} from '../evaluation/input';
-import type {OrchestrateEnvironment} from '../evaluation/orchestrateTarget';
+import {ownThread} from '../evaluation/threadOwner';
+import {createProtectedConversation,type OperatorContext} from '../evaluation/protectedConversation';
+import {CompetitionStore} from '../evaluation/orchestrateCompetition';
 
-// Platform rule complements immutable site-wide daily and per-conversation limits.
-// Declarative configuration is not proof of observed hosted rate enforcement.
+// Platform IP controls complement immutable site-wide reservations. This rule must
+// be confirmed in deployed processing logs; local mocks do not prove enforcement.
 export const config={path:'/api/v1/conversation',rateLimit:{windowLimit:12,windowSize:60,aggregateBy:['ip','domain'],action:'rate_limit'}};
 const Headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'};
-function json(value:unknown,status=200,cookie?:string){return new Response(JSON.stringify(value),{status,headers:{...Headers,...(cookie?{'Set-Cookie':cookie}:{})}});}
-async function body(request:Request,signal:AbortSignal){
- const reader=request.body?.getReader();if(!reader)throw new ChatError('inputRejected');let size=0;const parts:Uint8Array[]=[];
+const store=(signal:AbortSignal)=>netlifyQuota('EndoConversationQuota',signal);
+const admission=createAdmission(store);
+const chat=createChat({admission,ownThread:(visitId,threadId,signal)=>ownThread(store,visitId,threadId,signal)});
+const editable=createProtectedConversation({store:signal=>netlifyQuota(CompetitionStore,signal)});
+function json(content:unknown,status=200){return new Response(JSON.stringify(content),{status,headers:Headers});}
+async function readBody(request:Request,signal:AbortSignal){
+ const reader=request.body?.getReader();if(!reader)throw new ChatError('inputRejected');const parts:Uint8Array[]=[];let size=0;
  const cancel=()=>{void reader.cancel().catch(()=>{});};signal.addEventListener('abort',cancel,{once:true});
- try{for(;;){signal.throwIfAborted();const next=await reader.read();if(next.done)break;size+=next.value.length;if(size>24576)throw new ChatError('inputRejected');parts.push(next.value);}return parseJson(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(parts)));}
+ try{for(;;){signal.throwIfAborted();const next=await reader.read();if(next.done)break;size+=next.value.length;if(size>24576)throw new ChatError('inputRejected');parts.push(next.value);}const payload=parseJson(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(parts)));if(size>6144&&(!payload||typeof payload!=='object'||(payload as {version?:unknown}).version!=='2'))throw new ChatError('inputRejected');return payload;}catch(failure){signal.throwIfAborted();if(failure instanceof ChatError)throw failure;throw new ChatError('inputRejected');}
  finally{signal.removeEventListener('abort',cancel);void reader.cancel().catch(()=>{});reader.releaseLock();}
 }
-export function createConverse(options:{environment?:OrchestrateEnvironment;clock?:()=>number;service?:ReturnType<typeof createProductionConversation>}={}){
- const env=options.environment??process.env,clock=options.clock??Date.now,service=options.service??createProductionConversation({environment:env,clock,store:signal=>netlifyQuota(ConversationStore,signal)});
- return async(request:Request,context:DeployContext={}):Promise<Response>=>{
-  const signal=AbortSignal.any([request.signal,AbortSignal.timeout(27000)]);
-  try{
-   const enabled=isProductionRequest(request,context)&&!!productionWindow(env,clock());
-   // No cookie, storage, IAM or provider activity on capability requests.
-   if(request.method==='GET')return json({version:'2',status:enabled?'available':'blocked',mode:'accessCodeSyntheticDiscussion',accessCodeRequired:true});
-   if(!enabled)return json({version:'2',code:'disabled'},404);
-   if(request.method!=='POST')return json({version:'2',code:'inputRejected'},405);
-   if(request.headers.get('origin')!==ProductionOrigin||request.headers.has('sec-fetch-site')&&request.headers.get('sec-fetch-site')!=='same-origin'||!/^application\/json(?:\s*;|$)/i.test(request.headers.get('content-type')||''))throw new ChatError('inputRejected');
-   const payload=await body(request,signal);if(!payload||typeof payload!=='object'||Array.isArray(payload))throw new ChatError('inputRejected');
-   const input=payload as Record<string,unknown>,access=createVisitorAccess(env,clock);let visitor=access.read(request.headers.get('cookie')),cookie:string|undefined;
-   if(input.action==='start'){
-    if(Object.keys(input).sort().join('|')!=='accessCode|action|syntheticOnly|version')throw new ChatError('inputRejected');
-    if(!visitor){const issued=access.issue(input.accessCode);if(!issued)return json({version:'2',code:'accessRequired'},403);visitor=issued.visitor;cookie=issued.cookie;}
-    // The access code is not passed into the conversation, quota or provider.
-    const result=await service.handle({version:input.version,action:'start',syntheticOnly:input.syntheticOnly},visitor,signal);signal.throwIfAborted();return json(result,200,cookie);
-   }
-   if(!visitor)return json({version:'2',code:'accessRequired'},403);
-   const result=await service.handle(input,visitor,signal);signal.throwIfAborted();return json(result);
-  }catch(error){if(request.signal.aborted)return new Response(null,{status:499,headers:Headers});const safe=chatFailure(error instanceof InputError?new ChatError('inputRejected'):error);return json({version:'2',code:safe.code,detail:'Conversation unavailable or request not permitted. Your structured case is unchanged.'},safe.status);}
- };
-}
-export default createConverse();
+/** Version 1 retains its legacy fixed-prompt contract. Version 2 accepts editable
+ * synthetic discussion only through trusted Preview #4 operator authorization.
+ * Neither version accepts caller-selected provider thread IDs or case objects.
+ */
+export function createConverse(service:Pick<ReturnType<typeof createChat>,'capability'|'handle'>=chat,protectedService=editable){return async function converse(request:Request,context:OperatorContext={}):Promise<Response>{
+ const signal=AbortSignal.any([request.signal,AbortSignal.timeout(27000)]);
+ try{
+  signal.throwIfAborted();const address=new URL(request.url);if(address.search)throw new ChatError('inputRejected');
+  if(request.method==='GET')return json(protectedService.capability(context).status==='available'&&address.origin==='https://deploy-preview-4--clinicalagent.netlify.app'?protectedService.capability(context):service.capability());
+  if(request.method!=='POST')return json({code:'inputRejected',detail:'This operation is unavailable.'},405);
+  if(request.headers.get('origin')!==address.origin||request.headers.has('sec-fetch-site')&&request.headers.get('sec-fetch-site')!=='same-origin'||!/^application\/json(?:\s*;|$)/i.test(request.headers.get('content-type')||''))throw new ChatError('inputRejected');
+  const payload=await readBody(request,signal),version=payload&&typeof payload==='object'?(payload as {version?:unknown}).version:undefined;
+  if(version==='2'&&address.origin!=='https://deploy-preview-4--clinicalagent.netlify.app')throw new ChatError('unavailable');
+  const result=version==='2'?await protectedService.handle(payload,context,signal):await service.handle(payload,signal);signal.throwIfAborted();return json(result);
+ }catch(failure){if(request.signal.aborted)return new Response(null,{status:499,headers:Headers});const safe=chatFailure(failure instanceof InputError?new ChatError('inputRejected'):failure);return json({version:'1',code:safe.code,...(safe.outputStage?{outputStage:safe.outputStage}:{}),...(safe.outputRejection?{outputRejection:safe.outputRejection}:{}),...(safe.responseRejection?{responseRejection:safe.responseRejection}:{}),detail:'Conversation is unavailable or the request was not permitted. The case is unchanged.'},safe.status);}
+};}
+const protectedHandler=createConverse(),publicHandler=createPublicConverse();
+export default (request:Request,context:OperatorContext&DeployContext={})=>new URL(request.url).origin==='https://clinicalagent.netlify.app'?publicHandler(request,context):protectedHandler(request,context);

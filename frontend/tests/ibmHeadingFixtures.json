@@ -1,0 +1,24 @@
+{
+  "provenance": "Offline synthetic reconstructions of the operator-reported visible title; not captured IBM responses. The visible title alone does not determine the original Markdown syntax.",
+  "table": "| Consideration | Uncertainty |\n| --- | --- |\n| Fictional possibility | Not established |",
+  "majorSections": [
+    {"number":1,"title":"Differential considerations","body":"| Consideration | Uncertainty |\n| --- | --- |\n| Fictional possibility | Not established |","category":"differential"},
+    {"number":2,"title":"Patient history (as reported)","body":"Reported fictional history remains unverified.","category":"history"},
+    {"number":3,"title":"Symptoms and clinical features","body":"- Reported feature\n- Unknown accompanying feature","category":"symptoms"},
+    {"number":4,"title":"Relevant investigations","body":"| Existing information | Status |\n| --- | --- |\n| Fictional record | Unknown |","category":"investigations"},
+    {"number":5,"title":"Follow-up questions and uncertainties","body":"What information remains unknown?","category":"followup"}
+  ],
+  "variants": [
+    {"id":"markdownHeading","title":"## 1. Differential considerations","astType":"heading"},
+    {"id":"boldParagraph","title":"**1. Differential considerations**","astType":"paragraph"},
+    {"id":"numberedText","title":"1. Differential considerations","astType":"list"},
+    {"id":"numberedBold","title":"1. **Differential considerations**","astType":"list"},
+    {"id":"numberedParenthesis","title":"1) Differential considerations","astType":"list"},
+    {"id":"escapedNumberedParagraph","title":"1\\. Differential considerations","astType":"paragraph"}
+  ],
+  "headingless": {
+  "provenance": "Synthetic offline reconstruction of the reported paragraph/list/conclusion structure; not an IBM transcript or clinically validated content.",
+  "input": "I'm reviewing a patient in their early 30s who has been experiencing mild pelvic discomfort for the past few weeks. The discomfort occasionally worsens around menstruation.\n\nThe patient is currently comfortable, with a blood pressure of 118/76 and heart rate of 78.\n\nWhat are the main clinical possibilities you would consider?",
+  "response": "Several possibilities could be discussed, but this description alone does not establish a diagnosis.\n\n- Endometriosis: an educational consideration, not confirmed by the reported pattern.\n- Primary dysmenorrhea: a possible discussion topic, not a determination for this patient.\n- Ovarian cyst: not established by the information supplied.\n- Pelvic floor or musculoskeletal pain: a possible consideration requiring independent assessment.\n- Irritable bowel syndrome: bowel history has not been supplied and this is not confirmed.\n- Pelvic inflammatory disease: no diagnosis is established by this fictional scenario.\n\nThe reported observations remain unverified. Further history and independent assessment would be needed to clarify these possibilities."
+}
+}

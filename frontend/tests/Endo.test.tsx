@@ -1,3 +1,4 @@
+import {loadRetainedExample} from './retainedExamples';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, it, vi } from 'vitest';
@@ -12,9 +13,9 @@ it('brands the public page Endo without changing internal identifiers', async ()
   vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify(url.endsWith('/v1/modules') ? Modules : Ready), { headers: { 'X-Clinical-Mode': 'standard' } })));
   render(<App />); await screen.findByRole('radio', { name: 'Fictional review module' });
   expect(document.title).toBe('Endo | Clinical Evidence Assistant');
-  expect(screen.getByRole('link', { name: 'Endo — case details' })).toHaveAttribute('href', '#caseForm');
+  expect(screen.getByRole('link', { name: 'Endo — agent' })).toHaveAttribute('href', '#endoAgent');
   expect(document.querySelector('footer strong')).toHaveTextContent('Endo');
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('New evidence review');
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Clinical questions. Clearer conversations.');
   const html = readFileSync('index.html', 'utf8');
   expect(html).toContain('<title>Endo | Clinical Evidence Assistant</title>'); expect(html).not.toContain('Clarity Clinical Support');
   expect(document.querySelector('input[name=clinicalModule]:checked')).toBeNull(); expect(screen.getByRole('button', { name: 'Analyze case' })).toBeDisabled();
@@ -22,7 +23,7 @@ it('brands the public page Endo without changing internal identifiers', async ()
 it('exposes only real section navigation and no saved-case or account controls', () => {
   render(<ReviewNavigation />);
   const navigation = screen.getByRole('navigation', { name: 'Review sections' });
-  expect(Array.from(navigation.querySelectorAll('a')).map(link => link.getAttribute('href'))).toEqual(['#caseForm', '#uploadTitle', '#evidenceWorkspace', '#scopeTitle']);
+  expect(Array.from(navigation.querySelectorAll('a')).map(link => link.getAttribute('href'))).toEqual(['#endoAgent', '#caseForm', '#uploadTitle', '#scopeTitle']);
   expect(navigation).not.toHaveTextContent(/saved|profile|login|notification/i);
 });
 it('announces the actual workflow stage without simulated completion', () => {
@@ -106,7 +107,7 @@ it('blocks invalid entered gestation without changing optional unknown semantics
 it('orders the workflow and keeps scope and repeated unknown context out of the primary path', async () => {
   mockModules('competition'); render(<App />);
   await screen.findByRole('radio', { name: 'Endometriosis & Chronic Pelvic Pain' });
-  expect(screen.getByLabelText('Try a demonstration case')).toHaveValue('');
+  expect(screen.getByLabelText('Load example case')).toHaveValue('');
   expect(screen.getByRole('option', { name: 'Choose a demonstration case' })).toBeInTheDocument();
   expect(screen.queryAllByRole('radio', { checked: true })).toHaveLength(0);
   expect(screen.getByText('Select a clinical module to begin')).toBeVisible();
@@ -129,10 +130,10 @@ it('orders the workflow and keeps scope and repeated unknown context out of the 
 });
 it('loads exact fixture fields and only the fixture-assigned module without submitting', async () => {
   const requests = mockModules('competition'); render(<App />);
-  const selector = await screen.findByLabelText('Try a demonstration case');
+  const selector = await screen.findByLabelText('Load example case');
   await waitFor(() => expect(selector).toBeEnabled());
   const preset = PregnancyCases.find(example => example.id === 'pregDetailed')!;
-  await userEvent.selectOptions(selector, preset.id);
+  loadRetainedExample(preset.id);
   expect(screen.getByDisplayValue(preset.moduleId)).toBeChecked();
   expect(screen.getByLabelText('Case narrative')).toHaveValue(preset.narrative);
   expect(screen.getByLabelText('Age range')).toHaveValue(preset.ageRange);
@@ -140,13 +141,13 @@ it('loads exact fixture fields and only the fixture-assigned module without subm
   expect(screen.getByLabelText('Pregnancy status')).toHaveValue(preset.pregnancy);
   expect(screen.getByLabelText('PID status')).toHaveValue(preset.pid);
   expect(document.querySelector('.additionalContext')).not.toHaveAttribute('open');
-  expect(screen.getByText('Demonstration case loaded — verify the selected module and case information before analyzing')).toBeVisible();
+  expect(screen.getByRole('button',{name:'Analyze case'})).toBeEnabled();
   expect(requests.mock.calls.filter(([url]) => url.endsWith('/v1/analyze'))).toHaveLength(0);
   await userEvent.click(screen.getByRole('button', { name: 'Analyze case' }));
   await waitFor(() => expect(requests.mock.calls.filter(([url]) => url.endsWith('/v1/analyze'))).toHaveLength(1));
   const payload = JSON.parse(requests.mock.calls.find(([url]) => url.endsWith('/v1/analyze'))![1]!.body as string);
   expect(payload).toEqual({ moduleHint: preset.moduleId, ageRange: preset.ageRange, caseType: preset.caseType, pregnancyPossible: preset.pregnancy === 'yes' ? true : preset.pregnancy === 'no' ? false : null, pidDiagnosedOrPresumed: preset.pid === 'yes' ? true : preset.pid === 'no' ? false : null, additionalNotes: preset.narrative, earlyPregnancy: preset.earlyPregnancy });
-  await userEvent.selectOptions(selector, 'brief');
+  loadRetainedExample('brief');
   expect(screen.getByDisplayValue(DemoCases[0].moduleId)).toBeChecked();
   expect(screen.getByLabelText('Case narrative')).toHaveValue(DemoCases[0].narrative);
   expect(screen.queryByLabelText('Pregnancy test result')).not.toBeInTheDocument();

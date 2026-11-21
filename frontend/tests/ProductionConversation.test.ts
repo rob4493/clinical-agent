@@ -1,13 +1,14 @@
 // @vitest-environment node
 import {expect,it,vi} from 'vitest';
 import {randomUUID} from 'node:crypto';
+import {productionWindow} from '../../netlify/evaluation/productionAccess';
 import {createProductionConversation} from '../../netlify/evaluation/productionConversation';
-import {validateConversationTicket} from '../../netlify/evaluation/conversationQuota';
+import {createConversationQuota,maximumPublicEvaluationEnd,validateConversationTicket,productionStopKey} from '../../netlify/evaluation/conversationQuota';
 import type {QuotaStore} from '../../netlify/evaluation/demoQuota';
 import type {Transport} from '../../netlify/evaluation/watsonShadow';
 const Now=Date.parse('2026-11-16T12:00:00Z');
-const Settings={ENDO_CHAT_ENABLED:'true',ENDO_CHAT_KILL_SWITCH:'false',ENDO_CHAT_TOOL_POLICY:'approved-operations-enforced',ENDO_CHAT_STARTED_AT:new Date(Now-1000).toISOString(),ENDO_CHAT_UNTIL:new Date(Now+3600000).toISOString(),ENDO_CHAT_DAILY_CALL_LIMIT:'50',ENDO_CHAT_DAILY_SESSION_LIMIT:'20',ENDO_CHAT_ACCESS_CODE:'SyntheticDemoAccessCode123',ENDO_CHAT_SESSION_SECRET:'SyntheticSessionSecretNeverUseInProduction123',ORCHESTRATE_ENABLED:'false',ENDO_DEMO_INFERENCE_ENABLED:'false',ENDO_DEMO_KILL_SWITCH:'true',OTEL_SDK_DISABLED:'true',ORCHESTRATE_API_URL:'https://api.eu-de.watson-orchestrate.cloud.ibm.com/instances/SyntheticTenant',ORCHESTRATE_AGENT_ID:'c6698d4e-a08d-4b77-bf05-139ff3b4c695',ORCHESTRATE_ENVIRONMENT:'live',WATSONX_AI_AUTH_TYPE:'iam',WATSONX_AI_APIKEY:'SyntheticServerKey',WATSONX_AI_TIMEOUT_MS:'1000'};
-const Context={id:'11111111-1111-4111-8111-111111111111',started:Now-1000,until:Now+3600000};
+const Settings={ENDO_CHAT_ENABLED:'true',ENDO_CHAT_KILL_SWITCH:'false',ENDO_CHAT_TOOL_POLICY:'approved-operations-enforced',ENDO_CHAT_PROVIDER_ALLOWANCE:'reviewed',ENDO_CHAT_REVIEW_REFERENCE:'SyntheticReviewedFixture',ENDO_CHAT_STARTED_AT:new Date(Now-1000).toISOString(),ENDO_CHAT_UNTIL:new Date(Now+3600000).toISOString(),ENDO_CHAT_DAILY_CALL_LIMIT:'50',ENDO_CHAT_DAILY_SESSION_LIMIT:'20',ENDO_CHAT_VISITOR_CALL_LIMIT:'12',ENDO_CHAT_VISITOR_SESSION_LIMIT:'3',ENDO_CHAT_NETWORK_CALL_LIMIT:'20',ENDO_CHAT_NETWORK_SESSION_LIMIT:'8',ENDO_CHAT_ACCESS_CODE:'SyntheticDemoAccessCode123',ENDO_CHAT_SESSION_SECRET:'SyntheticSessionSecretNeverUseInProduction123',ORCHESTRATE_ENABLED:'false',ENDO_DEMO_INFERENCE_ENABLED:'false',ENDO_DEMO_KILL_SWITCH:'true',OTEL_SDK_DISABLED:'true',ORCHESTRATE_API_URL:'https://api.eu-de.watson-orchestrate.cloud.ibm.com/instances/SyntheticTenant',ORCHESTRATE_AGENT_ID:'c6698d4e-a08d-4b77-bf05-139ff3b4c695',ORCHESTRATE_ENVIRONMENT:'live',WATSONX_AI_AUTH_TYPE:'iam',WATSONX_AI_APIKEY:'SyntheticServerKey',WATSONX_AI_TIMEOUT_MS:'1000'};
+const Context={network:'a'.repeat(64),id:'11111111-1111-4111-8111-111111111111',started:Now-1000,until:Now+3600000};
 const signal=()=>new AbortController().signal;
 const json=(value:unknown)=>new Response(JSON.stringify(value),{headers:{'content-type':'application/json'}});
 function memory(){
@@ -96,3 +97,33 @@ it('fails closed when strong lock readback or audit writing fails',async()=>{
 });
 
 it('validates only production operational records and never historical ticket shapes',()=>{expect(()=>validateConversationTicket('chat/lock/'+randomUUID()+'/12','{"consumed":true}')).toThrow();expect(()=>validateConversationTicket('visit/2026-11-16/'+randomUUID()+'/0')).toThrow();expect(()=>validateConversationTicket('chat/lock/'+randomUUID()+'/0','{"transcript":"unapproved"}')).toThrow();});
+
+it('reuses preview safety explanations and source/caution screening for anonymous discussion',async()=>{const f=fixture(),start=await f.start();const urgent=await f.turn(start.receipt,'Sudden severe lower-abdominal pain, heavy vaginal bleeding and fainting. BP 86/52; HR 124. Pregnancy status unknown.');expect(urgent.state).toBe('safetyHalt');expect(urgent.safetyExplanation).toMatchObject({pregnancy:'unknown'});expect(f.transport).not.toHaveBeenCalled();expect('readingSourceIds' in urgent).toBe(false);const next=await f.start();f.transport.mockImplementation(async(address)=>address.includes('/identity/token')?json({access_token:'SyntheticBearer',token_type:'Bearer',expires_in:3600}):json({thread_id:randomUUID(),choices:[{index:0,finish_reason:'stop',message:{role:'assistant',content:'The patient has pelvic pain. Endometriosis is an educational discussion topic.'}}]}));const reply=await f.turn(next.receipt);expect(reply.text).toBe('The patient has pelvic pain. Endometriosis is an educational discussion topic.');expect(reply.clinicalWarnings).toContain('patientAssertion');expect(reply.readingSourceIds).toContain('WHO-2025');});
+it('enforces visitor call limits before IAM independently of site capacity',async()=>{const f=fixture();f.environment.ENDO_CHAT_VISITOR_CALL_LIMIT='1';const start=await f.start(),first=await f.turn(start.receipt);await expect(f.turn(first.receipt,'more',['what is endometriosis?'])).rejects.toThrow();expect(f.transport.mock.calls.filter(([url])=>!url.includes('/identity/token'))).toHaveLength(1);const other={...Context,id:randomUUID()};const second=await f.service.handle({version:'2',action:'start',syntheticOnly:true},other,signal());await f.service.handle({version:'2',action:'turn',receipt:second.receipt,message:'fictional education',history:[]},other,signal());expect(f.transport.mock.calls.filter(([url])=>!url.includes('/identity/token'))).toHaveLength(2);});
+it('enforces shared network limits across independent visitor cookies',async()=>{const f=fixture();f.environment.ENDO_CHAT_NETWORK_CALL_LIMIT='1';const start=await f.start();await f.turn(start.receipt);const other={...Context,id:randomUUID()},second=await f.service.handle({version:'2',action:'start',syntheticOnly:true},other,signal());await expect(f.service.handle({version:'2',action:'turn',receipt:second.receipt,message:'fictional education',history:[]},other,signal())).rejects.toThrow();expect(f.transport.mock.calls.filter(([url])=>!url.includes('/identity/token'))).toHaveLength(1);});
+
+it('honors an immutable operational stop before IAM without rebuilding or resetting tickets',async()=>{const f=fixture(),start=await f.start();const key=productionStopKey(productionWindow(f.environment,Now)!);await f.store.set(key,'{"stopped":true}',{onlyIfNew:true});const count=f.records.size;expect(await f.service.available(signal())).toBe(false);await expect(f.turn(start.receipt)).rejects.toThrow();expect(f.records.size).toBe(count);expect(f.transport).not.toHaveBeenCalled();});
+
+
+it('preserves frozen site quotas across renewed sessions and UTC days throughout two months',async()=>{
+ const storage=memory();let now=Now+40*86400000;
+ const window={startedAt:Now,until:maximumPublicEvaluationEnd(Now),dailyCalls:1,dailySessions:1};
+ const quota=()=>createConversationQuota(async()=>storage.store,window,()=>now,()=>0);
+ await quota().reserveCall(signal());await quota().reserveSession(signal());
+ await expect(quota().reserveCall(signal())).rejects.toThrow();
+ await expect(quota().reserveSession(signal())).rejects.toThrow();
+ // Another release window or visitor cannot reset the same UTC site's tickets.
+ const changed={...window,startedAt:Now+1};
+ await expect(createConversationQuota(async()=>storage.store,changed,()=>now,()=>0).reserveCall(signal())).rejects.toThrow();
+ now+=86400000;await quota().reserveCall(signal());await quota().reserveSession(signal());
+ expect([...storage.records.keys()].filter(key=>key.startsWith('policy/'))).toHaveLength(2);
+ now=window.until;await expect(quota().reserveCall(signal())).rejects.toThrow();
+});
+it('keeps the operational stop effective late in a public evaluation period',async()=>{
+ const f=fixture();f.environment.ENDO_CHAT_STARTED_AT=new Date(Now).toISOString();
+ f.environment.ENDO_CHAT_UNTIL=new Date(maximumPublicEvaluationEnd(Now)).toISOString();
+ f.setNow(Now+40*86400000);const window=productionWindow(f.environment,Now+40*86400000)!;
+ expect(await f.service.available(signal())).toBe(true);
+ await f.store.set(productionStopKey(window),'{"stopped":true}',{onlyIfNew:true});
+ expect(await f.service.available(signal())).toBe(false);expect(f.transport).not.toHaveBeenCalled();
+});

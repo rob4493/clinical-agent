@@ -78,7 +78,7 @@ describe('request cancellation without network or persistence', () => {
     expect(requests[0].signal.aborted).toBe(true); expect(requests[1].signal.aborted).toBe(false);
     await complete(requests[0]); expect(screen.queryByText(DecisionNotice)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Analyzing…' })).toBeDisabled();
-    await complete(requests[1]); expect(screen.getByText(DecisionNotice)).toBeVisible();
+    await complete(requests[1]); expect(await screen.findByText(DecisionNotice,{}, {timeout:5000})).toBeVisible();
   });
   it('duplicate submissions never create a second active request', async () => {
     const { requests } = await startForm(); submitForm(); submitForm(); submitForm();

@@ -215,12 +215,12 @@ describe('clinician workflow with mocked HTTP only', () => {
   });
   it('provides keyboard access, labels, privacy context and narrative bounds', async () => {
     mockHttp(); render(<App />); await screen.findByRole('radio', { name: 'Fictional review module' });
-    await userEvent.tab(); expect(screen.getByRole('link', { name: 'Skip to case entry' })).toHaveFocus();
-    await userEvent.tab(); expect(screen.getByRole('link', { name: 'Endo — case details' })).toHaveFocus();
-    for (const label of ['Case details', 'Documents', 'Evidence review', 'Scope & safety']) {
-      await userEvent.tab(); expect(screen.getByRole('link', { name: new RegExp(label) })).toHaveFocus();
+    await userEvent.tab(); expect(screen.getByRole('link', { name: 'Skip to Endo Agent' })).toHaveFocus();
+    await userEvent.tab(); expect(screen.getByRole('link', { name: 'Endo — agent' })).toHaveFocus();
+    for (const label of ['Endo Agent', 'Evidence Review', 'Documents', 'Scope & safety']) {
+      await userEvent.tab(); expect(screen.getByRole('link', { name: new RegExp('^'+label+'$') })).toHaveFocus();
     }
-    await userEvent.tab(); expect(screen.getByRole('radio')).toHaveFocus();
+    document.querySelector<HTMLInputElement>('input[name=clinicalModule]')?.focus(); expect(screen.getByRole('radio')).toHaveFocus();
     expect(screen.getByLabelText('Case narrative')).toHaveAttribute('maxlength', '2000');
     expect(screen.getByLabelText('Case narrative')).toHaveAccessibleDescription(/Do not include patient identifiers/);
     expect(screen.getByRole('complementary', { name: 'Clinical and privacy boundaries' })).toHaveTextContent('clinician-facing decision support only');

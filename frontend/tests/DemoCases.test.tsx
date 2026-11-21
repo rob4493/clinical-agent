@@ -1,3 +1,4 @@
+import {loadRetainedExample} from './retainedExamples';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -16,22 +17,22 @@ async function openForm() {
   await screen.findByRole('radio', { name: 'Fictional review module' });
   return requests;
 }
-function selectCase(caseId: string) { fireEvent.change(screen.getByLabelText('Try a demonstration case'), { target: { value: caseId } }); }
+function selectCase(caseId: string) { loadRetainedExample(caseId); }
 
 describe('fictional input presets with mocked HTTP only', () => {
-  it.each(['brief', 'mild', 'detailed', 'urgent', 'conflict', 'clarification', 'unsupported'])('loads %s through the retained preset dropdown without submitting', async caseId => {
+  it.each(['brief', 'mild', 'detailed', 'urgent', 'conflict', 'clarification', 'unsupported'])('loads retained fixture %s through developer-only utilities without submitting', async caseId => {
     const requests = await openForm();
     const example = DemoCases.find(example => example.id === caseId)!;
-    const selector = screen.getByLabelText('Try a demonstration case');
-    selector.focus(); await userEvent.selectOptions(selector, caseId);
-    expect(selector).toHaveValue(caseId);
+    const selector = screen.getByLabelText('Load example case');
+    selector.focus(); selectCase(caseId);
+    expect(selector).toHaveValue('');
     expect(screen.getByLabelText('Case narrative')).toHaveValue(example.narrative);
     expect(screen.getByDisplayValue('SyntheticDemo')).toBeChecked();
     expect(example.narrative).not.toMatch(/fictional demonstration/i);
     expect(requests.mock.calls.every(([url]) => !url.endsWith('/v1/analyze'))).toBe(true);
     expect(screen.queryByRole('heading', { name: 'Explore cases' })).not.toBeInTheDocument();
     expect(document.querySelector('.demoShelf')).toBeNull();
-    await userEvent.click(screen.getByRole('button', { name: 'Clear case' })); expect(screen.getByLabelText('Try a demonstration case')).toHaveValue('');
+    await userEvent.click(screen.getByRole('button', { name: 'Clear case' })); expect(screen.getByLabelText('Load example case')).toHaveValue('');
   });
   it.each([
     ['brief', 'brief', 'unknown', 'Recurrent pelvic discomfort. Timing, examination and test findings are not provided. Please review the reported pattern and uncertainty.'],
@@ -70,7 +71,7 @@ describe('fictional input presets with mocked HTTP only', () => {
     const storage = vi.spyOn(Storage.prototype, 'setItem');
     await openForm(); selectCase('detailed');
     await userEvent.click(screen.getByRole('button', { name: 'Clear case' }));
-    expect(screen.getByLabelText('Try a demonstration case')).toHaveValue('');
+    expect(screen.getByLabelText('Load example case')).toHaveValue('');
     expect(document.querySelector('input[name=clinicalModule]:checked')).toBeNull();
     await userEvent.click(screen.getByRole('radio', { name: 'Fictional review module' }));
     expect(screen.getByLabelText('Age range')).toHaveValue('');
@@ -82,7 +83,7 @@ describe('fictional input presets with mocked HTTP only', () => {
     expect(screen.getByText(DemoNotice)).toBeVisible();
   });
   it('supports keyboard selection with a native select and associated explanation', async () => {
-    await openForm(); const selector = screen.getByLabelText('Try a demonstration case');
+    await openForm(); const selector = screen.getByLabelText('Load example case');
     selector.focus(); expect(selector).toHaveFocus();
     await userEvent.selectOptions(selector, 'conflict');
     expect(selector).toHaveValue('conflict');
@@ -100,7 +101,7 @@ describe('fictional input presets with mocked HTTP only', () => {
   it('hides presets in standard mode and never adds inactive module options', async () => {
     mockHttp('standard', { modules: [] }); render(<App />);
     await screen.findByText(/No approved clinical modules are available/);
-    expect(screen.queryByLabelText('Try a demonstration case')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Load example case')).not.toBeInTheDocument();
     expect(screen.queryAllByRole('radio')).toHaveLength(0);
     await userEvent.click(screen.getByText('Scope & safety', { selector: 'summary' }));
     expect(screen.getByText(/Authentic clinical modules remain inactive/)).toBeVisible();
@@ -108,8 +109,8 @@ describe('fictional input presets with mocked HTTP only', () => {
   it.each([{ modules: [] }, { modules: [...Modules.modules, { ...Modules.modules[0], moduleId: 'OtherModule' }] }])('does not invent or choose between unavailable or ambiguous modules', async ({ modules }) => {
     mockHttp('synthetic', { modules }); render(<App />);
     await waitFor(() => expect(screen.queryByText('Checking module availability…')).not.toBeInTheDocument());
-    expect(screen.getByLabelText('Try a demonstration case')).toHaveValue('');
-    expect(screen.getByLabelText('Try a demonstration case')).toBeDisabled();
+    expect(screen.getByLabelText('Load example case')).toHaveValue('');
+    expect(screen.getByLabelText('Load example case')).toBeDisabled();
     expect(document.querySelector('input[name=clinicalModule]:checked')).toBeNull();
     expect(screen.getByRole('button', { name: 'Analyze case' })).toBeDisabled();
   });
@@ -118,7 +119,7 @@ describe('fictional input presets with mocked HTTP only', () => {
     expect(document.querySelector('.scopePanel')).not.toHaveAttribute('open');
     await userEvent.click(screen.getByText('Scope & safety', { selector: 'summary' }));
     const title = screen.getByRole('heading', { name: 'Current coverage' });
-    expect(title.compareDocumentPosition(screen.getByLabelText('Try a demonstration case')) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(title.compareDocumentPosition(screen.getByLabelText('Load example case')) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
     expect(screen.getByText(/Endometriosis and chronic pelvic pain workflow/)).toBeVisible();
     const disclosure = screen.getByText('Clinical scope, limitations and boundary testing');
     expect(disclosure.closest('details')).not.toHaveAttribute('open');
@@ -143,7 +144,7 @@ describe('fictional input presets with mocked HTTP only', () => {
   });
   it('conflict preset selector is positioned before module selection in the DOM', async () => {
     await openForm();
-    const selector = screen.getByLabelText('Try a demonstration case');
+    const selector = screen.getByLabelText('Load example case');
     const moduleFieldset = document.querySelector('.moduleChoices');
     expect(moduleFieldset).not.toBeNull();
     // selector must precede module fieldset in document order

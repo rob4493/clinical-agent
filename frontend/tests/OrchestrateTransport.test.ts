@@ -7,6 +7,9 @@ const Settings={ORCHESTRATE_ENABLED:'true',ORCHESTRATE_API_URL:'https://api.dl.w
 const Thread='22222222-2222-4222-8222-222222222222';
 const Turn:OrchestrateTurn={messages:[{role:'user',content:'Synthetic public conversation prompt.'}]};
 const Reply={object:'chat.completion',thread_id:Thread,choices:[{index:0,finish_reason:'stop',message:{role:'assistant',content:'Synthetic unvalidated provider text.'}}]};
+it.each([['x'.repeat(16001),'textTooLong'],['text\u0000','textInvalidCharacters']])('keeps existing protocol text bounds with a precise fixed diagnostic %#',(content,code)=>{
+ let failure:unknown;try{parseOrchestrateResponse({...Reply,choices:[{...Reply.choices[0],message:{role:'assistant',content}}]});}catch(error){failure=error;}expect(failure).toMatchObject({rejection:code,httpSuccess:true});expect(JSON.stringify(failure)).not.toContain(content);
+});
 const signal=()=>new AbortController().signal;
 const json=(content:unknown)=>new Response(JSON.stringify(content),{headers:{'content-type':'application/json'}});
 function gate():OrchestrateGate{return {authorize:vi.fn(async()=>true),reserve:vi.fn(async()=>{})};}
