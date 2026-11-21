@@ -1,12 +1,32 @@
 # Public evaluation hosting
 
+## [🌐 OPEN LIVE ENDO — AGENT ENDO AND STRUCTURED EVIDENCE REVIEW](https://clinicalagent.netlify.app/)
+
+**Public website:** **https://clinicalagent.netlify.app/**
+
+**Current milestone (November 21, 2026):** the website hosts **live anonymous
+IBM watsonx Orchestrate Agent Endo chat** and the separate deterministic
+Structured Evidence Review. A real IBM-generated first response was
+confirmed using the public Production endpoint, after a secure anonymous
+session was established. The working agent demonstration in protected
+Preview #4 was also recorded and submitted for judging. No login is needed
+for the public chat. The live first test did **not** test follow-up continuity.
+
+**Verified public launch:** Netlify deployment `6b01aa92d599c4c7de59f902`,
+application commit `0e906aa30b81234d41803619cb6f0af7eada9fa5`.
+**Configured evaluation window (UTC):**
+`2026-11-21T14:31:00Z` – `2027-01-21T14:31:00Z`.
+Availability depends on provider service, quotas and kill switches.
+The website remains strictly for fictional/de-identified evaluation, not
+actual patient care. See [Production conversation controls](shared/ProductionChat.md).
+
 This competition evaluation build is not approved for patient care. Use fictional or de-identified cases only. Reviewed with healthcare professionals for evaluation and feedback. Not validated or approved for patient care.
 
 ## One Netlify deployment
 
-Use the root netlify.toml. A repository-root build base keeps production and CLI file patterns consistent. Its command installs the exact frontend lockfile with lifecycle scripts disabled and builds through npm --prefix frontend. It publishes frontend/dist, pins Node 24.21.0 and bundles netlify/functions/evaluate.ts with esbuild. No Python host, backend URL, database, API key or CLINICAL_EVIDENCE_ROOT is required.
+Use the root netlify.toml. A repository-root build base keeps production and CLI file patterns consistent. Its command installs the exact frontend lockfile with lifecycle scripts disabled and builds through npm --prefix frontend. It publishes frontend/dist, pins Node 24.21.0 and bundles the Netlify Functions with esbuild. The **deterministic evaluation function** requires no Python host, backend URL, database, provider API key or CLINICAL_EVIDENCE_ROOT. The **separate live conversation function** uses securely configured server-side IBM credentials and Netlify Blobs quotas.
 
-The first rewrite routes /api/* to /.netlify/functions/evaluate/:splat. The final SPA fallback supports direct URLs and page refreshes. API failures remain sanitized JSON. VITE_BACKEND_URL configures only the separate local Vite/FastAPI development proxy; it is unnecessary for Netlify.
+Explicit rewrites route `/api/v1/conversation` to the `converse` Function and `/api/v1/embed-session` to `embedSession`; the general `/api/*` rewrite routes to `evaluate/:splat`. The final SPA fallback supports direct URLs and page refreshes. API failures remain sanitized JSON. VITE_BACKEND_URL configures only the separate local Vite/FastAPI development proxy; it is unnecessary for Netlify.
 
 Build preparation verifies the trusted evaluation review record and creates an explicit public allowlist snapshot in ignored frontend/.evaluationBundle/content.json. It is statically imported only by server code and embedded in the function, outside the static publish directory. Runtime rechecks every embedded file against the trusted review pin. The only additional included file is Netlify's MIT runtime notice, netlify/RuntimeNotice.txt. There are no runtime evidence files or dynamic filesystem lookups. This avoids the local CLI's broad filesystem tracing and recursive copying of previous build/test directories. No original publications, intake files, private packages or source-file hashes are copied. Builds and startup never reseal changed evidence. A running function retains its immutable reviewed release; changes require a complete verified rebuild and deployment, not mutable evidence-file replacement.
 
@@ -14,7 +34,7 @@ Build preparation verifies the trusted evaluation review record and creates an e
 
 GET /api/health is liveness. GET /api/ready verifies local evaluation dependencies; GET /api/v1/modules discovers the two evaluation modules. POST /api/v1/analyze preserves the existing request and AnalysisResult shapes. Readiness means evaluation availability, never authentic clinical approval. Missing or altered reviewed files fail closed, and final response provenance is rechecked. Invalid discovery/readiness keeps Analyze unavailable.
 
-The server uses deterministic evidence-bound composition, not a live language model or vector service. It retains input/privacy validation, conflicts, clarification, source-bound urgent warnings, module isolation and exact citations. Authentic module activation and pending source states remain unchanged. The function has no outbound clients, application retries, persistent case state or case logging.
+The **Structured Evidence Review** server uses deterministic evidence-bound composition, not a live language model or vector service. **Separately**, the `converse` Function invokes the existing live IBM watsonx Orchestrate Agent Endo only after anonymous admission, privacy/safety checks and quota reservation. It retains input/privacy validation, conflicts, clarification, source-bound urgent warnings, module isolation and exact citations. Authentic module activation and pending source states remain unchanged. The deterministic `evaluate` function retains its source-bound analysis and does not use IBM chat. The separate `converse` function has bounded server-to-IBM requests, secure short-lived session receipts and immutable quota/lock records, without intentionally persisting raw clinical chat transcripts.
 
 A five-second operation deadline bounds the function. Browser aborts prevent late UI updates. Request-signal cancellation is respected when propagated by the host; a buffered CDN may allow bounded computation to finish after a client disconnect. Guaranteed host-to-function disconnect propagation has not been established. Review platform logs, retention, access controls and request-body capture settings before tester access. Never enable payload logging or analytics.
 
