@@ -10,6 +10,23 @@ Public evaluation site: **[clinicalagent.netlify.app](https://clinicalagent.netl
 
 Developers and future integrations share a [versioned clinical-data contract](shared/README.md). Existing submissions remain compatible. Optional de-identified document review is available, with explicit clinician confirmation before analysis.
 
+## IBM technologies and completed milestones
+
+**Successful recorded demonstration (November 2026):** A demonstration of **Agent Endo working within the Endo website** was successfully **recorded and submitted for evaluation**. This was a working IBM-backed preview demonstration, not merely an architectural prototype. The video is not hosted in this repository.
+
+| IBM technology | How Endo uses it | Documented accomplishment |
+|---|---|---|
+| **IBM Bob** | AI-assisted development | Assisted preparation of OpenAPI tool definitions, Orchestrate agent instructions, synthetic test fixtures and integration documentation. Bob is not the live clinical runtime. |
+| **IBM watsonx Orchestrate** | Agent deployment and conversation | **Agent Endo** was designed, configured and deployed. The IBM interface shows **Live v2.0.0** with both original clinical tools. **Protected Deploy Preview #4** demonstrated real IBM-backed multi-turn conversation within Endo. |
+| **IBM watsonx.ai** | Optional server-side presentation adapter | Bounded `shadow` and `reviewed` modes were implemented with validation and deterministic fallback. This adapter is separate from Orchestrate chat; it is **not claimed to have powered the recorded demo**. |
+| **IBM Cloud IAM** | Secure IBM authentication | A real **Production Netlify runtime IAM exchange passed (HTTP 200)**; this does not establish public IBM inference permission or account capacity. |
+
+**What the working agent demonstrated:** clinical-knowledge discussion and follow-up continuity, deterministic urgency screening and escalation, and relevant verified official reading links. For structured analysis, Endo retains its deterministic evaluation engine, safety rules and source-linked results. The project preserves **78 reviewed-for-evaluation claims** across two clinical topics; these are **not** approved for patient care.
+
+**Release candidate validation:** **2,379 frontend/Function tests**, **314 source-only backend tests (one skipped)**, and **144 integrity bindings** reported passing for PR #4. The private-fixture backend suite cannot be fully run from the public source-only checkout because protected manifests are absent; these are not claimed as passes.
+
+**Deployment distinction:** the [public Endo site](https://clinicalagent.netlify.app/) provides Structured Evidence Review. The live IBM demonstration was in **protected Preview #4** and was successfully recorded and submitted. Anonymous IBM conversations on the public Production site are **not yet activated**. Two-calendar-month admission controls are prepared in [PR #4](https://github.com/rob4493/clinical-agent/pull/4); see [production conversation status](shared/ProductionChat.md).
+
 ## What works today
 
 - A React website with a same-origin Netlify evaluation API; FastAPI remains available for local development.
@@ -18,8 +35,8 @@ Developers and future integrations share a [versioned clinical-data contract](sh
 - Concise clinician-oriented responses, relevant source links, reviewed visuals and safe evidence-insufficient outcomes.
 - Browser-memory PDF, DOCX and TXT review with clinician confirmation before analysis.
 - Optional server-side watsonx.ai presentation support that cannot replace the deterministic clinical analysis.
-- Optional local follow-up collection with one final approval for case changes. Protected Preview #4 has separately authorized IBM discussion; the anonymous Production migration remains default-disabled pending release verification.
-- IBM watsonx Orchestrate integration assets for a separate conversational evaluation agent.
+- Optional local follow-up collection with one final approval for case changes; protected Preview #4 also demonstrated IBM-backed dialogue.
+- An existing, deployed **IBM watsonx Orchestrate Agent Endo v2.0.0**, with two clinical tools and a successfully recorded/submitted website demonstration.
 - Two competition topics: **Endometriosis and Chronic Pelvic Pain** and **Early Pregnancy Pain and Bleeding**.
 
 The competition topics use separate, integrity-verified, project-authored evaluation summary packages. Their eligibility for controlled evaluation does **not** approve the sources for authentic clinical use. All four authentic clinical modules remain inactive and pending review. A clean local checkout remains deterministic and does not require IBM or Milvus. Authorized hosted environments can separately enable the constrained watsonx.ai presentation adapter, and the Orchestrate assets can connect a deployed IBM agent to the same public evaluation API.
@@ -176,7 +193,7 @@ See [Document review and limits](shared/DocumentReview.md) for supported formats
 
 ## Endo interface
 
-Endo is the Clinical Evidence Assistant shown in the browser. The centered case workspace keeps explicit module selection, document review and evidence safeguards. The current website does not embed the separate Orchestrate agent and has no Review Companion panel. See [Endo design and accessibility](shared/EndoDesign.md) for the visual system and its differences from the design reference.
+Endo is the Clinical Evidence Assistant shown in the browser. The centered case workspace keeps explicit module selection, document review and evidence safeguards. The public Production website does not expose live IBM chat; the **protected Preview #4 integrated Agent Endo within Endo**, including the recorded demonstration. There is no Review Companion panel. See [Endo design and accessibility](shared/EndoDesign.md) for the visual system and its differences from the design reference.
 
 Response display and reviewed plain-language wording: see [Response presentation](shared/ResponsePresentation.md).
 
@@ -197,22 +214,21 @@ The presentation adapter never receives raw case narratives, demographics, measu
 
 See [shadow-mode safeguards](shared/WatsonShadow.md) and [reviewed-mode configuration and rollback](shared/WatsonReviewed.md). Keep IBM credentials and configuration in server-side environment variables only; never place them in frontend or Vite settings.
 
-### watsonx Orchestrate agent
+### IBM watsonx Orchestrate — deployed Agent Endo
 
-The `orchestrate` directory contains the IBM Bob-assisted integration package:
+**Agent Endo is a configured, deployed agent in IBM watsonx Orchestrate, not an unimplemented integration.** The Live interface displays **v2.0.0** with both original clinical tools. A working IBM-backed conversation was demonstrated within the protected Endo Preview #4, and the successful demo was **recorded and submitted**. Public Production chat remains disabled.
 
-- An OpenAPI 3.0.3 specification exposing only `GET /api/v1/modules` and `POST /api/v1/analyze`.
-- Fail-closed agent instructions requiring the Endo analysis tool for every clinical evaluation.
-- Verified synthetic Module 1 and Module 2 demonstration cases.
-- Setup, evaluation and deployment documentation.
+The `orchestrate` directory contains IBM **Bob-assisted** integration work:
 
-These assets are intended for a separately configured IBM Orchestrate agent. This repository does not provision or verify that hosted agent. In an authorized synthetic evaluation, it can build a tool request, but Endo remains the clinical authority and its `renderedText` must be returned unchanged.
+- **`GET /api/v1/modules`** — discovers Endo clinical evaluation modules.
+- **`POST /api/v1/analyze`** — submits synthetic-case analysis to Endo's deterministic clinical evidence engine.
+- OpenAPI 3.0.3 specifications, fail-closed agent instructions, synthetic fixtures for both competition topics, and integration, testing and deployment guidance.
 
-This creates a different privacy boundary from the direct website: the website's watsonx.ai presentation adapter does not receive case details, while the Orchestrate agent necessarily processes the de-identified conversation needed to build its tool request. The assets support separately authorized fictional evaluation only; their presence does not authorize transmitting a conversation to IBM. Do not send uploaded document text, filenames, identifiers or real patient information through the agent. The public evaluation endpoint is not an authenticated clinical service.
+**IBM technology roles are distinct:** **Bob** assisted development; **watsonx Orchestrate** runs the existing Agent Endo and its two tools; **watsonx.ai** supports an optional bounded presentation adapter; and **IBM Cloud IAM** authenticates server-to-server integration. Production IAM HTTP 200 was verified. There is no need to invent a second agent or claim that the optional watsonx.ai adapter ran the recorded demo.
 
-IBM Bob was used during development to help prepare the OpenAPI tool specification, agent instructions, synthetic fixtures and integration documentation. Bob is not part of the live case-analysis runtime.
+The protected agent demonstration used synthetic/de-identified content only. Orchestrate processes the conversational context needed for its tasks, whereas the separate watsonx.ai presentation adapter excludes raw case narratives. Do not send patient identifiers, document content, filenames, or real patient data. Endo's deterministic `renderedText`, source bindings and safety decisions remain authoritative for structured analysis. Neither the live-tool inventory nor the successful protected demonstration proves every effective downstream permission, public provider allowance or public access authorization. **Endo is not approved for patient care.**
 
-Before any patient-adjacent use, independently review authentication, authorization, rate limiting, audit behavior, IBM retention and data-handling settings, institutional security requirements and applicable healthcare agreements. Embedding the Orchestrate agent into the Endo website would also require server-side token signing and secure key management; it is not enabled by the current frontend.
+See [the Orchestrate integration](orchestrate/README.md) and [production conversation controls](shared/ProductionChat.md).
 
 ## Simplified clinician workspace
 
@@ -221,9 +237,9 @@ For a manual case, choose a clinical-module card. Alternatively, a demonstration
 The compact upload control accepts PDF, DOCX or TXT. **File requirements and privacy** explains the limits. After selecting files, confirm they are de-identified, view each file, review its extracted information and explicitly confirm before analysis. The original files and filenames stay in browser memory. Result headings are **Evidence summary**, **Clinical considerations** and **Clinical details and sources**; urgent warnings and prescribing boundaries remain visible first.
 
 
-### Conversational-agent preparation
+### Conversational agent — demonstrated in protected preview
 
-**Live IBM conversation is not enabled in this version.** The prepared connection still requires privacy authorization, authenticated session controls and reviewed checks for generated content.
+**Agent Endo successfully operated within protected Endo Deploy Preview #4, and the demonstration was recorded and submitted.** Anonymous IBM chat on the public Production website is **not yet activated**; this does not erase the completed preview milestone.
 
 To use the available local follow-up workflow:
 
@@ -234,7 +250,7 @@ To use the available local follow-up workflow:
 
 **Check IBM connection** checks Endo's availability status only. It does not contact IBM or send your case. Existing conflicts still require their separate review, and urgent warnings take priority over follow-up.
 
-See [connection status and approval requirements](shared/AgentConnection.md).
+The [earlier connection planning document](shared/AgentConnection.md) reflects the November 5 preparation stage, not the later deployed Orchestrate demo. See [Production chat](shared/ProductionChat.md) for the updated public-admission design.
 
 Production visitor controls, usage bounds, release prerequisites and the public user workflow are documented in [Production chat](shared/ProductionChat.md). IBM Bob assists development; IBM watsonx Orchestrate is the runtime for the existing Agent Endo. A prepared route is not evidence of a completed public launch.
 
